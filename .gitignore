@@ -1,0 +1,58 @@
+# ASP.NET Core .gitignore
+bin/
+obj/
+*.db
+*.db-journal
+.env
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# # ASP.NET Core Configuration
+# appsettings.json
+# appsettings.*.json
+
+# # Entity Framework Migrations
+# Migrations/
+
+# Node.js and Angular .gitignore
+node_modules/
+dist/
+tmp/
+temp/
+out-tsc/
+package-lock.json
+yarn.lock
+*.log
+coverage/
+
+# Angular-specific
+.angular/
+.angular-cache/
+*.js.map
+*.d.ts
+*.ngsummary.json
+*.ngstyle.js
+*.ngfactory.js
+src/environments/environment.ts
+src/environments/environment.prod.ts
+
+# IDE and Editor Configurations
+.idea/
+.DS_Store
+Thumbs.db
+
+# MacOS-specific
+*.DS_Store
+
+# Windows-specific
+desktop.ini
+
+# Optional npm cache directory
+.npm
+
+# Git merge conflict files
+*.orig
