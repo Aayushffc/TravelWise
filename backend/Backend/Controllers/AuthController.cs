@@ -60,12 +60,5 @@ namespace TravelWiseAPI.Controllers
             var token = await _dbHelper.GenerateJwtToken(user);
             return Ok(new AuthResponseDTO { Token = token, Email = user.Email });
         }
-
-        [HttpGet("check-username/{username}")]
-        public async Task<IActionResult> CheckUsernameAvailability(string username)
-        {
-            var userExists = await _userManager.Users.AnyAsync(u => u.UserName == username);
-            return Ok(!userExists);
-        }
     }
 }
