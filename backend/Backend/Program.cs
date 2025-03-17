@@ -1,3 +1,4 @@
+using System.Text;
 using Backend.DBContext;
 using Backend.Helper;
 using Backend.Models.Auth;
@@ -6,29 +7,30 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Load Configuration
-builder.Configuration
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+builder
+    .Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
 // Database Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
 // Identity Configuration
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    // Password Policy
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 8;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequireUppercase = true;
-})
+builder
+    .Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        // Password Policy
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequireUppercase = true;
+    })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -42,7 +44,8 @@ if (string.IsNullOrEmpty(jwtKey))
 
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -53,7 +56,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["JWT:Issuer"],
             ValidAudience = builder.Configuration["JWT:Audience"],
-            IssuerSigningKey = key
+            IssuerSigningKey = key,
         };
     });
 
@@ -64,12 +67,8 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(allowedOrigins)
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        _ = policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
     });
-
 });
 
 // Controllers and Swagger
@@ -88,18 +87,13 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
+        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
     };
 
     c.AddSecurityDefinition("Bearer", securityScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        { securityScheme, new string[] {} }
-    });
+    c.AddSecurityRequirement(
+        new OpenApiSecurityRequirement { { securityScheme, new string[] { } } }
+    );
 });
 
 var app = builder.Build();

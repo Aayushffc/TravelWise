@@ -16,7 +16,12 @@ namespace TravelWiseAPI.Controllers
         private readonly IConfiguration _configuration;
         private readonly IDBHelper _dbHelper;
 
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, IDBHelper dbHelper)
+        public AuthController(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            IConfiguration configuration,
+            IDBHelper dbHelper
+        )
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -34,7 +39,7 @@ namespace TravelWiseAPI.Controllers
             {
                 UserName = model.UserName,
                 Email = model.Email,
-                FullName = model.FullName
+                FullName = model.FullName,
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -53,7 +58,12 @@ namespace TravelWiseAPI.Controllers
             if (user == null)
                 return Unauthorized("Invalid credentials");
 
-            var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                model.Password,
+                false,
+                false
+            );
             if (!result.Succeeded)
                 return Unauthorized("Invalid credentials");
 

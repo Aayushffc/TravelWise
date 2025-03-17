@@ -1,6 +1,4 @@
 ﻿namespace Backend.Controllers
 {
-    public class DestinationController
-    {
-    }
+    public class DestinationController { }
 }
