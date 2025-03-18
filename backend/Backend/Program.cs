@@ -1,8 +1,11 @@
+using System.Security.Claims;
 using System.Text;
 using Backend.DBContext;
 using Backend.Helper;
 using Backend.Models.Auth;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -36,6 +39,7 @@ builder
 
 // Dependency Injection
 builder.Services.AddScoped<IDBHelper, DBHelper>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["JWT:Key"];
@@ -45,7 +49,11 @@ if (string.IsNullOrEmpty(jwtKey))
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
 builder
-    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -57,6 +65,52 @@ builder
             ValidIssuer = builder.Configuration["JWT:Issuer"],
             ValidAudience = builder.Configuration["JWT:Audience"],
             IssuerSigningKey = key,
+        };
+    })
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.CallbackPath = "/api/auth/google-callback";
+        options.SaveTokens = true;
+        options.Events = new OAuthEvents
+        {
+            OnCreatingTicket = async context =>
+            {
+                var email = context.Principal.FindFirstValue(ClaimTypes.Email);
+                var name = context.Principal.FindFirstValue(ClaimTypes.Name);
+                var picture = context.Principal.FindFirstValue("picture");
+
+                if (string.IsNullOrEmpty(email))
+                    return;
+
+                var userManager = context.HttpContext.RequestServices.GetRequiredService<
+                    UserManager<ApplicationUser>
+                >();
+                var user = await userManager.FindByEmailAsync(email);
+
+                if (user == null)
+                {
+                    user = new ApplicationUser
+                    {
+                        UserName = email,
+                        Email = email,
+                        FullName = name,
+                        EmailConfirmed = true,
+                    };
+
+                    var result = await userManager.CreateAsync(user);
+                    if (result.Succeeded)
+                    {
+                        var dbHelper =
+                            context.HttpContext.RequestServices.GetRequiredService<IDBHelper>();
+                        await dbHelper.AddUserRole(user);
+                    }
+                }
+
+                context.Identity.AddClaim(new Claim("UserId", user.Id));
+                context.Identity.AddClaim(new Claim("FullName", user.FullName));
+            },
         };
     });
 

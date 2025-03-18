@@ -13,10 +13,17 @@ namespace Backend.DBContext
 
         public DbSet<Location> Locations { get; set; }
         public DbSet<Deal> Deals { get; set; }
+        public DbSet<AgencyApplication> AgencyApplications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<AgencyApplication>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
