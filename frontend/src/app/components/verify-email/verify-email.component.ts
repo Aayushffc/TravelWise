@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./verify-email.component.css']
 })
 export class VerifyEmailComponent implements OnInit {
-  email: string = '';
+  userEmail: string = '';
   verificationCode: string = '';
   errorMessage: string = '';
   successMessage: string = '';
@@ -29,28 +29,23 @@ export class VerifyEmailComponent implements OnInit {
     // Check if email is provided in query params
     this.route.queryParams.subscribe(params => {
       if (params['email']) {
-        this.email = params['email'];
+        this.userEmail = params['email'];
       } else {
         // Try to get the email from the current user
         const user = this.authService.getCurrentUser();
         if (user && user.email) {
-          this.email = user.email;
+          this.userEmail = user.email;
         }
       }
     });
   }
 
   requestCode(): void {
-    if (!this.email) {
-      this.errorMessage = 'Please enter your email address';
-      return;
-    }
-
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.authService.requestVerificationCode(this.email).subscribe({
+    this.authService.requestVerificationCode(this.userEmail).subscribe({
       next: () => {
         this.codeRequested = true;
         this.successMessage = 'Verification code sent to your email';
@@ -64,8 +59,8 @@ export class VerifyEmailComponent implements OnInit {
   }
 
   verifyEmail(): void {
-    if (!this.email || !this.verificationCode) {
-      this.errorMessage = 'Please enter your email and verification code';
+    if (!this.verificationCode) {
+      this.errorMessage = 'Please enter your verification code';
       return;
     }
 
@@ -74,7 +69,7 @@ export class VerifyEmailComponent implements OnInit {
     this.successMessage = '';
 
     this.authService.verifyEmail({
-      email: this.email,
+      email: this.userEmail,
       verificationCode: this.verificationCode
     }).subscribe({
       next: () => {
