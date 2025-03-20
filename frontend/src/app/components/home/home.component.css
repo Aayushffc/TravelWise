@@ -22,3 +22,28 @@
     padding-right: 1rem;
   }
 }
+
+/* Profile menu styles */
+.profile-menu-trigger {
+  transition: all 0.2s ease-in-out;
+}
+
+.profile-menu-trigger:hover {
+  opacity: 0.8;
+}
+
+/* Animation for dropdown */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.absolute {
+  animation: slideDown 0.2s ease-out;
+}

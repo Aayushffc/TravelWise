@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -21,6 +21,8 @@ export class HomeComponent implements OnInit {
   isLoading: boolean = true;
   isEmailVerified: boolean = true;
   isAuthenticated: boolean = false;
+  isProfileMenuOpen: boolean = false;
+  @ViewChild('profileMenuTrigger') profileMenuTrigger!: ElementRef;
 
   constructor(
     private locationService: LocationService,
@@ -45,8 +47,15 @@ export class HomeComponent implements OnInit {
         this.userName = user.email.split('@')[0];
       }
 
-      // Check if email is verified
-      this.isEmailVerified = this.authService.isEmailVerified();
+      // Update this part to get the latest email verification status
+      this.authService.getUserProfile().subscribe({
+        next: (profile) => {
+          this.isEmailVerified = profile.emailConfirmed;
+        },
+        error: (error) => {
+          console.error('Error fetching user profile:', error);
+        }
+      });
     }
   }
 
@@ -103,5 +112,22 @@ export class HomeComponent implements OnInit {
 
   viewDeal(dealId: number): void {
     this.router.navigate(['/deal', dealId]);
+  }
+
+  toggleProfileMenu(): void {
+    this.isProfileMenuOpen = !this.isProfileMenuOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.isProfileMenuOpen &&
+        !this.profileMenuTrigger.nativeElement.contains(event.target)) {
+      this.isProfileMenuOpen = false;
+    }
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

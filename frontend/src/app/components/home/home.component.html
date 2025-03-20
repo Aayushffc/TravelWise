@@ -46,7 +46,43 @@
 
         <!-- User Greeting -->
         <div class="flex items-center">
-          <span *ngIf="userName" class="text-gray-700">Hi, {{ userName }}</span>
+          <div
+            class="relative group cursor-pointer flex items-center"
+            (click)="toggleProfileMenu()"
+            #profileMenuTrigger
+          >
+            <span *ngIf="userName" class="text-gray-700 group-hover:text-gray-900">Hi, {{ userName }}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 ml-2 text-gray-600 group-hover:text-gray-900 transition-colors"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+
+            <!-- Profile Dropdown Menu -->
+            <div
+              *ngIf="isProfileMenuOpen"
+              class="absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 z-20"
+            >
+              <div class="py-1">
+                <a routerLink="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                <a routerLink="/bookings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Bookings</a>
+                <a routerLink="/support" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Support</a>
+                <a routerLink="/faq" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">FAQ</a>
+              </div>
+              <div class="py-1">
+                <button
+                  (click)="logout()"
+                  class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
           <button *ngIf="!userName" class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition" routerLink="/login">
             Login
           </button>
