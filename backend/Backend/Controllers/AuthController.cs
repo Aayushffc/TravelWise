@@ -184,43 +184,95 @@ namespace TravelWiseAPI.Controllers
         {
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(
                 "Google",
-                "/api/auth/google-callback"
+                Url.Action(
+                    "GoogleCallback",
+                    "Auth",
+                    new { returnUrl = _configuration["FrontendUrl"] + "/auth/callback" }
+                )
             );
-
-            // Set PKCE to false since we're handling the callback our own way
             properties.SetParameter("UsePkce", false);
-
+            properties.SetParameter("AccessType", "offline");
+            properties.SetParameter("Prompt", "consent");
+            properties.SetParameter("state", Guid.NewGuid().ToString());
             return Challenge(properties, "Google");
         }
 
         [HttpGet("google-callback")]
-        public async Task<IActionResult> GoogleCallback()
+        public async Task<IActionResult> GoogleCallback(string returnUrl)
         {
-            var info = await _signInManager.GetExternalLoginInfoAsync();
-            if (info == null)
-                return BadRequest("Error loading external login information.");
-
-            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(email))
-                return BadRequest("Could not retrieve email from Google login.");
-
-            // Try to sign in with existing account
-            var result = await _signInManager.ExternalLoginSignInAsync(
-                info.LoginProvider,
-                info.ProviderKey,
-                isPersistent: false
-            );
-
-            ApplicationUser user;
-
-            if (result.Succeeded)
+            try
             {
-                // Existing user login
-                user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == email);
-                if (user == null)
+                _logger.LogInformation(
+                    "Google callback received. ReturnUrl: {ReturnUrl}",
+                    returnUrl
+                );
+
+                var info = await _signInManager.GetExternalLoginInfoAsync();
+                if (info == null)
                 {
-                    // If somehow FirstOrDefaultAsync returned null but ExternalLoginSignInAsync succeeded,
-                    // we'll just create a new user
+                    _logger.LogError("Failed to get external login info");
+                    return Redirect($"{returnUrl}?error=external_login_failed");
+                }
+
+                _logger.LogInformation(
+                    "External login info received for email: {Email}",
+                    info.Principal.FindFirstValue(ClaimTypes.Email)
+                );
+
+                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(email))
+                {
+                    _logger.LogError("Failed to get email from Google login");
+                    return BadRequest("Could not retrieve email from Google login.");
+                }
+
+                // Try to sign in with existing account
+                var result = await _signInManager.ExternalLoginSignInAsync(
+                    info.LoginProvider,
+                    info.ProviderKey,
+                    isPersistent: false
+                );
+
+                ApplicationUser user;
+
+                if (result.Succeeded)
+                {
+                    // Existing user login
+                    user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == email);
+                    if (user == null)
+                    {
+                        // If somehow FirstOrDefaultAsync returned null but ExternalLoginSignInAsync succeeded,
+                        // we'll just create a new user
+                        var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
+                        var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
+                        var fullName = $"{firstName} {lastName}".Trim();
+
+                        user = new ApplicationUser
+                        {
+                            UserName = email,
+                            Email = email,
+                            FirstName = firstName,
+                            LastName = lastName,
+                            FullName = fullName,
+                            EmailConfirmed = true,
+                        };
+
+                        var createResult = await _userManager.CreateAsync(user);
+                        if (!createResult.Succeeded)
+                        {
+                            _logger.LogError(
+                                "Failed to create user from Google login: {Errors}",
+                                string.Join(", ", createResult.Errors.Select(e => e.Description))
+                            );
+                            return BadRequest("Failed to create user from Google login.");
+                        }
+
+                        await _dbHelper.AddUserRole(user);
+                    }
+                }
+                else
+                {
+                    // New user, create an account
                     var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
                     var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
                     var fullName = $"{firstName} {lastName}".Trim();
@@ -237,46 +289,52 @@ namespace TravelWiseAPI.Controllers
 
                     var createResult = await _userManager.CreateAsync(user);
                     if (!createResult.Succeeded)
+                    {
+                        _logger.LogError(
+                            "Failed to create user from Google login: {Errors}",
+                            string.Join(", ", createResult.Errors.Select(e => e.Description))
+                        );
                         return BadRequest("Failed to create user from Google login.");
+                    }
 
+                    // Add user to default role
                     await _dbHelper.AddUserRole(user);
+
+                    // Add the external login provider to the user
+                    var addLoginResult = await _userManager.AddLoginAsync(user, info);
+                    if (!addLoginResult.Succeeded)
+                    {
+                        _logger.LogError(
+                            "Failed to add Google login information: {Errors}",
+                            string.Join(", ", addLoginResult.Errors.Select(e => e.Description))
+                        );
+                        return BadRequest("Failed to add Google login information to user.");
+                    }
                 }
+
+                // Generate token
+                var token = await _dbHelper.GenerateJwtToken(user);
+
+                // Set the token as a cookie
+                Response.Cookies.Append(
+                    "ACCESS_TOKEN",
+                    token,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = false,
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    }
+                );
+
+                return Redirect($"{returnUrl}?success=true");
             }
-            else
+            catch (Exception ex)
             {
-                // New user, create an account
-                var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
-                var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
-                var fullName = $"{firstName} {lastName}".Trim();
-
-                user = new ApplicationUser
-                {
-                    UserName = email,
-                    Email = email,
-                    FirstName = firstName,
-                    LastName = lastName,
-                    FullName = fullName,
-                    EmailConfirmed = true,
-                };
-
-                var createResult = await _userManager.CreateAsync(user);
-                if (!createResult.Succeeded)
-                    return BadRequest("Failed to create user from Google login.");
-
-                // Add user to default role
-                await _dbHelper.AddUserRole(user);
-
-                // Add the external login provider to the user
-                var addLoginResult = await _userManager.AddLoginAsync(user, info);
-                if (!addLoginResult.Succeeded)
-                    return BadRequest("Failed to add Google login information to user.");
+                _logger.LogError(ex, "Error during Google callback");
+                return Redirect($"{returnUrl}?error=authentication_failed");
             }
-
-            // Generate token
-            var token = await _dbHelper.GenerateJwtToken(user);
-
-            // Redirect to frontend with token
-            return Redirect($"{_configuration["FrontendUrl"]}/auth/callback?token={token}");
         }
 
         [HttpPost("request-verification-code")]
@@ -368,8 +426,105 @@ namespace TravelWiseAPI.Controllers
                     lastName = user.LastName,
                     fullName = user.FullName,
                     emailConfirmed = user.EmailConfirmed,
+                    phoneNumber = user.PhoneNumber
                 }
             );
+        }
+
+        [Authorize]
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return NotFound("User not found");
+
+            if (!string.IsNullOrEmpty(model.FullName))
+                user.FullName = model.FullName;
+
+            if (!string.IsNullOrEmpty(model.PhoneNumber))
+                user.PhoneNumber = model.PhoneNumber;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok(new { message = "Profile updated successfully" });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+                return Ok(new { message = "If the email exists, a password reset link will be sent." });
+
+            // Generate password reset token
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Create reset password link
+            var resetLink = $"{_configuration["FrontendUrl"]}/reset-password?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(token)}";
+
+            try
+            {
+                // Send email with reset link
+                await _emailService.SendPasswordResetEmailAsync(user.Email, resetLink);
+                return Ok(new { message = "If the email exists, a password reset link will be sent." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending password reset email to {Email}", user.Email);
+                return StatusCode(500, "Failed to send password reset email. Please try again later.");
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+                return BadRequest("Invalid request");
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok(new { message = "Password has been reset successfully" });
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // Clear the authentication cookie
+            await _signInManager.SignOutAsync();
+
+            // Clear the JWT token cookie
+            Response.Cookies.Delete(
+                "ACCESS_TOKEN",
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                }
+            );
+
+            return Ok(new { message = "Logged out successfully" });
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return NotFound("User not found");
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok(new { message = "Password changed successfully" });
         }
     }
 }

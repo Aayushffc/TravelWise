@@ -14,6 +14,7 @@ namespace Backend.DBContext
         public DbSet<Location> Locations { get; set; }
         public DbSet<Deal> Deals { get; set; }
         public DbSet<AgencyApplication> AgencyApplications { get; set; }
+        public DbSet<FAQ> FAQs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

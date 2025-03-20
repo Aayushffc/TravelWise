@@ -72,5 +72,18 @@ namespace Backend.Helper
 
             await SendEmailAsync(user.Email, subject, body);
         }
+
+        public async Task SendPasswordResetEmailAsync(string email, string resetLink)
+        {
+            var subject = "Reset Your Password";
+            var body =
+                $@"
+                <h2>Reset Your Password</h2>
+                <p>Click the link below to reset your password:</p>
+                <p><a href='{resetLink}'>Reset Password</a></p>
+                <p>If you didn't request this, please ignore this email.</p>";
+
+            await SendEmailAsync(email, subject, body);
+        }
     }
 }

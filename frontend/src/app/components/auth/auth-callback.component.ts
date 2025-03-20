@@ -23,10 +23,9 @@ export class AuthCallbackComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const token = params['token'];
-      if (token) {
-        // Let the auth service handle the token
-        this.authService.handleAuthCallback(token);
+      if (params['success'] === 'true') {
+        // The token is now stored in an HTTP-only cookie
+        // We can just navigate to home
         this.router.navigate(['/home']);
       } else {
         this.router.navigate(['/login'], {

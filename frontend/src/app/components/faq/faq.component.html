@@ -1,0 +1,50 @@
+<div class="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold text-center text-gray-900 mb-12">
+      Frequently Asked Questions
+    </h1>
+
+    <div class="space-y-8">
+      <div *ngFor="let category of faqCategories" class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ category.category }}</h2>
+
+        <div class="space-y-4">
+          <div *ngFor="let faq of category.questions" class="border-b border-gray-200 pb-4 last:border-b-0">
+            <button
+              (click)="toggleFAQ(faq)"
+              class="w-full text-left focus:outline-none"
+            >
+              <div class="flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">
+                  {{ faq.question }}
+                </h3>
+                <span class="ml-6 flex-shrink-0">
+                  <svg
+                    [class.rotate-180]="expandedFAQs.includes(faq.id)"
+                    class="h-6 w-6 transform transition-transform duration-200"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </button>
+            <div
+              *ngIf="expandedFAQs.includes(faq.id)"
+              class="mt-2 text-gray-600"
+            >
+              <p class="text-base">{{ faq.answer }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

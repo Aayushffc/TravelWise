@@ -1,16 +1,13 @@
-using System.Security.Claims;
 using System.Text;
 using Backend.DBContext;
 using Backend.Helper;
 using Backend.Models.Auth;
-using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,8 +51,9 @@ builder
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     })
+    .AddCookie()
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -71,6 +69,11 @@ builder
 
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies["ACCESS_TOKEN"];
+                return Task.CompletedTask;
+            },
             OnAuthenticationFailed = context =>
             {
                 if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
@@ -84,41 +87,25 @@ builder
                 context.HandleResponse();
                 context.Response.StatusCode = 401;
                 context.Response.ContentType = "application/json";
-                var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Invalid token" });
+                var result = System.Text.Json.JsonSerializer.Serialize(
+                    new { message = "Invalid token" }
+                );
                 return context.Response.WriteAsync(result);
             },
-            OnMessageReceived = context =>
-            {
-                var accessToken = context.Request.Query["access_token"];
-                var path = context.HttpContext.Request.Path;
-                if (accessToken.Count > 0 && path.StartsWithSegments("/api"))
-                {
-                    context.Token = accessToken;
-                }
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                var token = context.SecurityToken as JwtSecurityToken;
-                if (token != null)
-                {
-                    var identity = context.Principal.Identity as ClaimsIdentity;
-                    if (identity != null)
-                    {
-                        identity.AddClaim(new Claim("access_token", token.RawData));
-                    }
-                }
-                return Task.CompletedTask;
-            }
         };
     })
     .AddGoogle(options =>
     {
         options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        options.CallbackPath = "/api/auth/google-callback";
+        options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.SaveTokens = true;
+        options.CallbackPath = "/api/auth/google-callback";
         options.UsePkce = false;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None; // Change this for development
+        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+        options.CorrelationCookie.IsEssential = true;
+        options.CorrelationCookie.HttpOnly = true;
     });
 
 var allowedOrigins = builder.Configuration.GetValue<string>("allowedOrigins")!.Split(',');
@@ -128,7 +115,12 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        _ = policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .SetIsOriginAllowed(origin => true); // For development only
     });
 });
 
@@ -140,6 +132,14 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Change this for development
+});
+
+// Add cookie policy
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.Secure = CookieSecurePolicy.None; // Change this for development
 });
 
 // Controllers and Swagger
@@ -173,12 +173,18 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
 app.UseHttpsRedirection();
-app.UseCors(); // Enable CORS
+app.UseCors();
+app.UseCookiePolicy();
 app.UseSession();
 app.UseAuthentication();
-
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
