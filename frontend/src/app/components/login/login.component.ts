@@ -36,17 +36,8 @@ export class LoginComponent {
       .subscribe({
         next: (response) => {
           this.authService.saveToken(response);
-
-          // Check if email is verified
-          if (response.emailConfirmed === false) {
-            // Redirect to email verification page if email is not verified
-            this.router.navigate(['/verify-email'], {
-              queryParams: { email: response.email }
-            });
-          } else {
-            // Navigate to home page if email is verified
-            this.router.navigate(['/home']);
-          }
+          // Always redirect to home page after successful login
+          this.router.navigate(['/home']);
         },
         error: (error) => {
           this.isLoading = false;
