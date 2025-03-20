@@ -1,0 +1,107 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { LocationService } from '../../services/location.service';
+import { DealService } from '../../services/deal.service';
+import { AuthService } from '../../services/auth.service';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css']
+})
+export class HomeComponent implements OnInit {
+  locations: any[] = [];
+  locationDeals: {[key: number]: any[]} = {};
+  searchTerm: string = '';
+  userName: string = '';
+  isLoading: boolean = true;
+  isEmailVerified: boolean = true;
+  isAuthenticated: boolean = false;
+
+  constructor(
+    private locationService: LocationService,
+    private dealService: DealService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.loadUserInfo();
+    this.loadLocations();
+  }
+
+  loadUserInfo(): void {
+    this.isAuthenticated = this.authService.isAuthenticated();
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      // Use email as fallback if fullName is not available
+      if (user.fullName) {
+        this.userName = user.fullName.split(' ')[0];
+      } else {
+        this.userName = user.email.split('@')[0];
+      }
+
+      // Check if email is verified
+      this.isEmailVerified = this.authService.isEmailVerified();
+    }
+  }
+
+  loadLocations(): void {
+    this.isLoading = true;
+    this.locationService.getLocations().subscribe({
+      next: (data) => {
+        this.locations = data;
+        // For each location, load its deals
+        this.locations.forEach(location => {
+          this.loadDealsForLocation(location.id);
+        });
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading locations:', error);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadDealsForLocation(locationId: number): void {
+    this.dealService.getDealsByLocation(locationId).subscribe({
+      next: (deals) => {
+        this.locationDeals[locationId] = deals;
+      },
+      error: (error) => {
+        console.error(`Error loading deals for location ${locationId}:`, error);
+      }
+    });
+  }
+
+  scrollLocations(direction: 'left' | 'right'): void {
+    const container = document.getElementById('locations-container');
+    if (container) {
+      const scrollAmount = 300; // Adjust scroll amount as needed
+      if (direction === 'left') {
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    }
+  }
+
+  search(): void {
+    if (this.searchTerm.trim()) {
+      this.router.navigate(['/search'], { queryParams: { term: this.searchTerm } });
+    }
+  }
+
+  viewLocation(locationId: number): void {
+    this.router.navigate(['/location', locationId]);
+  }
+
+  viewDeal(dealId: number): void {
+    this.router.navigate(['/deal', dealId]);
+  }
+}

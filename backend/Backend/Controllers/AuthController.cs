@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
+using System.Net;
 
 namespace TravelWiseAPI.Controllers
 {
@@ -52,8 +54,10 @@ namespace TravelWiseAPI.Controllers
             {
                 UserName = model.UserName,
                 Email = model.Email,
-                FullName = model.FullName,
-                EmailConfirmed = false,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                FullName = $"{model.FirstName} {model.LastName}",
+                EmailConfirmed = false, // User starts with unverified email
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -62,27 +66,22 @@ namespace TravelWiseAPI.Controllers
 
             await _dbHelper.AddUserRole(user);
 
-            // Generate and send verification code
-            var verificationCode = GenerateVerificationCode();
-            await _emailService.SendVerificationEmailAsync(user, verificationCode);
-
-            // Store verification code in user claims
-            await _userManager.AddClaimAsync(
-                user,
-                new System.Security.Claims.Claim("VerificationCode", verificationCode)
-            );
-            await _userManager.AddClaimAsync(
-                user,
-                new System.Security.Claims.Claim(
-                    "VerificationCodeExpiry",
-                    DateTime.UtcNow.AddMinutes(10).ToString("O")
-                )
-            );
+            // Generate a token for the user
+            var token = await _dbHelper.GenerateJwtToken(user);
 
             return Ok(
                 new
                 {
-                    message = "User registered successfully. Please check your email for verification code.",
+                    message = "User registered successfully.",
+                    token = token,
+                    user = new
+                    {
+                        email = user.Email,
+                        firstName = user.FirstName,
+                        lastName = user.LastName,
+                        fullName = user.FullName,
+                        emailConfirmed = user.EmailConfirmed,
+                    },
                 }
             );
         }
@@ -90,7 +89,7 @@ namespace TravelWiseAPI.Controllers
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] EmailVerificationDTO model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
             if (user == null)
                 return NotFound("User not found");
 
@@ -149,9 +148,14 @@ namespace TravelWiseAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
+            // Instead of FindByEmailAsync which fails on duplicate emails, use a manual query
+            var users = await _userManager.Users.Where(u => u.Email == model.Email).ToListAsync();
+            if (users.Count == 0)
                 return Unauthorized("Invalid credentials");
+
+            // If multiple users found with the same email, use the first one
+            // This is a temporary fix - you should ensure email uniqueness in your database
+            var user = users.First();
 
             var result = await _signInManager.PasswordSignInAsync(
                 user,
@@ -163,7 +167,16 @@ namespace TravelWiseAPI.Controllers
                 return Unauthorized("Invalid credentials");
 
             var token = await _dbHelper.GenerateJwtToken(user);
-            return Ok(new AuthResponseDTO { Token = token, Email = user.Email });
+            return Ok(
+                new AuthResponseDTO
+                {
+                    Token = token,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    FullName = user.FullName,
+                }
+            );
         }
 
         [HttpGet("google-login")]
@@ -173,6 +186,10 @@ namespace TravelWiseAPI.Controllers
                 "Google",
                 "/api/auth/google-callback"
             );
+
+            // Set PKCE to false since we're handling the callback our own way
+            properties.SetParameter("UsePkce", false);
+
             return Challenge(properties, "Google");
         }
 
@@ -183,35 +200,156 @@ namespace TravelWiseAPI.Controllers
             if (info == null)
                 return BadRequest("Error loading external login information.");
 
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(email))
+                return BadRequest("Could not retrieve email from Google login.");
+
+            // Try to sign in with existing account
             var result = await _signInManager.ExternalLoginSignInAsync(
                 info.LoginProvider,
                 info.ProviderKey,
                 isPersistent: false
             );
+
+            ApplicationUser user;
+
             if (result.Succeeded)
             {
-                var user = await _userManager.FindByEmailAsync(
-                    info.Principal.FindFirstValue(ClaimTypes.Email)
-                );
-                var token = await _dbHelper.GenerateJwtToken(user);
+                // Existing user login
+                user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    // If somehow FirstOrDefaultAsync returned null but ExternalLoginSignInAsync succeeded,
+                    // we'll just create a new user
+                    var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
+                    var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
+                    var fullName = $"{firstName} {lastName}".Trim();
 
-                // Redirect to frontend with token
-                return Redirect($"{_configuration["FrontendUrl"]}/auth/callback?token={token}");
+                    user = new ApplicationUser
+                    {
+                        UserName = email,
+                        Email = email,
+                        FirstName = firstName,
+                        LastName = lastName,
+                        FullName = fullName,
+                        EmailConfirmed = true,
+                    };
+
+                    var createResult = await _userManager.CreateAsync(user);
+                    if (!createResult.Succeeded)
+                        return BadRequest("Failed to create user from Google login.");
+
+                    await _dbHelper.AddUserRole(user);
+                }
+            }
+            else
+            {
+                // New user, create an account
+                var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
+                var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
+                var fullName = $"{firstName} {lastName}".Trim();
+
+                user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    FullName = fullName,
+                    EmailConfirmed = true,
+                };
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                    return BadRequest("Failed to create user from Google login.");
+
+                // Add user to default role
+                await _dbHelper.AddUserRole(user);
+
+                // Add the external login provider to the user
+                var addLoginResult = await _userManager.AddLoginAsync(user, info);
+                if (!addLoginResult.Succeeded)
+                    return BadRequest("Failed to add Google login information to user.");
             }
 
-            return BadRequest("Failed to authenticate with Google.");
+            // Generate token
+            var token = await _dbHelper.GenerateJwtToken(user);
+
+            // Redirect to frontend with token
+            return Redirect($"{_configuration["FrontendUrl"]}/auth/callback?token={token}");
+        }
+
+        [HttpPost("request-verification-code")]
+        public async Task<IActionResult> RequestVerificationCode([FromBody] EmailRequestDTO model)
+        {
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            if (user == null)
+                return NotFound("User not found");
+
+            if (user.EmailConfirmed)
+                return BadRequest("Email is already verified");
+
+            try
+            {
+                // Generate and send verification code
+                var verificationCode = GenerateVerificationCode();
+                await _emailService.SendVerificationEmailAsync(user, verificationCode);
+
+                // Remove any existing verification claims
+                var existingClaims = await _userManager.GetClaimsAsync(user);
+                var codeClaim = existingClaims.FirstOrDefault(c => c.Type == "VerificationCode");
+                var expiryClaim = existingClaims.FirstOrDefault(c =>
+                    c.Type == "VerificationCodeExpiry"
+                );
+
+                if (codeClaim != null)
+                    await _userManager.RemoveClaimAsync(user, codeClaim);
+                if (expiryClaim != null)
+                    await _userManager.RemoveClaimAsync(user, expiryClaim);
+
+                // Store new verification code in user claims
+                await _userManager.AddClaimAsync(
+                    user,
+                    new System.Security.Claims.Claim("VerificationCode", verificationCode)
+                );
+                await _userManager.AddClaimAsync(
+                    user,
+                    new System.Security.Claims.Claim(
+                        "VerificationCodeExpiry",
+                        DateTime.UtcNow.AddMinutes(10).ToString("O")
+                    )
+                );
+
+                return Ok(new { message = "Verification code sent to your email." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending verification email to {Email}", user.Email);
+                return StatusCode(
+                    500,
+                    "Failed to send verification email. Please try again later."
+                );
+            }
         }
 
         private string GenerateVerificationCode()
         {
-            using var rng = RandomNumberGenerator.Create();
-            var codeBytes = new byte[3];
-            rng.GetBytes(codeBytes);
-            return Convert
-                .ToBase64String(codeBytes)
-                .Replace("/", "_")
-                .Replace("+", "-")
-                .Substring(0, 6);
+            try
+            {
+                using var rng = RandomNumberGenerator.Create();
+                var codeBytes = new byte[4]; // Adjusted size
+                rng.GetBytes(codeBytes);
+                return Convert
+                    .ToBase64String(codeBytes)
+                    .Replace("/", "_")
+                    .Replace("+", "-")
+                    .Substring(0, 6);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating verification code");
+                throw;
+            }
         }
     }
 }

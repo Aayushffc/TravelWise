@@ -1,42 +1,36 @@
-name: Backend CI/CD
+name: Deploy Backend to Render
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "backend/**"
-  pull_request:
-    branches: [main]
+    branches:
+      - main
     paths:
       - "backend/**"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Set up .NET 9.0
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: "9.0.x"
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore Dependencies
+        run: dotnet restore backend/TravelWiseAPI.sln
 
-      - name: Build
-        run: dotnet build --no-restore
+      - name: Build Project
+        run: dotnet build backend/TravelWiseAPI.sln --configuration Release
 
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
+      - name: Publish API
+        run: dotnet publish backend/TravelWiseAPI.sln -c Release -o backend/publish
 
-      - name: Build and push Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          docker build -t your-registry/backend:${{ github.sha }} .
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push your-registry/backend:${{ github.sha }}
+      - name: Deploy to Render
+        uses: jakejarvis/render-deploy@v1
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}

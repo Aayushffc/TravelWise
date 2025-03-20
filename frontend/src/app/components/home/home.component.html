@@ -1,0 +1,158 @@
+<div class="home-container">
+  <!-- Email verification banner -->
+  <div *ngIf="!isEmailVerified && isAuthenticated" class="bg-yellow-100 border-yellow-400 border-b px-4 py-2">
+    <div class="container mx-auto flex justify-between items-center">
+      <p class="text-yellow-700">
+        Your email is not verified. Please verify your email to access all features.
+      </p>
+      <button
+        class="px-4 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition"
+        routerLink="/verify-email"
+      >
+        Verify Email
+      </button>
+    </div>
+  </div>
+
+  <!-- Header with logo, search bar, and user greeting -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto py-4 px-6">
+      <div class="flex justify-between items-center">
+        <!-- Logo -->
+        <div class="flex-shrink-0">
+          <h1 class="text-2xl font-bold text-indigo-600">TravelWise</h1>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="w-1/2">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              placeholder="Search for destinations, deals, or experiences..."
+              class="w-full py-2 px-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              (keyup.enter)="search()"
+            >
+            <button
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-indigo-600 text-white p-2 rounded-full"
+              (click)="search()"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- User Greeting -->
+        <div class="flex items-center">
+          <span *ngIf="userName" class="text-gray-700">Hi, {{ userName }}</span>
+          <button *ngIf="!userName" class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition" routerLink="/login">
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+  </div>
+
+  <!-- Locations Scroll Section -->
+  <section *ngIf="!isLoading" class="py-8 bg-gray-50">
+    <div class="container mx-auto px-6">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-6">Popular Destinations</h2>
+
+      <div class="relative">
+        <!-- Left Arrow -->
+        <button
+          (click)="scrollLocations('left')"
+          class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-2 z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div id="locations-container" class="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
+          <div
+            *ngFor="let location of locations"
+            class="flex-shrink-0 w-48 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
+            (click)="viewLocation(location.id)"
+          >
+            <img
+              [src]="location.imageUrl || 'assets/placeholder-location.jpg'"
+              [alt]="location.name"
+              class="w-full h-32 object-cover"
+            >
+            <div class="p-3">
+              <h3 class="text-md font-semibold text-gray-800">{{ location.name }}</h3>
+              <p class="text-gray-600 text-xs mt-1">{{ location.description | slice:0:60 }}{{ location.description.length > 60 ? '...' : '' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Arrow -->
+        <button
+          (click)="scrollLocations('right')"
+          class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-2 z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Deals by Location Sections -->
+  <section *ngIf="!isLoading" class="py-8">
+    <div class="container mx-auto px-6">
+      <div *ngFor="let location of locations" class="mb-12">
+        <!-- Only show locations with deals -->
+        <ng-container *ngIf="locationDeals[location.id] && locationDeals[location.id].length > 0">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-semibold text-gray-800">{{ location.name }} Deals</h2>
+            <a
+              class="text-indigo-600 hover:text-indigo-800 transition"
+              (click)="viewLocation(location.id)"
+            >See all</a>
+          </div>
+
+          <!-- Loading indicator for deals -->
+          <div *ngIf="!locationDeals[location.id]" class="flex justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+          </div>
+
+          <!-- Deals for this location -->
+          <div *ngIf="locationDeals[location.id]" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              *ngFor="let deal of locationDeals[location.id]"
+              class="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
+              (click)="viewDeal(deal.id)"
+            >
+              <img
+                [src]="deal.imageUrl || 'assets/placeholder-deal.jpg'"
+                [alt]="deal.title"
+                class="w-full h-48 object-cover"
+              >
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <h3 class="text-lg font-semibold text-gray-800">{{ deal.title }}</h3>
+                  <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-sm font-medium">{{ deal.price | currency }}</span>
+                </div>
+                <p class="text-gray-600 text-sm mt-2">{{ deal.description | slice:0:100 }}{{ deal.description.length > 100 ? '...' : '' }}</p>
+                <div class="flex justify-between items-center mt-4">
+                  <span class="text-gray-600 text-sm">{{ deal.duration }} days</span>
+                  <span class="text-indigo-600">View Deal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </section>
+</div>

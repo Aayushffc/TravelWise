@@ -1,0 +1,80 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto py-4 px-6">
+      <div class="flex items-center">
+        <button (click)="goBack()" class="mr-4 text-indigo-600 hover:text-indigo-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        <h1 class="text-2xl font-bold text-indigo-600">TravelWise</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-16">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage && !isLoading" class="container mx-auto px-6 py-8">
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+
+  <!-- Location Details -->
+  <div *ngIf="location && !isLoading" class="container mx-auto px-6 py-8">
+    <!-- Location Info -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+      <div class="relative">
+        <img
+          [src]="location.imageUrl || 'assets/placeholder-location.jpg'"
+          [alt]="location.name"
+          class="w-full h-64 object-cover"
+        >
+        <div class="absolute inset-0 bg-gradient-to-t from-black opacity-60"></div>
+        <div class="absolute bottom-0 left-0 p-6">
+          <h1 class="text-3xl font-bold text-white">{{ location.name }}</h1>
+        </div>
+      </div>
+      <div class="p-6">
+        <p class="text-gray-700">{{ location.description }}</p>
+      </div>
+    </div>
+
+    <!-- Deals Section -->
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Available Deals</h2>
+
+    <div *ngIf="deals.length === 0" class="bg-white rounded-lg shadow-md p-8 text-center">
+      <p class="text-gray-600">No deals available for this location.</p>
+    </div>
+
+    <div *ngIf="deals.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        *ngFor="let deal of deals"
+        class="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
+        (click)="viewDeal(deal.id)"
+      >
+        <img
+          [src]="deal.imageUrl || 'assets/placeholder-deal.jpg'"
+          [alt]="deal.title"
+          class="w-full h-48 object-cover"
+        >
+        <div class="p-4">
+          <div class="flex justify-between items-start">
+            <h3 class="text-lg font-semibold text-gray-800">{{ deal.title }}</h3>
+            <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-sm font-medium">{{ deal.price | currency }}</span>
+          </div>
+          <p class="text-gray-600 text-sm mt-2">{{ deal.description }}</p>
+          <div class="flex justify-between items-center mt-4">
+            <span class="text-gray-600 text-sm">{{ deal.duration }} days</span>
+            <span class="text-indigo-600">View Deal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

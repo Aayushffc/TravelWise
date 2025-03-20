@@ -8,6 +8,7 @@ using Backend.Models;
 using Backend.Models.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -42,16 +43,57 @@ namespace Backend.Helper
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim("UserId", user.Id),
+                new Claim("FirstName", user.FirstName),
+                new Claim("LastName", user.LastName),
                 new Claim("FullName", user.FullName),
             };
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
+                expires: DateTime.UtcNow.AddDays(1), // Shorter expiration for JWT
                 signingCredentials: creds
             );
 
             return await Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
+        }
+
+        public async Task<(string token, string refreshToken)> GenerateTokens(ApplicationUser user)
+        {
+            // Generate JWT token
+            var token = await GenerateJwtToken(user);
+
+            // Generate refresh token
+            var refreshToken = GenerateRefreshToken();
+
+            // Save refresh token to user
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(30); // 30 days for refresh token
+            await _userManager.UpdateAsync(user);
+
+            return (token, refreshToken);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
+        }
+
+        public async Task<bool> ValidateRefreshToken(string refreshToken)
+        {
+            var user = await GetUserByRefreshToken(refreshToken);
+            return user != null && user.RefreshTokenExpiresAt > DateTime.UtcNow;
+        }
+
+        public async Task<ApplicationUser?> GetUserByRefreshToken(string refreshToken)
+        {
+            return await _userManager.Users.FirstOrDefaultAsync(u =>
+                u.RefreshToken == refreshToken
+            );
         }
 
         public async Task<bool> AddUserRole(ApplicationUser user)

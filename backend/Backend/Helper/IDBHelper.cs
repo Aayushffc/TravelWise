@@ -7,6 +7,9 @@ namespace Backend.Helper
     public interface IDBHelper
     {
         Task<string> GenerateJwtToken(ApplicationUser user);
+        Task<(string token, string refreshToken)> GenerateTokens(ApplicationUser user);
+        Task<bool> ValidateRefreshToken(string refreshToken);
+        Task<ApplicationUser?> GetUserByRefreshToken(string refreshToken);
         Task<bool> AddUserRole(ApplicationUser user);
         Task<bool> AddAgencyRole(ApplicationUser user);
         Task<bool> AddAdminRole(ApplicationUser user);

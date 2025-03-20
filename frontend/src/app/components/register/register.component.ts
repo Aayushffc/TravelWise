@@ -3,18 +3,18 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [FormsModule, CommonModule, RouterLink],
+  imports: [FormsModule, CommonModule],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent {
   currentStep: number = 1;
-  fullName: string = '';
+  firstName: string = '';
+  lastName: string = '';
   email: string = '';
   password: string = '';
   confirmPassword: string = '';
@@ -28,7 +28,7 @@ export class RegisterComponent {
   ) {}
 
   nextStep() {
-    if (!this.fullName || !this.email || !this.password || !this.confirmPassword) {
+    if (!this.firstName || !this.lastName || !this.email || !this.password || !this.confirmPassword) {
       this.errorMessage = 'Please fill in all fields';
       return;
     }
@@ -38,7 +38,6 @@ export class RegisterComponent {
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.email)) {
       this.errorMessage = 'Please enter a valid email address';
@@ -59,7 +58,8 @@ export class RegisterComponent {
     this.errorMessage = '';
 
     const userData = {
-      fullName: this.fullName,
+      firstName: this.firstName,
+      lastName: this.lastName,
       email: this.email,
       password: this.password,
       userName: this.userName
@@ -67,20 +67,26 @@ export class RegisterComponent {
 
     this.authService.register(userData).subscribe({
       next: (response) => {
-        // Store the token if the API returns one
         if (response.token) {
-          localStorage.setItem('token', response.token);
+          this.router.navigate(['/home']);
+        } else {
+          this.router.navigate(['/verify-email'], {
+            queryParams: { email: this.email }
+          });
         }
-        // Navigate to login or dashboard
-        this.router.navigate(['/login']);
       },
       error: (error) => {
         this.isLoading = false;
-        this.errorMessage = error.error.message || 'An error occurred during registration';
+        this.errorMessage = error.error?.message || 'An error occurred during registration';
       },
       complete: () => {
         this.isLoading = false;
       }
     });
+  }
+
+  // Add Google login method
+  loginWithGoogle() {
+    this.authService.loginWithGoogle();
   }
 }

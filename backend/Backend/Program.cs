@@ -52,7 +52,8 @@ builder
     .Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
     .AddJwtBearer(options =>
     {
@@ -73,45 +74,7 @@ builder
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
         options.CallbackPath = "/api/auth/google-callback";
         options.SaveTokens = true;
-        options.Events = new OAuthEvents
-        {
-            OnCreatingTicket = async context =>
-            {
-                var email = context.Principal.FindFirstValue(ClaimTypes.Email);
-                var name = context.Principal.FindFirstValue(ClaimTypes.Name);
-                var picture = context.Principal.FindFirstValue("picture");
-
-                if (string.IsNullOrEmpty(email))
-                    return;
-
-                var userManager = context.HttpContext.RequestServices.GetRequiredService<
-                    UserManager<ApplicationUser>
-                >();
-                var user = await userManager.FindByEmailAsync(email);
-
-                if (user == null)
-                {
-                    user = new ApplicationUser
-                    {
-                        UserName = email,
-                        Email = email,
-                        FullName = name,
-                        EmailConfirmed = true,
-                    };
-
-                    var result = await userManager.CreateAsync(user);
-                    if (result.Succeeded)
-                    {
-                        var dbHelper =
-                            context.HttpContext.RequestServices.GetRequiredService<IDBHelper>();
-                        await dbHelper.AddUserRole(user);
-                    }
-                }
-
-                context.Identity.AddClaim(new Claim("UserId", user.Id));
-                context.Identity.AddClaim(new Claim("FullName", user.FullName));
-            },
-        };
+        options.UsePkce = false;
     });
 
 var allowedOrigins = builder.Configuration.GetValue<string>("allowedOrigins")!.Split(',');
@@ -123,6 +86,16 @@ builder.Services.AddCors(options =>
     {
         _ = policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
     });
+});
+
+// Add this before builder.Build()
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
 // Controllers and Swagger
@@ -158,7 +131,9 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseCors(); // Enable CORS
+app.UseSession();
 app.UseAuthentication();
+
 app.UseAuthorization();
 app.MapControllers();
 

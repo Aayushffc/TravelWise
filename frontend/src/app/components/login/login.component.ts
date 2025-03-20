@@ -35,16 +35,31 @@ export class LoginComponent {
     this.authService.login({ email: this.email, password: this.password })
       .subscribe({
         next: (response) => {
-          localStorage.setItem('token', response.token);
-          this.router.navigate(['/dashboard']);
+          this.authService.saveToken(response);
+
+          // Check if email is verified
+          if (response.emailConfirmed === false) {
+            // Redirect to email verification page if email is not verified
+            this.router.navigate(['/verify-email'], {
+              queryParams: { email: response.email }
+            });
+          } else {
+            // Navigate to home page if email is verified
+            this.router.navigate(['/home']);
+          }
         },
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error.message || 'An error occurred during login';
+          this.errorMessage = error.error?.message || 'An error occurred during login';
         },
         complete: () => {
           this.isLoading = false;
         }
       });
+  }
+
+  // Add Google login method
+  loginWithGoogle() {
+    this.authService.loginWithGoogle();
   }
 }
