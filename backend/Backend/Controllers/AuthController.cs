@@ -1,4 +1,6 @@
-﻿using System.Security.Claims;
+﻿using System.Net;
+using System.Net.Mail;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using Backend.DBContext;
 using Backend.DTOs.Auth;
@@ -8,8 +10,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Mail;
-using System.Net;
 
 namespace TravelWiseAPI.Controllers
 {
@@ -350,6 +350,26 @@ namespace TravelWiseAPI.Controllers
                 _logger.LogError(ex, "Error generating verification code");
                 throw;
             }
+        }
+
+        [Authorize]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return NotFound("User not found");
+
+            return Ok(
+                new AuthResponseDTO
+                {
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    FullName = user.FullName,
+                    EmailConfirmed = user.EmailConfirmed,
+                }
+            );
         }
     }
 }
