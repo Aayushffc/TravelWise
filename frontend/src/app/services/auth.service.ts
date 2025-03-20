@@ -24,6 +24,7 @@ interface AuthResponse {
   firstName?: string;
   lastName?: string;
   fullName?: string;
+  refreshToken?: string;
   emailConfirmed?: boolean;
 }
 
@@ -38,6 +39,7 @@ interface EmailVerificationData {
 export class AuthService {
   private apiUrl = environment.apiUrl + '/api/auth';
   private userSubject = new BehaviorSubject<AuthResponse | null>(null);
+  private refreshTokenTimeout: any;
   user$ = this.userSubject.asObservable();
 
   constructor(
@@ -46,6 +48,7 @@ export class AuthService {
   ) {
     // Check for existing auth on startup
     this.initAuthFromStorage();
+    this.startRefreshTokenTimer();
   }
 
   private initAuthFromStorage(): void {
@@ -75,6 +78,7 @@ export class AuthService {
         tap(response => {
           if (response.token) {
             this.saveToken(response);
+            this.startRefreshTokenTimer();
           }
         }),
         catchError(error => {
@@ -93,6 +97,7 @@ export class AuthService {
     }).pipe(
       tap(response => {
         this.saveToken(response);
+        this.startRefreshTokenTimer();
       }),
       catchError(error => {
         console.error('Login error', error);
@@ -114,6 +119,51 @@ export class AuthService {
       email: '',  // This will be extracted from the token
     };
     this.saveToken(authData);
+    this.startRefreshTokenTimer();
+  }
+
+  // Refresh token
+  refreshToken(): Observable<any> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/refresh-token`, {}, { withCredentials: true })
+      .pipe(
+        tap(response => {
+          this.saveToken(response);
+          this.startRefreshTokenTimer();
+        }),
+        catchError(error => {
+          this.logout();
+          return throwError(() => error);
+        })
+      );
+  }
+
+  // Start the refresh token timer
+  private startRefreshTokenTimer() {
+    // Parse the JWT token to get expiration time
+    if (!this.userSubject.value?.token) return;
+
+    try {
+      const token = this.userSubject.value.token;
+      const jwtToken = JSON.parse(atob(token.split('.')[1]));
+      const expires = new Date(jwtToken.exp * 1000);
+
+      // Set a timeout to refresh 1 minute before token expires
+      const timeout = expires.getTime() - Date.now() - (60 * 1000);
+
+      // Only set the timer if the token expires in the future
+      if (timeout > 0) {
+        this.refreshTokenTimeout = setTimeout(() => {
+          this.refreshToken().subscribe();
+        }, timeout);
+      }
+    } catch (error) {
+      console.error('Error starting refresh token timer', error);
+    }
+  }
+
+  // Stop the refresh token timer
+  private stopRefreshTokenTimer() {
+    clearTimeout(this.refreshTokenTimeout);
   }
 
   // Store Token
@@ -138,6 +188,7 @@ export class AuthService {
     this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe();
     localStorage.removeItem('authToken');
     this.userSubject.next(null);
+    this.stopRefreshTokenTimer();
     this.router.navigate(['/login']);
   }
 
@@ -184,18 +235,7 @@ export class AuthService {
     return user ? !!user.emailConfirmed : false;
   }
 
-  // Get user profile from backend
-  getUserProfile(): Observable<AuthResponse> {
-    const headers = this.getHeaders();
-    return this.http.get<AuthResponse>(`${this.apiUrl}/profile`, { headers })
-      .pipe(
-        tap(response => {
-          this.saveToken(response);
-        }),
-        catchError(error => {
-          console.error('Error fetching user profile:', error);
-          return throwError(() => error);
-        })
-      );
+  getUserProfile(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/profile`);
   }
 }

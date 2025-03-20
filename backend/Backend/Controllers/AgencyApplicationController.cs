@@ -11,6 +11,7 @@ namespace TravelWiseAPI.Controllers
 {
     [Route("api/agency-applications")]
     [ApiController]
+    [Authorize]
     public class AgencyApplicationController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;

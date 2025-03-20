@@ -26,7 +26,7 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    component: HomeComponent
+    component: HomeComponent  // Using HomeComponent for dashboard until a separate one is created
   },
   {
     path: 'auth/callback',

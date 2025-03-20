@@ -1,11 +1,13 @@
 using Backend.DTOs;
 using Backend.Helper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class DealController : ControllerBase
     {
         private readonly IDBHelper _dbHelper;

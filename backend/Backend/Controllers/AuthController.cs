@@ -361,13 +361,13 @@ namespace TravelWiseAPI.Controllers
                 return NotFound("User not found");
 
             return Ok(
-                new AuthResponseDTO
+                new
                 {
-                    Email = user.Email,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    FullName = user.FullName,
-                    EmailConfirmed = user.EmailConfirmed,
+                    email = user.Email,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    fullName = user.FullName,
+                    emailConfirmed = user.EmailConfirmed,
                 }
             );
         }
