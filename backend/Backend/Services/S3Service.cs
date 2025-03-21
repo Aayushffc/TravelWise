@@ -24,7 +24,7 @@ namespace Backend.Services
             _awsSettings = awsSettings.Value;
             var config = new AmazonS3Config
             {
-                RegionEndpoint = RegionEndpoint.GetBySystemName(_awsSettings.Region)
+                RegionEndpoint = RegionEndpoint.GetBySystemName(_awsSettings.Region),
             };
             _s3Client = new AmazonS3Client(_awsSettings.AccessKey, _awsSettings.SecretKey, config);
         }
@@ -41,7 +41,9 @@ namespace Backend.Services
 
             // Validate file size
             if (file.Length > _awsSettings.MaxFileSizeInMB * 1024 * 1024)
-                throw new ArgumentException($"File size exceeds {_awsSettings.MaxFileSizeInMB}MB limit");
+                throw new ArgumentException(
+                    $"File size exceeds {_awsSettings.MaxFileSizeInMB}MB limit"
+                );
 
             // Generate unique file name
             var fileName = $"{Guid.NewGuid()}{fileExtension}";
@@ -53,7 +55,7 @@ namespace Backend.Services
                 InputStream = fileStream,
                 Key = key,
                 BucketName = _awsSettings.BucketName,
-                ContentType = file.ContentType
+                ContentType = file.ContentType,
             };
 
             var transferUtility = new TransferUtility(_s3Client);
@@ -70,7 +72,7 @@ namespace Backend.Services
                 var deleteRequest = new DeleteObjectRequest
                 {
                     BucketName = _awsSettings.BucketName,
-                    Key = key
+                    Key = key,
                 };
 
                 await _s3Client.DeleteObjectAsync(deleteRequest);
@@ -88,7 +90,7 @@ namespace Backend.Services
             {
                 BucketName = _awsSettings.BucketName,
                 Key = key,
-                Expires = DateTime.UtcNow.AddHours(1)
+                Expires = DateTime.UtcNow.AddHours(1),
             };
 
             return await Task.FromResult(_s3Client.GetPreSignedURL(request));
