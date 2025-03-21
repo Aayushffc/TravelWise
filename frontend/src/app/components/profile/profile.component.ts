@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-profile',
@@ -24,7 +25,9 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private http: HttpClient
+    private http: HttpClient,
+    private router: Router,
+    private location: Location
   ) {}
 
   ngOnInit() {
@@ -95,5 +98,9 @@ export class ProfileComponent implements OnInit {
         // Show error message
       }
     });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }

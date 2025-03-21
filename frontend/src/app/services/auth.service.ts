@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 
 interface RegisterData {
   firstName: string;
@@ -237,5 +237,73 @@ export class AuthService {
 
   getUserProfile(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/profile`);
+  }
+
+  // Add this method to check if user is admin
+  isAdmin(): boolean {
+    const user = this.userSubject.value;
+    if (!user) return false;
+
+    try {
+      const token = user.token;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.roles?.includes('Admin') || false;
+    } catch (e) {
+      console.error('Error checking admin status:', e);
+      return false;
+    }
+  }
+
+  getUserRole(): Observable<string> {
+    console.log('Getting user role...');
+    return this.http.get<any>(`${this.apiUrl}/role`).pipe(
+      map(response => {
+        console.log('Role response:', response);
+        return response.role;
+      }),
+      catchError(error => {
+        console.error('Error getting user role:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  navigateBasedOnRole() {
+    console.log('Starting role-based navigation...');
+    this.getUserRole().subscribe({
+      next: (role) => {
+        console.log('Received role:', role);
+        switch(role) {
+          case 'Admin':
+            console.log('Navigating to admin page...');
+            this.router.navigate(['/admin']);
+            break;
+          case 'Agency':
+            console.log('Navigating to agency page...');
+            this.router.navigate(['/agency']);
+            break;
+          default:
+            console.log('Navigating to home page...');
+            this.router.navigate(['/home']);
+        }
+      },
+      error: (error) => {
+        console.error('Error in navigateBasedOnRole:', error);
+        // If there's an error, navigate to home as default
+        this.router.navigate(['/home']);
+      }
+    });
+  }
+
+  // Forgot Password
+  forgotPassword(email: string): Observable<any> {
+    const headers = this.getHeaders();
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email }, { headers })
+      .pipe(
+        catchError(error => {
+          console.error('Forgot password error', error);
+          return throwError(() => error);
+        })
+      );
   }
 }

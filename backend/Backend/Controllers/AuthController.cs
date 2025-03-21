@@ -426,7 +426,7 @@ namespace TravelWiseAPI.Controllers
                     lastName = user.LastName,
                     fullName = user.FullName,
                     emailConfirmed = user.EmailConfirmed,
-                    phoneNumber = user.PhoneNumber
+                    phoneNumber = user.PhoneNumber,
                 }
             );
         }
@@ -457,24 +457,32 @@ namespace TravelWiseAPI.Controllers
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
-                return Ok(new { message = "If the email exists, a password reset link will be sent." });
+                return Ok(
+                    new { message = "If the email exists, a password reset link will be sent." }
+                );
 
             // Generate password reset token
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
             // Create reset password link
-            var resetLink = $"{_configuration["FrontendUrl"]}/reset-password?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(token)}";
+            var resetLink =
+                $"{_configuration["FrontendUrl"]}/reset-password?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(token)}";
 
             try
             {
                 // Send email with reset link
                 await _emailService.SendPasswordResetEmailAsync(user.Email, resetLink);
-                return Ok(new { message = "If the email exists, a password reset link will be sent." });
+                return Ok(
+                    new { message = "If the email exists, a password reset link will be sent." }
+                );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending password reset email to {Email}", user.Email);
-                return StatusCode(500, "Failed to send password reset email. Please try again later.");
+                return StatusCode(
+                    500,
+                    "Failed to send password reset email. Please try again later."
+                );
             }
         }
 
@@ -485,7 +493,11 @@ namespace TravelWiseAPI.Controllers
             if (user == null)
                 return BadRequest("Invalid request");
 
-            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                model.Token,
+                model.NewPassword
+            );
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 
@@ -520,11 +532,29 @@ namespace TravelWiseAPI.Controllers
             if (user == null)
                 return NotFound("User not found");
 
-            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                model.CurrentPassword,
+                model.NewPassword
+            );
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 
             return Ok(new { message = "Password changed successfully" });
+        }
+
+        [Authorize]
+        [HttpGet("role")]
+        public async Task<IActionResult> GetUserRole()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return NotFound("User not found");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? "User"; // Default to "User" if no role is assigned
+
+            return Ok(new { role = role });
         }
     }
 }

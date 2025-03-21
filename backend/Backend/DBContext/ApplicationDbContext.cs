@@ -20,7 +20,8 @@ namespace Backend.DBContext
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<AgencyApplication>()
+            builder
+                .Entity<AgencyApplication>()
                 .HasOne(a => a.User)
                 .WithMany()
                 .HasForeignKey(a => a.UserId)

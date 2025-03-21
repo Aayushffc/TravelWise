@@ -23,15 +23,14 @@ namespace Backend.Controllers
         {
             try
             {
-                var faqs = await _context.FAQs
-                    .Where(f => f.IsActive)
+                var faqs = await _context
+                    .FAQs.Where(f => f.IsActive)
                     .OrderBy(f => f.Category)
                     .ThenBy(f => f.OrderIndex)
                     .ToListAsync();
 
                 // Group FAQs by category
-                var groupedFaqs = faqs
-                    .GroupBy(f => f.Category)
+                var groupedFaqs = faqs.GroupBy(f => f.Category)
                     .Select(g => new
                     {
                         Category = g.Key,
@@ -40,8 +39,8 @@ namespace Backend.Controllers
                             q.Id,
                             q.Question,
                             q.Answer,
-                            q.OrderIndex
-                        })
+                            q.OrderIndex,
+                        }),
                     });
 
                 return Ok(groupedFaqs);

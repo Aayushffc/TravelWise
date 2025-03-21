@@ -2,6 +2,8 @@ using System.Text;
 using Backend.DBContext;
 using Backend.Helper;
 using Backend.Models.Auth;
+using Backend.Models.AWS;
+using Backend.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -141,6 +143,13 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
     options.Secure = CookieSecurePolicy.None; // Change this for development
 });
+
+// Add AWS S3 configuration
+builder.Services.Configure<AWSSettings>(
+    builder.Configuration.GetSection("AWS"));
+
+// Register S3 service
+builder.Services.AddScoped<IS3Service, S3Service>();
 
 // Controllers and Swagger
 builder.Services.AddControllers();

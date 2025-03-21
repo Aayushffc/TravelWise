@@ -35,20 +35,23 @@ export class LoginComponent {
     this.authService.login({ email: this.email, password: this.password })
       .subscribe({
         next: (response) => {
+          console.log('Login successful, saving token...');
           this.authService.saveToken(response);
 
           // Check if email is verified
           if (response.emailConfirmed === false) {
-            // Redirect to email verification page if email is not verified
+            console.log('Email not verified, redirecting to verification page...');
             this.router.navigate(['/verify-email'], {
               queryParams: { email: response.email }
             });
           } else {
-            // Navigate to home page if email is verified
-            this.router.navigate(['/home']);
+            console.log('Email verified, starting role-based navigation...');
+            // Navigate based on user role
+            this.authService.navigateBasedOnRole();
           }
         },
         error: (error) => {
+          console.error('Login error:', error);
           this.isLoading = false;
           this.errorMessage = error.error?.message || 'An error occurred during login';
         },
@@ -61,5 +64,30 @@ export class LoginComponent {
   // Add Google login method
   loginWithGoogle() {
     this.authService.loginWithGoogle();
+  }
+
+  forgotPassword() {
+    if (!this.email) {
+      this.errorMessage = 'Please enter your email address';
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.authService.forgotPassword(this.email).subscribe({
+      next: (response) => {
+        this.router.navigate(['/forgot-password'], {
+          queryParams: { email: this.email }
+        });
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.errorMessage = error.error?.message || 'An error occurred while processing your request';
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
   }
 }
