@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AgencyApplicationService, AgencyApplicationDTO, AgencyApplicationResponseDTO } from '../../services/agency-application.service';
 import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-agency-application',
@@ -23,10 +24,12 @@ export class AgencyApplicationComponent implements OnInit {
   error: string | null = null;
   success: string | null = null;
   isEmailVerified: boolean = false;
+  userRole: string = '';
 
   constructor(
     private agencyApplicationService: AgencyApplicationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -37,6 +40,17 @@ export class AgencyApplicationComponent implements OnInit {
   loadUserInfo(): void {
     const user = this.authService.getCurrentUser();
     if (user) {
+      // Get user role
+      this.authService.getUserRole().subscribe({
+        next: (role) => {
+          this.userRole = role;
+        },
+        error: (error) => {
+          console.error('Error fetching user role:', error);
+        }
+      });
+
+      // Get email verification status
       this.authService.getUserProfile().subscribe({
         next: (profile) => {
           this.isEmailVerified = profile.emailConfirmed;
@@ -76,5 +90,9 @@ export class AgencyApplicationComponent implements OnInit {
         this.error = error.error?.message || 'Failed to submit application';
       }
     });
+  }
+
+  goBack(): void {
+    this.router.navigate(['/profile']);
   }
 }

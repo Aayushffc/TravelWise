@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Backend.DBContext;
 using Backend.Helper;
@@ -10,7 +11,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,7 +68,7 @@ builder
             ValidIssuer = builder.Configuration["JWT:Issuer"],
             ValidAudience = builder.Configuration["JWT:Audience"],
             IssuerSigningKey = key,
-            RoleClaimType = ClaimTypes.Role
+            RoleClaimType = ClaimTypes.Role,
         };
 
         options.Events = new JwtBearerEvents
@@ -147,8 +147,7 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 });
 
 // Add AWS S3 configuration
-builder.Services.Configure<AWSSettings>(
-    builder.Configuration.GetSection("AWS"));
+builder.Services.Configure<AWSSettings>(builder.Configuration.GetSection("AWS"));
 
 // Register S3 service
 builder.Services.AddScoped<IS3Service, S3Service>();
