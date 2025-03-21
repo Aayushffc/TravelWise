@@ -88,18 +88,6 @@ export class ProfileComponent implements OnInit {
     // Implement phone verification logic
   }
 
-  requestAgencyUpgrade() {
-    this.http.post(`${environment.apiUrl}/api/auth/request-agency-upgrade`, {}).subscribe({
-      next: () => {
-        // Show success message
-      },
-      error: (error) => {
-        console.error('Error requesting agency upgrade:', error);
-        // Show error message
-      }
-    });
-  }
-
   goBack(): void {
     this.location.back();
   }

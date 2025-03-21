@@ -118,33 +118,6 @@ namespace TravelWiseAPI.Controllers
             return Ok(new { message = "Email verified successfully" });
         }
 
-        [Authorize]
-        [HttpPost("request-agency-upgrade")]
-        public async Task<IActionResult> RequestAgencyUpgrade()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-                return NotFound("User not found");
-
-            if (!user.EmailConfirmed)
-                return BadRequest("Please verify your email first");
-
-            if (await _userManager.IsInRoleAsync(user, "Agency"))
-                return BadRequest("User is already an agency");
-
-            // Check if user already has a pending application
-            var existingApplication = await _context.AgencyApplications.FirstOrDefaultAsync(a =>
-                a.UserId == user.Id && !a.IsApproved && a.RejectionReason == null
-            );
-
-            if (existingApplication != null)
-                return BadRequest("You already have a pending application");
-
-            return Ok(
-                new { message = "Please submit your agency application with required details" }
-            );
-        }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO model)
         {

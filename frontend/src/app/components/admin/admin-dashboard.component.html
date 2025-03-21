@@ -65,31 +65,37 @@
           <li *ngFor="let application of agencyApplications" class="px-6 py-4">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-medium text-gray-900">{{application.userName}}</h3>
-                <p class="text-sm text-gray-500">{{application.email}}</p>
-                <p class="text-sm text-gray-500">Submitted: {{application.submittedAt | date:'medium'}}</p>
+                <h3 class="text-lg font-medium text-gray-900">{{application.agencyName}}</h3>
+                <p class="text-sm text-gray-500">{{application.userName}}</p>
+                <p class="text-sm text-gray-500">{{application.userEmail}}</p>
+                <p class="text-sm text-gray-500">Submitted: {{application.createdAt | date:'medium'}}</p>
               </div>
               <div class="flex space-x-2">
                 <button
-                  *ngIf="application.status === 'pending'"
+                  *ngIf="!application.isApproved && !application.rejectionReason"
                   (click)="approveAgency(application.id)"
                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   Approve
                 </button>
                 <button
-                  *ngIf="application.status === 'pending'"
-                  (click)="rejectAgency(application.id)"
+                  *ngIf="!application.isApproved && !application.rejectionReason"
+                  (click)="openRejectDialog(application.id)"
                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   Reject
                 </button>
                 <span
-                  *ngIf="application.status !== 'pending'"
-                  [class]="application.status === 'approved' ? 'text-green-600' : 'text-red-600'"
-                  class="inline-flex items-center px-3 py-2 text-sm font-medium"
+                  *ngIf="application.isApproved"
+                  class="inline-flex items-center px-3 py-2 text-sm font-medium text-green-600"
                 >
-                  {{application.status | titlecase}}
+                  Approved
+                </span>
+                <span
+                  *ngIf="application.rejectionReason"
+                  class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600"
+                >
+                  Rejected
                 </span>
               </div>
             </div>
@@ -141,6 +147,46 @@
       </svg>
       <h3 class="mt-2 text-sm font-medium text-gray-900">No {{activeTab === 'agencies' ? 'applications' : 'FAQs'}} found</h3>
       <p class="mt-1 text-sm text-gray-500">Get started by creating a new {{activeTab === 'agencies' ? 'application' : 'FAQ'}}.</p>
+    </div>
+
+    <!-- Reject Dialog -->
+    <div *ngIf="rejectDialogOpen" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Application</h3>
+        <div class="mb-4">
+          <label for="rejectionReason" class="block text-sm font-medium text-gray-700">Rejection Reason</label>
+          <textarea
+            id="rejectionReason"
+            [(ngModel)]="rejectionReason"
+            rows="4"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Please provide a detailed reason for rejection (minimum 10 characters)"
+          ></textarea>
+          <div class="mt-1 text-sm text-gray-500">
+            <p *ngIf="rejectionReason.length < 10" class="text-red-500">
+              Reason must be at least 10 characters long (currently {{rejectionReason.length}})
+            </p>
+            <p *ngIf="rejectionReason.length > 500" class="text-red-500">
+              Reason cannot exceed 500 characters (currently {{rejectionReason.length}})
+            </p>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3">
+          <button
+            (click)="closeRejectDialog()"
+            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="rejectAgency()"
+            [disabled]="!isValidRejectionReason()"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Reject
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

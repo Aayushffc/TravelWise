@@ -1,0 +1,127 @@
+<div class="bg-white rounded-lg shadow-md p-6 my-8">
+  <!-- Back Button -->
+  <div class="mb-6">
+    <button
+      (click)="goBack()"
+      class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+    >
+      <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+      </svg>
+      Back
+    </button>
+  </div>
+
+  <h2 class="text-2xl font-semibold text-gray-800 mb-6">Agency Applications</h2>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+    {{ error }}
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="success" class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+    {{ success }}
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+  </div>
+
+  <!-- Applications Table -->
+  <div *ngIf="!isLoading" class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agency Name</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let application of applications">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900">{{ application.agencyName }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-gray-900">{{ application.userName }}</div>
+            <div class="text-sm text-gray-500">{{ application.userEmail }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span *ngIf="application.isApproved" class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+              Approved
+            </span>
+            <span *ngIf="!application.isApproved && !application.rejectionReason" class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+              Pending
+            </span>
+            <span *ngIf="application.rejectionReason" class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
+              Rejected
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ application.createdAt | date }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <div *ngIf="!application.isApproved && !application.rejectionReason" class="flex space-x-2">
+              <button
+                (click)="handleApprove(application.id)"
+                class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                Approve
+              </button>
+              <button
+                (click)="openRejectDialog(application)"
+                class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                Reject
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Reject Dialog -->
+  <div *ngIf="rejectDialogOpen" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Application</h3>
+      <div class="mb-4">
+        <label for="rejectionReason" class="block text-sm font-medium text-gray-700">Rejection Reason</label>
+        <textarea
+          id="rejectionReason"
+          [(ngModel)]="rejectionReason"
+          rows="4"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Please provide a detailed reason for rejection (minimum 10 characters)"
+        ></textarea>
+        <div class="mt-1 text-sm text-gray-500">
+          <p *ngIf="rejectionReason.length < 10" class="text-red-500">
+            Reason must be at least 10 characters long (currently {{rejectionReason.length}})
+          </p>
+          <p *ngIf="rejectionReason.length > 500" class="text-red-500">
+            Reason cannot exceed 500 characters (currently {{rejectionReason.length}})
+          </p>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button
+          (click)="closeRejectDialog()"
+          class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="handleReject()"
+          [disabled]="!isValidRejectionReason()"
+          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

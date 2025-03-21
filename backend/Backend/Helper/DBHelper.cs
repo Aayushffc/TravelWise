@@ -38,6 +38,10 @@ namespace Backend.Helper
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // Get user roles
+            var roles = await _userManager.GetRolesAsync(user);
+            var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
+
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
@@ -51,7 +55,7 @@ namespace Backend.Helper
                 new Claim("FirstName", user.FirstName),
                 new Claim("LastName", user.LastName),
                 new Claim("FullName", user.FullName),
-            };
+            }.Concat(roleClaims);
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],
@@ -140,6 +144,11 @@ namespace Backend.Helper
                 return result.Succeeded;
             }
             return false;
+        }
+
+        public async Task<bool> IsUserAdmin(ApplicationUser user)
+        {
+            return await _userManager.IsInRoleAsync(user, "Admin");
         }
 
         #region Location Operations

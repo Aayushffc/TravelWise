@@ -72,6 +72,12 @@
                 <a routerLink="/bookings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Bookings</a>
                 <a routerLink="/support" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Support</a>
                 <a routerLink="/faq" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">FAQ</a>
+                <!-- Agency-specific menu items -->
+                <a *ngIf="userRole === 'Agency'" routerLink="/agency-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Agency Dashboard</a>
+                <a *ngIf="userRole === 'Agency'" routerLink="/manage-deals" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Manage Deals</a>
+                <!-- Admin-specific menu items -->
+                <a *ngIf="userRole === 'Admin'" routerLink="/admin-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Dashboard</a>
+                <a *ngIf="userRole === 'Admin'" routerLink="/admin-agency-applications" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Agency Applications</a>
               </div>
               <div class="py-1">
                 <button

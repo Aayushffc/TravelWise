@@ -41,4 +41,12 @@ namespace Backend.DTOs.Auth
         public string? RejectionReason { get; set; }
         public string? ReviewedBy { get; set; }
     }
+
+    public class RejectApplicationDTO
+    {
+        [Required(ErrorMessage = "Rejection reason is required")]
+        [MinLength(10, ErrorMessage = "Rejection reason must be at least 10 characters long")]
+        [MaxLength(500, ErrorMessage = "Rejection reason cannot exceed 500 characters")]
+        public string Reason { get; set; } = string.Empty;
+    }
 }

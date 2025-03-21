@@ -280,7 +280,7 @@ export class AuthService {
             break;
           case 'Agency':
             console.log('Navigating to agency page...');
-            this.router.navigate(['/agency']);
+            this.router.navigate(['/home']);
             break;
           default:
             console.log('Navigating to home page...');

@@ -13,6 +13,7 @@ namespace Backend.Helper
         Task<bool> AddUserRole(ApplicationUser user);
         Task<bool> AddAgencyRole(ApplicationUser user);
         Task<bool> AddAdminRole(ApplicationUser user);
+        Task<bool> IsUserAdmin(ApplicationUser user);
 
         // Location operations
         Task<IEnumerable<LocationResponseDto>> GetLocations();

@@ -12,6 +12,8 @@ import { AdminGuard } from './guards/admin.guard';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { AgencyApplicationComponent } from './components/agency-application/agency-application.component';
+import { AdminAgencyApplicationsComponent } from './components/admin-agency-applications/admin-agency-applications.component';
 
 export const routes: Routes = [
   {
@@ -41,6 +43,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard, AdminGuard]
   },
   {
+    path: 'admin/agency-applications',
+    component: AdminAgencyApplicationsComponent,
+    canActivate: [AuthGuard, AdminGuard]
+  },
+  {
     path: 'home',
     component: HomeComponent,
     canActivate: [AuthGuard]
@@ -48,6 +55,11 @@ export const routes: Routes = [
   {
     path: 'profile',
     component: ProfileComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'agency-application',
+    component: AgencyApplicationComponent,
     canActivate: [AuthGuard]
   },
   {

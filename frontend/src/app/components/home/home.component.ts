@@ -22,6 +22,7 @@ export class HomeComponent implements OnInit {
   isEmailVerified: boolean = true;
   isAuthenticated: boolean = false;
   isProfileMenuOpen: boolean = false;
+  userRole: string = '';
   @ViewChild('profileMenuTrigger') profileMenuTrigger!: ElementRef;
 
   constructor(
@@ -46,6 +47,16 @@ export class HomeComponent implements OnInit {
       } else {
         this.userName = user.email.split('@')[0];
       }
+
+      // Get user role
+      this.authService.getUserRole().subscribe({
+        next: (role) => {
+          this.userRole = role;
+        },
+        error: (error) => {
+          console.error('Error fetching user role:', error);
+        }
+      });
 
       // Update this part to get the latest email verification status
       this.authService.getUserProfile().subscribe({
