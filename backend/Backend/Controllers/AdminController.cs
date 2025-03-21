@@ -166,6 +166,6 @@ namespace Backend.Controllers
 
     public class RejectAgencyDTO
     {
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
     }
 }

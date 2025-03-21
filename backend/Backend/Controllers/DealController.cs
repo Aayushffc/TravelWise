@@ -1,7 +1,7 @@
 using Backend.DTOs;
 using Backend.Helper;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers
 {
