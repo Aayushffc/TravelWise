@@ -68,16 +68,13 @@
               class="absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 z-20"
             >
               <div class="py-1">
-                <a routerLink="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                <a routerLink="/home/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
                 <a routerLink="/bookings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Bookings</a>
                 <a routerLink="/support" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Support</a>
                 <a routerLink="/faq" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">FAQ</a>
                 <!-- Agency-specific menu items -->
                 <a *ngIf="userRole === 'Agency'" routerLink="/agency-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Agency Dashboard</a>
-                <a *ngIf="userRole === 'Agency'" routerLink="/manage-deals" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Manage Deals</a>
-                <!-- Admin-specific menu items -->
-                <a *ngIf="userRole === 'Admin'" routerLink="/admin-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Dashboard</a>
-                <a *ngIf="userRole === 'Admin'" routerLink="/admin-agency-applications" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Agency Applications</a>
+                <a *ngIf="userRole === 'Agency'" routerLink="/agency/manage-deals" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Manage Deals</a>
               </div>
               <div class="py-1">
                 <button

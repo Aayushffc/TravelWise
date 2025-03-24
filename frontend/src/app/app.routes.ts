@@ -9,11 +9,14 @@ import { FAQComponent } from './components/faq/faq.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { AgencyGuard } from './guards/agency.guard';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { AgencyApplicationComponent } from './components/agency-application/agency-application.component';
 import { AdminAgencyApplicationsComponent } from './components/admin-agency-applications/admin-agency-applications.component';
+import { ManageLocationsComponent } from './components/admin/manage-locations/manage-locations.component';
+import { ManageDealsComponent } from './components/manage-deals/manage-deals.component';
 
 export const routes: Routes = [
   {
@@ -48,12 +51,22 @@ export const routes: Routes = [
     canActivate: [AuthGuard, AdminGuard]
   },
   {
+    path: 'admin/locations',
+    component: ManageLocationsComponent,
+    canActivate: [AuthGuard, AdminGuard]
+  },
+  {
+    path: 'agency/manage-deals',
+    component: ManageDealsComponent,
+    canActivate: [AuthGuard, AgencyGuard]
+  },
+  {
     path: 'home',
     component: HomeComponent,
     canActivate: [AuthGuard]
   },
   {
-    path: 'profile',
+    path: 'home/profile',
     component: ProfileComponent,
     canActivate: [AuthGuard]
   },

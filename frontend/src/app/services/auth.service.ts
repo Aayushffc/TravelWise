@@ -26,6 +26,7 @@ interface AuthResponse {
   fullName?: string;
   refreshToken?: string;
   emailConfirmed?: boolean;
+  roles?: string[];
 }
 
 interface EmailVerificationData {
@@ -305,5 +306,10 @@ export class AuthService {
           return throwError(() => error);
         })
       );
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.getCurrentUser();
+    return user?.roles?.includes(role) || false;
   }
 }

@@ -23,6 +23,18 @@ export class DealService {
     return this.http.get<any>(`${this.apiUrl}/${id}`);
   }
 
+  createDeal(deal: any): Observable<any> {
+    return this.http.post<any>(this.apiUrl, deal);
+  }
+
+  updateDeal(id: number, deal: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, deal);
+  }
+
+  deleteDeal(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`);
+  }
+
   searchDeals(
     searchTerm?: string,
     minPrice?: number,
