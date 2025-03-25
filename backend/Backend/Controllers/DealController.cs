@@ -45,6 +45,14 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<DealResponseDto>> CreateDeal(DealCreateDto dealDto)
         {
+            // Get the current user's ID from the User.Identity
+            var userId = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            dealDto.UserId = userId;
             var deal = await _dbHelper.CreateDeal(dealDto);
             return CreatedAtAction(nameof(GetDeal), new { id = deal.Id }, deal);
         }

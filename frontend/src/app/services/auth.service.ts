@@ -19,6 +19,7 @@ interface LoginData {
 }
 
 interface AuthResponse {
+  id: string;
   token: string;
   email: string;
   firstName?: string;
@@ -116,6 +117,7 @@ export class AuthService {
   // Handle OAuth Callback
   handleAuthCallback(token: string): void {
     const authData: AuthResponse = {
+      id: '',  // This will be extracted from the token
       token,
       email: '',  // This will be extracted from the token
     };

@@ -26,10 +26,11 @@ export class AuthCallbackComponent implements OnInit {
       if (params['success'] === 'true') {
         // The token is now stored in an HTTP-only cookie
         // We can just navigate to home
-        this.router.navigate(['/home']);
+        this.authService.navigateBasedOnRole();
       } else {
+        const error = params['error'] || 'Authentication failed';
         this.router.navigate(['/login'], {
-          queryParams: { error: 'Authentication failed' }
+          queryParams: { error }
         });
       }
     });

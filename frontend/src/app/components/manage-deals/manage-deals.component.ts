@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DealService } from '../../services/deal.service';
 import { LocationService } from '../../services/location.service';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 interface Location {
   id: number;
@@ -29,6 +30,7 @@ interface Deal {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  userId: string;
 }
 
 @Component({
@@ -48,6 +50,7 @@ export class ManageDealsComponent implements OnInit {
   showLocationModal: boolean = false;
   selectedDeal: Deal | null = null;
   newLocation: { name: string } = { name: '' };
+  currentUserId: string | null = null;
 
   dealForm: Partial<Deal> = {
     title: '',
@@ -63,12 +66,21 @@ export class ManageDealsComponent implements OnInit {
   constructor(
     private dealService: DealService,
     private locationService: LocationService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.loadDeals();
     this.loadLocations();
+    this.getCurrentUserId();
+  }
+
+  private getCurrentUserId(): void {
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.currentUserId = user.id;
+    }
   }
 
   loadDeals(): void {
@@ -126,6 +138,7 @@ export class ManageDealsComponent implements OnInit {
     this.showEditModal = false;
     this.showLocationModal = false;
     this.selectedDeal = null;
+    this.newLocation = { name: '' };
   }
 
   createDeal(): void {
@@ -134,16 +147,19 @@ export class ManageDealsComponent implements OnInit {
       return;
     }
 
-    this.dealService.createDeal(this.dealForm as any).subscribe({
-      next: () => {
-        this.success = 'Deal created successfully';
-        this.closeModals();
-        this.loadDeals();
-      },
-      error: (error) => {
-        this.error = 'Failed to create deal';
-      }
-    });
+    if (this.currentUserId) {
+      this.dealForm.userId = this.currentUserId;
+      this.dealService.createDeal(this.dealForm as any).subscribe({
+        next: () => {
+          this.success = 'Deal created successfully';
+          this.closeModals();
+          this.loadDeals();
+        },
+        error: (error) => {
+          this.error = 'Failed to create deal';
+        }
+      });
+    }
   }
 
   updateDeal(): void {
@@ -152,16 +168,19 @@ export class ManageDealsComponent implements OnInit {
       return;
     }
 
-    this.dealService.updateDeal(this.selectedDeal.id, this.dealForm as any).subscribe({
-      next: () => {
-        this.success = 'Deal updated successfully';
-        this.closeModals();
-        this.loadDeals();
-      },
-      error: (error) => {
-        this.error = 'Failed to update deal';
-      }
-    });
+    if (this.currentUserId) {
+      this.dealForm.userId = this.currentUserId;
+      this.dealService.updateDeal(this.selectedDeal.id, this.dealForm as any).subscribe({
+        next: () => {
+          this.success = 'Deal updated successfully';
+          this.closeModals();
+          this.loadDeals();
+        },
+        error: (error) => {
+          this.error = 'Failed to update deal';
+        }
+      });
+    }
   }
 
   deleteDeal(id: number): void {
