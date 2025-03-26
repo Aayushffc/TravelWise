@@ -46,6 +46,12 @@
           >
             FAQ Management
           </button>
+          <button
+            [class]="activeTab === 'locations' ? activeTabClass : inactiveTabClass"
+            (click)="setActiveTab('locations')"
+          >
+            Location Management
+          </button>
         </nav>
       </div>
     </div>
@@ -138,6 +144,11 @@
           </li>
         </ul>
       </div>
+    </div>
+
+    <!-- Location Management Tab -->
+    <div *ngIf="activeTab === 'locations' && !isLoading">
+      <app-manage-locations></app-manage-locations>
     </div>
 
     <!-- Empty State -->

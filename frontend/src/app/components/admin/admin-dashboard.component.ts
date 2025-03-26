@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth.service';
 import { AgencyApplicationService, AgencyApplicationResponseDTO } from '../../services/agency-application.service';
 import { FormsModule } from '@angular/forms';
+import { ManageLocationsComponent } from './manage-locations/manage-locations.component';
 
 interface FAQ {
   id: number;
@@ -19,7 +20,7 @@ interface FAQ {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ManageLocationsComponent],
   templateUrl: './admin-dashboard.component.html'
 })
 export class AdminDashboardComponent implements OnInit {

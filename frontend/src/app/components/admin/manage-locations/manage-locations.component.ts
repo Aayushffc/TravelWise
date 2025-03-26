@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LocationService } from '../../../services/location.service';
+import { FileUploadService } from '../../../services/file-upload.service';
 
 interface Location {
   id: number;
@@ -30,6 +31,8 @@ export class ManageLocationsComponent implements OnInit {
   showCreateModal: boolean = false;
   showEditModal: boolean = false;
   selectedLocation: Location | null = null;
+  selectedFile: File | null = null;
+  isUploading: boolean = false;
 
   locationForm: Partial<Location> = {
     name: '',
@@ -39,7 +42,10 @@ export class ManageLocationsComponent implements OnInit {
     isActive: true
   };
 
-  constructor(private locationService: LocationService) {}
+  constructor(
+    private locationService: LocationService,
+    private fileUploadService: FileUploadService
+  ) {}
 
   ngOnInit(): void {
     this.loadLocations();
@@ -59,6 +65,25 @@ export class ManageLocationsComponent implements OnInit {
     });
   }
 
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+      this.isUploading = true;
+      this.fileUploadService.uploadFile(file, 'locations').subscribe({
+        next: (response) => {
+          this.locationForm.imageUrl = response.url;
+          this.isUploading = false;
+          this.success = 'Image uploaded successfully';
+        },
+        error: (error) => {
+          this.error = 'Failed to upload image';
+          this.isUploading = false;
+        }
+      });
+    }
+  }
+
   openCreateModal(): void {
     this.locationForm = {
       name: '',
@@ -67,12 +92,14 @@ export class ManageLocationsComponent implements OnInit {
       isPopular: false,
       isActive: true
     };
+    this.selectedFile = null;
     this.showCreateModal = true;
   }
 
   openEditModal(location: Location): void {
     this.selectedLocation = location;
     this.locationForm = { ...location };
+    this.selectedFile = null;
     this.showEditModal = true;
   }
 
@@ -80,6 +107,7 @@ export class ManageLocationsComponent implements OnInit {
     this.showCreateModal = false;
     this.showEditModal = false;
     this.selectedLocation = null;
+    this.selectedFile = null;
   }
 
   createLocation(): void {
