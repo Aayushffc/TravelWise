@@ -1,0 +1,200 @@
+<div class="min-h-screen bg-gray-100">
+  <!-- Navigation Bar -->
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex">
+          <button (click)="goBack()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition">
+            <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
+          </button>
+        </div>
+        <div class="flex items-center">
+          <button
+            (click)="toggleEdit()"
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white"
+            [ngClass]="isEditing ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'"
+          >
+            {{ isEditing ? 'Cancel Edit' : 'Edit Deal' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+      <span class="block sm:inline">{{ error }}</span>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="success" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+      <span class="block sm:inline">{{ success }}</span>
+    </div>
+  </div>
+
+  <!-- Deal Content -->
+  <div *ngIf="!isLoading && deal" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Photo Gallery -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+      <div class="relative h-[500px]">
+        <img
+          *ngIf="deal.photos && deal.photos.length > 0"
+          [src]="deal.photos[currentImageIndex]"
+          class="w-full h-full object-cover"
+          alt="Deal photo"
+          (error)="handleImageError($event)"
+        >
+        <!-- Navigation Arrows -->
+        <button
+          *ngIf="currentImageIndex > 0"
+          (click)="previousImage()"
+          class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          *ngIf="deal.photos && currentImageIndex < deal.photos.length - 1"
+          (click)="nextImage()"
+          class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+      <!-- Thumbnail Strip -->
+      <div class="p-4 overflow-x-auto">
+        <div class="flex space-x-4">
+          <div
+            *ngFor="let photo of deal.photos; let i = index"
+            class="flex-shrink-0 w-24 h-24 cursor-pointer"
+            [class.border-2]="i === currentImageIndex"
+            [class.border-indigo-600]="i === currentImageIndex"
+            (click)="selectImage(i)"
+          >
+            <img
+              [src]="photo"
+              class="w-full h-full object-cover rounded"
+              alt="Thumbnail"
+              (error)="handleImageError($event)"
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deal Information -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="p-6">
+        <!-- Title and Basic Info -->
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-gray-900" *ngIf="!isEditing">{{ deal.title }}</h1>
+          <input
+            *ngIf="isEditing"
+            type="text"
+            [(ngModel)]="deal.title"
+            class="w-full text-3xl font-bold border-gray-300 rounded-md"
+            placeholder="Deal Title"
+          >
+          <div class="mt-4 flex flex-wrap gap-4">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span class="text-gray-600">{{ deal.location?.name }}</span>
+            </div>
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-gray-600">{{ deal.daysCount }} Days / {{ deal.nightsCount }} Nights</span>
+            </div>
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-gray-600">
+                <span class="text-2xl font-bold text-indigo-600">${{ deal.discountedPrice }}</span>
+                <span class="ml-2 text-sm line-through text-gray-500">${{ deal.price }}</span>
+                <span class="ml-2 text-sm text-green-600">({{ deal.discountPercentage }}% off)</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Package Type and Rating -->
+        <div class="mb-6 flex items-center justify-between">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                [ngClass]="{
+                  'bg-green-100 text-green-800': deal.packageType === 'STANDARD',
+                  'bg-blue-100 text-blue-800': deal.packageType === 'PREMIUM',
+                  'bg-purple-100 text-purple-800': deal.packageType === 'LUXURY'
+                }">
+            {{ deal.packageType }}
+          </span>
+          <div class="flex items-center">
+            <span class="text-yellow-400">★</span>
+            <span class="ml-1 text-gray-600">{{ deal.rating || 0 }} / 5</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Description</h2>
+          <div *ngIf="!isEditing" class="text-gray-600">{{ deal.description }}</div>
+          <textarea
+            *ngIf="isEditing"
+            [(ngModel)]="deal.description"
+            rows="4"
+            class="w-full border-gray-300 rounded-md"
+            placeholder="Deal description"
+          ></textarea>
+        </div>
+
+        <!-- Facilities -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Included Facilities</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div *ngIf="deal.elderlyFriendly" class="flex items-center space-x-2">
+              <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Elderly Friendly</span>
+            </div>
+            <div *ngIf="deal.internetIncluded" class="flex items-center space-x-2">
+              <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Internet</span>
+            </div>
+            <!-- Add more facilities here -->
+          </div>
+        </div>
+
+        <!-- Save Button when Editing -->
+        <div *ngIf="isEditing" class="mt-6">
+          <button
+            (click)="saveDeal()"
+            class="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

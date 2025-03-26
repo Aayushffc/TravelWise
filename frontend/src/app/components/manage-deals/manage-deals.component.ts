@@ -486,17 +486,16 @@ export class ManageDealsComponent implements OnInit {
   }
 
   deleteDeal(id: number): void {
-    if (confirm('Are you sure you want to delete this deal?')) {
-      this.dealService.deleteDeal(id).subscribe({
-        next: () => {
-          this.success = 'Deal deleted successfully';
-          this.loadDeals();
-        },
-        error: (error) => {
-          this.error = 'Failed to delete deal';
-        }
-      });
-    }
+    this.dealService.deleteDeal(id).subscribe({
+      next: () => {
+        this.success = 'Deal deleted successfully';
+        this.deals = this.deals.filter(deal => deal.id !== id);
+      },
+      error: (error) => {
+        console.error('Delete deal error:', error);
+        this.error = 'Failed to delete deal. Please try again later.';
+      }
+    });
   }
 
   createLocation(): void {
@@ -534,5 +533,24 @@ export class ManageDealsComponent implements OnInit {
   closeDetailsModal(): void {
     this.showDetailsModal = false;
     this.selectedDeal = null;
+  }
+
+  handleImageError(event: any): void {
+    // Set a default image when the image fails to load
+    event.target.src = 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg';
+  }
+
+  navigateToDealDetails(dealId: number): void {
+    console.log('Navigating to:', `/agency/agency-deal-details/${dealId}`);
+    this.router.navigate(['/agency/agency-deal-details', dealId]).then(
+      (success) => console.log('Navigation success:', success),
+      (error) => console.error('Navigation error:', error)
+    );
+  }
+
+  confirmDelete(id: number): void {
+    if (confirm('Are you sure you want to delete this deal? This action cannot be undone.')) {
+      this.deleteDeal(id);
+    }
   }
 }

@@ -17,6 +17,7 @@ import { AgencyApplicationComponent } from './components/agency-application/agen
 import { AdminAgencyApplicationsComponent } from './components/admin-agency-applications/admin-agency-applications.component';
 import { ManageLocationsComponent } from './components/admin/manage-locations/manage-locations.component';
 import { ManageDealsComponent } from './components/manage-deals/manage-deals.component';
+import { AgencyDealDetailsComponent } from './components/agency-deal-details/agency-deal-details.component';
 
 export const routes: Routes = [
   {
@@ -111,6 +112,11 @@ export const routes: Routes = [
     path: 'faq',
     component: FAQComponent,
     title: 'FAQ - TravelWise'
+  },
+  {
+    path: 'agency/agency-deal-details/:id',
+    component: AgencyDealDetailsComponent,
+    canActivate: [AuthGuard, AgencyGuard]
   },
   {
     path: '**',
