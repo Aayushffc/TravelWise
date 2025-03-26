@@ -143,6 +143,7 @@ namespace TravelWiseAPI.Controllers
             return Ok(
                 new AuthResponseDTO
                 {
+                    Id = user.Id,
                     Token = token,
                     Email = user.Email,
                     FirstName = user.FirstName,
