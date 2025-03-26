@@ -749,7 +749,10 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@InsuranceIncluded", deal.InsuranceIncluded);
             command.Parameters.AddWithValue("@VisaIncluded", deal.VisaIncluded);
             command.Parameters.AddWithValue("@Itinerary", JsonSerializer.Serialize(deal.Itinerary));
-            command.Parameters.AddWithValue("@PackageOptions", JsonSerializer.Serialize(deal.PackageOptions));
+            command.Parameters.AddWithValue(
+                "@PackageOptions",
+                JsonSerializer.Serialize(deal.PackageOptions)
+            );
             command.Parameters.AddWithValue("@MapUrl", deal.MapUrl);
             command.Parameters.AddWithValue("@Policies", JsonSerializer.Serialize(deal.Policies));
             command.Parameters.AddWithValue("@PackageType", deal.PackageType);

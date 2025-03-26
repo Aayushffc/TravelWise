@@ -184,6 +184,14 @@ export class AgencyDealDetailsComponent implements OnInit {
     });
   }
 
+  trackByActivity(index: number, activity: string): number {
+    return index;
+  }
+
+  trackByInclusion(index: number, inclusion: string): number {
+    return index;
+  }
+
   addActivity(day: ItineraryDay): void {
     if (!day.activities) {
       day.activities = [];
@@ -194,6 +202,22 @@ export class AgencyDealDetailsComponent implements OnInit {
   removeActivity(day: ItineraryDay, index: number): void {
     if (!day.activities) return;
     day.activities.splice(index, 1);
+  }
+
+  handleActivityKeydown(event: KeyboardEvent, day: ItineraryDay, index: number): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (index === day.activities.length - 1) {
+        this.addActivity(day);
+      }
+    }
+  }
+
+  handleActivityInput(event: Event, day: ItineraryDay, index: number): void {
+    const input = event.target as HTMLInputElement;
+    if (day.activities) {
+      day.activities[index] = input.value;
+    }
   }
 
   // Package Options Management
@@ -229,6 +253,22 @@ export class AgencyDealDetailsComponent implements OnInit {
   removeInclusion(option: PackageOption, index: number): void {
     if (!option.inclusions) return;
     option.inclusions.splice(index, 1);
+  }
+
+  handleInclusionKeydown(event: KeyboardEvent, option: PackageOption, index: number): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (index === option.inclusions.length - 1) {
+        this.addInclusion(option);
+      }
+    }
+  }
+
+  handleInclusionInput(event: Event, option: PackageOption, index: number): void {
+    const input = event.target as HTMLInputElement;
+    if (option.inclusions) {
+      option.inclusions[index] = input.value;
+    }
   }
 
   // Policy Management

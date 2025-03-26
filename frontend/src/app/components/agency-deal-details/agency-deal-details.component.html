@@ -452,13 +452,13 @@
                       </svg>
                     </button>
                   </div>
-                  <div *ngFor="let activity of day.activities; let j = index" class="flex gap-2">
+                  <div *ngFor="let activity of day.activities; let j = index; trackBy: trackByActivity" class="flex gap-2">
                     <input
                       type="text"
                       [(ngModel)]="day.activities[j]"
+                      (keydown)="handleActivityKeydown($event, day, j)"
                       placeholder="Activity"
                       class="flex-1 rounded-md border-gray-300"
-                      (keydown.enter)="$event.preventDefault(); addActivity(day)"
                     >
                     <button
                       (click)="removeActivity(day, j)"
@@ -547,10 +547,11 @@
                       </svg>
                     </button>
                   </div>
-                  <div *ngFor="let inclusion of option.inclusions; let j = index" class="flex gap-2">
+                  <div *ngFor="let inclusion of option.inclusions; let j = index; trackBy: trackByInclusion" class="flex gap-2">
                     <input
                       type="text"
                       [(ngModel)]="option.inclusions[j]"
+                      (keydown)="handleInclusionKeydown($event, option, j)"
                       placeholder="Inclusion"
                       class="flex-1 rounded-md border-gray-300"
                     >
