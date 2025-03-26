@@ -1,8 +1,8 @@
+using System.Security.Claims;
 using Backend.DTOs;
 using Backend.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Backend.Controllers
 {
@@ -79,7 +79,11 @@ namespace Backend.Controllers
                 }
 
                 // Validate required fields
-                if (string.IsNullOrEmpty(dealDto.Title) || dealDto.LocationId <= 0 || dealDto.Price <= 0)
+                if (
+                    string.IsNullOrEmpty(dealDto.Title)
+                    || dealDto.LocationId <= 0
+                    || dealDto.Price <= 0
+                )
                 {
                     return BadRequest("Required fields are missing or invalid");
                 }
@@ -221,7 +225,9 @@ namespace Backend.Controllers
 
         // GET: api/Deal/user/{userId}
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<DealResponseDto>>> GetDealsByUserId(string userId)
+        public async Task<ActionResult<IEnumerable<DealResponseDto>>> GetDealsByUserId(
+            string userId
+        )
         {
             try
             {

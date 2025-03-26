@@ -27,7 +27,9 @@ namespace Backend.Controllers
                 // Validate file type
                 var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif" };
                 if (!allowedTypes.Contains(file.ContentType.ToLower()))
-                    return BadRequest("Invalid file type. Only JPEG, PNG, and GIF files are allowed.");
+                    return BadRequest(
+                        "Invalid file type. Only JPEG, PNG, and GIF files are allowed."
+                    );
 
                 // Validate file size (10MB max)
                 if (file.Length > 10 * 1024 * 1024)

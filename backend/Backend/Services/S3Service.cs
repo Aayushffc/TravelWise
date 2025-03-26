@@ -23,7 +23,7 @@ namespace Backend.Services
             _awsSettings = awsSettings.Value;
             var config = new AmazonS3Config
             {
-                RegionEndpoint = RegionEndpoint.GetBySystemName(_awsSettings.Region)
+                RegionEndpoint = RegionEndpoint.GetBySystemName(_awsSettings.Region),
             };
             _s3Client = new AmazonS3Client(_awsSettings.AccessKey, _awsSettings.SecretKey, config);
         }
@@ -45,7 +45,7 @@ namespace Backend.Services
                     InputStream = memoryStream,
                     Key = key,
                     BucketName = _awsSettings.BucketName,
-                    ContentType = file.ContentType
+                    ContentType = file.ContentType,
                 };
 
                 var transferUtility = new TransferUtility(_s3Client);
@@ -67,7 +67,7 @@ namespace Backend.Services
                 var deleteRequest = new DeleteObjectRequest
                 {
                     BucketName = _awsSettings.BucketName,
-                    Key = key
+                    Key = key,
                 };
 
                 await _s3Client.DeleteObjectAsync(deleteRequest);
