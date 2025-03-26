@@ -426,7 +426,7 @@ namespace Backend.Helper
                     AirTransfer, RoadTransfer, TrainTransfer, TravelCostIncluded,
                     GuideIncluded, PhotographyIncluded, InsuranceIncluded,
                     VisaIncluded, Itinerary, PackageOptions, MapUrl, Policies,
-                    PackageType, IsActive, CreatedAt, UpdatedAt
+                    PackageType, IsActive, CreatedAt, UpdatedAt, UserId
                 )
                 OUTPUT INSERTED.Id
                 VALUES (
@@ -437,7 +437,7 @@ namespace Backend.Helper
                     @AirTransfer, @RoadTransfer, @TrainTransfer, @TravelCostIncluded,
                     @GuideIncluded, @PhotographyIncluded, @InsuranceIncluded,
                     @VisaIncluded, @Itinerary, @PackageOptions, @MapUrl, @Policies,
-                    @PackageType, @IsActive, GETUTCDATE(), GETUTCDATE()
+                    @PackageType, @IsActive, GETUTCDATE(), GETUTCDATE(), @UserId
                 )";
 
             using var command = new SqlCommand(sql, connection);
@@ -593,6 +593,35 @@ namespace Backend.Helper
             return deals;
         }
 
+        public async Task<IEnumerable<DealResponseDto>> GetDealsByUserId(string userId)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql =
+                @"
+                SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
+                       l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
+                       l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
+                       l.RequestCallCount as LocationRequestCallCount,
+                       l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
+                FROM Deals d
+                INNER JOIN Locations l ON d.LocationId = l.Id
+                WHERE d.IsActive = 1 AND d.UserId = @UserId";
+
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            var deals = new List<DealResponseDto>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                deals.Add(MapToDealResponseDto(reader));
+            }
+
+            return deals;
+        }
+
         #endregion
 
         #region Helper Methods
@@ -718,14 +747,12 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@InsuranceIncluded", deal.InsuranceIncluded);
             command.Parameters.AddWithValue("@VisaIncluded", deal.VisaIncluded);
             command.Parameters.AddWithValue("@Itinerary", JsonSerializer.Serialize(deal.Itinerary));
-            command.Parameters.AddWithValue(
-                "@PackageOptions",
-                JsonSerializer.Serialize(deal.PackageOptions)
-            );
+            command.Parameters.AddWithValue("@PackageOptions", JsonSerializer.Serialize(deal.PackageOptions));
             command.Parameters.AddWithValue("@MapUrl", deal.MapUrl);
             command.Parameters.AddWithValue("@Policies", JsonSerializer.Serialize(deal.Policies));
             command.Parameters.AddWithValue("@PackageType", deal.PackageType);
             command.Parameters.AddWithValue("@IsActive", deal.IsActive);
+            command.Parameters.AddWithValue("@UserId", deal.UserId);
         }
 
         #endregion

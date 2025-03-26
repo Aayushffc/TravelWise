@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { Location as NgLocation } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { FileUploadService } from '../../services/file-upload.service';
+import { Deal } from '../../models/deal.model';
 
 interface Location {
   id: number;
@@ -17,51 +18,6 @@ interface Location {
   isActive: boolean;
   clickCount: number;
   requestCallCount: number;
-}
-
-interface Deal {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice: number;
-  discountPercentage: number;
-  rating: number;
-  daysCount: number;
-  nightsCount: number;
-  startPoint: string;
-  endPoint: string;
-  duration: string;
-  locationId: number;
-  location?: Location;
-  photos: string[];
-  packageType: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
-
-  // Facilities
-  elderlyFriendly: boolean;
-  internetIncluded: boolean;
-  travelIncluded: boolean;
-  mealsIncluded: boolean;
-  sightseeingIncluded: boolean;
-  stayIncluded: boolean;
-  airTransfer: boolean;
-  roadTransfer: boolean;
-  trainTransfer: boolean;
-  travelCostIncluded: boolean;
-  guideIncluded: boolean;
-  photographyIncluded: boolean;
-  insuranceIncluded: boolean;
-  visaIncluded: boolean;
-
-  // Additional details
-  itinerary: any[];
-  packageOptions: any[];
-  mapUrl: string;
-  policies: any[];
 }
 
 @Component({
@@ -126,6 +82,7 @@ export class ManageDealsComponent implements OnInit {
   showCreateModal: boolean = false;
   showEditModal: boolean = false;
   showLocationModal: boolean = false;
+  showDetailsModal: boolean = false;
   selectedDeal: Deal | null = null;
   newLocation: { name: string } = { name: '' };
   currentUserId: string | null = null;
@@ -170,10 +127,10 @@ export class ManageDealsComponent implements OnInit {
     visaIncluded: false,
 
     // Additional details
-    itinerary: [],
-    packageOptions: [],
+    itinerary: '',
+    packageOptions: '',
     mapUrl: '',
-    policies: []
+    policies: ''
   };
 
   constructor(
@@ -186,29 +143,39 @@ export class ManageDealsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadDeals();
-    this.loadLocations();
     this.getCurrentUserId();
+    this.loadLocations();
   }
 
   private getCurrentUserId(): void {
     const user = this.authService.getCurrentUser();
-    if (user) {
+    if (user && user.id) {
       this.currentUserId = user.id;
+      this.loadDeals();
     } else {
       this.error = 'User not authenticated';
+      this.isLoading = false;
       this.router.navigate(['/login']);
     }
   }
 
   loadDeals(): void {
+    if (!this.currentUserId) {
+      this.error = 'User not authenticated';
+      this.isLoading = false;
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.isLoading = true;
-    this.dealService.getDeals().subscribe({
-      next: (deals) => {
+    this.error = null;
+
+    this.dealService.getDealsByUserId(this.currentUserId).subscribe({
+      next: (deals: Deal[]) => {
         this.deals = deals;
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error = 'Failed to load deals';
         this.isLoading = false;
         console.error('Load deals error:', error);
@@ -557,5 +524,15 @@ export class ManageDealsComponent implements OnInit {
   getLocationName(locationId: number): string {
     const location = this.locations.find(l => l.id === locationId);
     return location ? location.name : 'Unknown Location';
+  }
+
+  viewDealDetails(deal: Deal): void {
+    this.selectedDeal = deal;
+    this.showDetailsModal = true;
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.selectedDeal = null;
   }
 }

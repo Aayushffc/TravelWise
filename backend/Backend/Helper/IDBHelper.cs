@@ -29,6 +29,7 @@ namespace Backend.Helper
         Task<IEnumerable<DealResponseDto>> GetDeals(int? locationId = null);
         Task<DealResponseDto> GetDealById(int id);
         Task<DealResponseDto> CreateDeal(DealCreateDto deal);
+        Task<IEnumerable<DealResponseDto>> GetDealsByUserId(string userId);
         Task<bool> UpdateDeal(int id, DealUpdateDto deal);
         Task<bool> DeleteDeal(int id);
         Task<IEnumerable<DealResponseDto>> SearchDeals(

@@ -218,5 +218,21 @@ namespace Backend.Controllers
                 return StatusCode(500, "An error occurred while searching deals");
             }
         }
+
+        // GET: api/Deal/user/{userId}
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<DealResponseDto>>> GetDealsByUserId(string userId)
+        {
+            try
+            {
+                var deals = await _dbHelper.GetDealsByUserId(userId);
+                return Ok(deals);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting deals for user {UserId}", userId);
+                return StatusCode(500, "An error occurred while retrieving deals");
+            }
+        }
     }
 }
