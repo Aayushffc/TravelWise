@@ -394,7 +394,8 @@ namespace Backend.Helper
                        l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
                        l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
                        l.RequestCallCount as LocationRequestCallCount,
-                       l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
+                       l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt,
+                       d.UserId
                 FROM Deals d
                 INNER JOIN Locations l ON d.LocationId = l.Id
                 WHERE d.Id = @Id AND d.IsActive = 1";
@@ -654,6 +655,7 @@ namespace Backend.Helper
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                 Title = reader.GetString(reader.GetOrdinal("Title")),
                 LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
+                UserId = reader.GetString(reader.GetOrdinal("UserId")),
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
                 DiscountedPrice = reader.GetDecimal(reader.GetOrdinal("DiscountedPrice")),
                 DiscountPercentage = reader.GetInt32(reader.GetOrdinal("DiscountPercentage")),

@@ -31,13 +31,32 @@ export interface Deal {
   photographyIncluded: boolean;
   insuranceIncluded: boolean;
   visaIncluded: boolean;
-  itinerary: string;
-  packageOptions: string;
+  itinerary: ItineraryDay[];
+  packageOptions: PackageOption[];
   mapUrl?: string;
-  policies: string;
+  policies: Policy[];
   packageType: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   userId: string;
+}
+
+export interface ItineraryDay {
+  dayNumber: number;
+  title: string;
+  description: string;
+  activities: string[];
+}
+
+export interface PackageOption {
+  name: string;
+  description: string;
+  price: number;
+  inclusions: string[];
+}
+
+export interface Policy {
+  title: string;
+  description: string;
 }

@@ -98,7 +98,6 @@ export class ManageDealsComponent implements OnInit {
     description: '',
     price: 0,
     discountedPrice: 0,
-    discountPercentage: 0,
     rating: 0,
     daysCount: 0,
     nightsCount: 0,
@@ -127,10 +126,10 @@ export class ManageDealsComponent implements OnInit {
     visaIncluded: false,
 
     // Additional details
-    itinerary: '',
-    packageOptions: '',
+    itinerary: [],
+    packageOptions: [],
     mapUrl: '',
-    policies: ''
+    policies: []
   };
 
   constructor(
@@ -366,13 +365,18 @@ export class ManageDealsComponent implements OnInit {
         }
       }
 
+      // Calculate discount percentage
+      const discountPercentage = this.dealForm.price && this.dealForm.discountedPrice && this.dealForm.price > 0
+        ? Math.round(((this.dealForm.price - this.dealForm.discountedPrice) / this.dealForm.price) * 100)
+        : 0;
+
       // Create a properly structured deal object
       const dealToCreate = {
         title: this.dealForm.title,
         description: this.dealForm.description,
         price: this.dealForm.price,
         discountedPrice: this.dealForm.discountedPrice,
-        discountPercentage: this.dealForm.discountPercentage,
+        discountPercentage,
         rating: this.dealForm.rating || 0,
         daysCount: this.dealForm.daysCount,
         nightsCount: this.dealForm.nightsCount,
@@ -446,12 +450,6 @@ export class ManageDealsComponent implements OnInit {
       return false;
     }
 
-    if (this.dealForm.price && this.dealForm.discountedPrice && this.dealForm.price > 0) {
-      this.dealForm.discountPercentage = Math.round(
-        ((this.dealForm.price - this.dealForm.discountedPrice) / this.dealForm.price) * 100
-      );
-    }
-
     return true;
   }
 
@@ -465,13 +463,17 @@ export class ManageDealsComponent implements OnInit {
     }
 
     // Calculate discount percentage
-    this.dealForm.discountPercentage = Math.round(
+    const discountPercentage = Math.round(
       ((this.dealForm.price - this.dealForm.discountedPrice) / this.dealForm.price) * 100
     );
 
     if (this.currentUserId) {
       this.dealForm.userId = this.currentUserId;
-      this.dealService.updateDeal(this.selectedDeal.id, this.dealForm as any).subscribe({
+      const dealToUpdate = {
+        ...this.dealForm,
+        discountPercentage
+      };
+      this.dealService.updateDeal(this.selectedDeal.id, dealToUpdate as any).subscribe({
         next: () => {
           this.success = 'Deal updated successfully';
           this.closeModals();

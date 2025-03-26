@@ -128,7 +128,7 @@ namespace Backend.Controllers
 
                 if (existingDeal.UserId != userId)
                 {
-                    return Forbid("You don't have permission to update this deal");
+                    return StatusCode(403, "You don't have permission to update this deal");
                 }
 
                 var success = await _dbHelper.UpdateDeal(id, dealDto);

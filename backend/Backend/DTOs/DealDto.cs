@@ -4,7 +4,7 @@ namespace Backend.DTOs
     {
         public string? Title { get; set; }
         public int LocationId { get; set; }
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
         public decimal Price { get; set; }
         public decimal DiscountedPrice { get; set; }
         public int DiscountPercentage { get; set; }
