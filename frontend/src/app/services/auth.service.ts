@@ -258,10 +258,8 @@ export class AuthService {
   }
 
   getUserRole(): Observable<string> {
-    console.log('Getting user role...');
     return this.http.get<any>(`${this.apiUrl}/role`).pipe(
       map(response => {
-        console.log('Role response:', response);
         return response.role;
       }),
       catchError(error => {
@@ -272,21 +270,16 @@ export class AuthService {
   }
 
   navigateBasedOnRole() {
-    console.log('Starting role-based navigation...');
     this.getUserRole().subscribe({
       next: (role) => {
-        console.log('Received role:', role);
         switch(role) {
           case 'Admin':
-            console.log('Navigating to admin page...');
             this.router.navigate(['/admin']);
             break;
           case 'Agency':
-            console.log('Navigating to agency page...');
             this.router.navigate(['/home']);
             break;
           default:
-            console.log('Navigating to home page...');
             this.router.navigate(['/home']);
         }
       },

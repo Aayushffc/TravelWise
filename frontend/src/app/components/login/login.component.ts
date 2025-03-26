@@ -35,17 +35,14 @@ export class LoginComponent {
     this.authService.login({ email: this.email, password: this.password })
       .subscribe({
         next: (response) => {
-          console.log('Login successful, saving token...');
           this.authService.saveToken(response);
 
           // Check if email is verified
           if (response.emailConfirmed === false) {
-            console.log('Email not verified, redirecting to verification page...');
             this.router.navigate(['/verify-email'], {
               queryParams: { email: response.email }
             });
           } else {
-            console.log('Email verified, starting role-based navigation...');
             // Navigate based on user role
             this.authService.navigateBasedOnRole();
           }

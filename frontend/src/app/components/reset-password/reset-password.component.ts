@@ -30,9 +30,6 @@ export class ResetPasswordComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       this.email = params['email'] || '';
       this.token = params['token'] || '';
-
-      // Log the parameters to help debug
-      console.log('Reset password params:', { email: this.email, token: this.token });
     });
   }
 

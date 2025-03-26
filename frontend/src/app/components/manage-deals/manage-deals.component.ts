@@ -543,7 +543,6 @@ export class ManageDealsComponent implements OnInit {
   }
 
   navigateToDealDetails(dealId: number): void {
-    console.log('Navigating to:', `/agency/agency-deal-details/${dealId}`);
     this.router.navigate(['/agency/agency-deal-details', dealId]).then(
       (success) => console.log('Navigation success:', success),
       (error) => console.error('Navigation error:', error)
