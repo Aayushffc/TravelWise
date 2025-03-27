@@ -1,6 +1,6 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "/Dockerfile"
+dockerfilePath = "/backend/Backend/Dockerfile"
 
 [deploy]
 startCommand = "dotnet Backend.dll"
