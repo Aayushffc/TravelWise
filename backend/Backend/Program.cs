@@ -128,6 +128,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHealthChecks();
+
 // Add this before builder.Build()
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -187,7 +189,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
-
+app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseCookiePolicy();

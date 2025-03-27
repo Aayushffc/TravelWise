@@ -9,12 +9,12 @@ RUN dotnet build "Backend.csproj" -c Release -o /app/build
 
 # Publish stage
 FROM build AS publish
-RUN dotnet publish "Backend.csproj" -c Release -o /app/publish
+RUN dotnet publish "Backend.csproj" -c Release -o /app/publish /p:UseAppHost=true
 
 # Final stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-EXPOSE 5000
-ENV ASPNETCORE_URLS=http://+:5000
+EXPOSE 8080
+ENV ASPNETCORE_URLS=https://+:7157
 ENTRYPOINT ["dotnet", "Backend.dll"] 
