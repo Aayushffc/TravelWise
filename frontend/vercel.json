@@ -2,7 +2,14 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/browser/index.html"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/browser/index.html"
+    }
+  ],
+  "outputDirectory": "dist/frontend/browser"
 }
