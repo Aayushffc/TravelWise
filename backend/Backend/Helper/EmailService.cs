@@ -16,12 +16,25 @@ namespace Backend.Helper
 
         public async Task SendEmailAsync(string to, string subject, string body)
         {
-            var smtpServer = _configuration["EmailSettings:SmtpServer"];
-            var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"]);
-            var smtpUsername = _configuration["EmailSettings:SmtpUsername"];
-            var smtpPassword = _configuration["EmailSettings:SmtpPassword"];
-            var fromEmail = _configuration["EmailSettings:FromEmail"];
-            var fromName = _configuration["EmailSettings:FromName"];
+            var smtpServer =
+                _configuration["EmailSettings:SmtpServer"]
+                ?? throw new InvalidOperationException("SMTP server is not configured");
+            var smtpPort = int.Parse(
+                _configuration["EmailSettings:SmtpPort"]
+                    ?? throw new InvalidOperationException("SMTP port is not configured")
+            );
+            var smtpUsername =
+                _configuration["EmailSettings:SmtpUsername"]
+                ?? throw new InvalidOperationException("SMTP username is not configured");
+            var smtpPassword =
+                _configuration["EmailSettings:SmtpPassword"]
+                ?? throw new InvalidOperationException("SMTP password is not configured");
+            var fromEmail =
+                _configuration["EmailSettings:FromEmail"]
+                ?? throw new InvalidOperationException("From email is not configured");
+            var fromName =
+                _configuration["EmailSettings:FromName"]
+                ?? throw new InvalidOperationException("From name is not configured");
 
             using var client = new SmtpClient(smtpServer, smtpPort)
             {
@@ -54,6 +67,9 @@ namespace Backend.Helper
                 <p>If you didn't request this verification, please ignore this email.</p>
             ";
 
+            if (user.Email == null)
+                throw new ArgumentException("User email cannot be null", nameof(user));
+
             await SendEmailAsync(user.Email, subject, body);
         }
 
@@ -69,6 +85,9 @@ namespace Backend.Helper
                 <p>This code will expire in 10 minutes.</p>
                 <p>If you didn't request this upgrade, please ignore this email.</p>
             ";
+
+            if (user.Email == null)
+                throw new ArgumentException("User email cannot be null", nameof(user));
 
             await SendEmailAsync(user.Email, subject, body);
         }

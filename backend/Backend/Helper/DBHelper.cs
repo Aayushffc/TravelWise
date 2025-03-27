@@ -4,12 +4,10 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Backend.DTOs;
-using Backend.Models;
 using Backend.Models.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Backend.Helper

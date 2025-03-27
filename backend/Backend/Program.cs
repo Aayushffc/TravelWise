@@ -29,7 +29,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder
     .Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
-        // Password Policy
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = true;
@@ -82,7 +81,7 @@ builder
             {
                 if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                 {
-                    context.Response.Headers.Add("Token-Expired", "true");
+                    context.Response.Headers.Append("Token-Expired", "true");
                 }
                 return Task.CompletedTask;
             },
@@ -100,21 +99,34 @@ builder
     })
     .AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        var clientId =
+            builder.Configuration["Authentication:Google:ClientId"]
+            ?? throw new InvalidOperationException("Google ClientId is missing in configuration.");
+        var clientSecret =
+            builder.Configuration["Authentication:Google:ClientSecret"]
+            ?? throw new InvalidOperationException(
+                "Google ClientSecret is missing in configuration."
+            );
+
+        options.ClientId = clientId;
+        options.ClientSecret = clientSecret;
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.SaveTokens = true;
         options.CallbackPath = "/api/auth/google-callback";
         options.UsePkce = false;
-        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None; // Change this for development
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always; // Secure in production
         options.CorrelationCookie.SameSite = SameSiteMode.Lax;
         options.CorrelationCookie.IsEssential = true;
         options.CorrelationCookie.HttpOnly = true;
     });
 
-var allowedOrigins = builder.Configuration.GetValue<string>("allowedOrigins")!.Split(',');
+// CORS Configuration with fallback
+var allowedOriginsRaw =
+    builder.Configuration.GetValue<string>("allowedOrigins") ?? "http://localhost:4200";
+var allowedOrigins = string.IsNullOrEmpty(allowedOriginsRaw)
+    ? ["http://localhost:4200"]
+    : allowedOriginsRaw.Split(',');
 
-// Add CORS services
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -124,13 +136,13 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
-            .SetIsOriginAllowed(origin => true); // For development only
+            .SetIsOriginAllowed(origin => true); // Remove this in production if not needed
     });
 });
 
 builder.Services.AddHealthChecks();
 
-// Add this before builder.Build()
+// Distributed Memory Cache and Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -138,20 +150,18 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Change this for development
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Secure in production
 });
 
-// Add cookie policy
+// Cookie Policy
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
-    options.Secure = CookieSecurePolicy.None; // Change this for development
+    options.Secure = CookieSecurePolicy.Always; // Secure in production
 });
 
-// Add AWS S3 configuration
+// AWS S3 Configuration
 builder.Services.Configure<AWSSettings>(builder.Configuration.GetSection("AWS"));
-
-// Register S3 service
 builder.Services.AddScoped<IS3Service, S3Service>();
 
 // Controllers and Swagger
@@ -159,7 +169,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    // Configure Swagger to support JWT authentication
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TravelWise API", Version = "v1" });
 
     var securityScheme = new OpenApiSecurityScheme
@@ -179,6 +188,13 @@ builder.Services.AddSwaggerGen(c =>
     );
 });
 
+// Dynamic port configuration for Railway
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(int.Parse(port));
+});
+
 var app = builder.Build();
 
 // Middleware
@@ -188,9 +204,14 @@ app.UseSwaggerUI();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+    app.UseHttpsRedirection(); // Only in development
 }
+else
+{
+    // In production, rely on Railway's HTTPS termination
+}
+
 app.UseHealthChecks("/health");
-app.UseHttpsRedirection();
 app.UseCors();
 app.UseCookiePolicy();
 app.UseSession();
