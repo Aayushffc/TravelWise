@@ -18,6 +18,7 @@ import { AdminAgencyApplicationsComponent } from './components/admin-agency-appl
 import { ManageLocationsComponent } from './components/admin/manage-locations/manage-locations.component';
 import { ManageDealsComponent } from './components/manage-deals/manage-deals.component';
 import { AgencyDealDetailsComponent } from './components/agency-deal-details/agency-deal-details.component';
+import { DealDetailsComponent } from './components/deal-details/deal-details.component';
 
 export const routes: Routes = [
   {
@@ -107,6 +108,11 @@ export const routes: Routes = [
   {
     path: 'location/:id',
     component: LocationDetailsComponent
+  },
+  {
+    path: 'deal/:id',
+    component: DealDetailsComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'faq',
