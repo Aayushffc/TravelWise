@@ -6,6 +6,30 @@ import { LocationService } from '../../services/location.service';
 import { DealService } from '../../services/deal.service';
 import { AuthService } from '../../services/auth.service';
 
+interface Location {
+  id: number;
+  name: string;
+  description: string | null;
+  imageUrl: string;
+}
+
+interface Deal {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  discountedPrice: number;
+  discountPercentage: number;
+  daysCount: number;
+  nightsCount: number;
+  photos: string[];
+  rating: number | null;
+  location: {
+    id: number;
+    name: string;
+  };
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -14,8 +38,8 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
-  locations: any[] = [];
-  locationDeals: {[key: number]: any[]} = {};
+  locations: Location[] = [];
+  locationDeals: {[key: number]: Deal[]} = {};
   searchTerm: string = '';
   userName: string = '';
   isLoading: boolean = true;

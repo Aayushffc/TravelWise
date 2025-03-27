@@ -4,6 +4,32 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LocationService } from '../../services/location.service';
 import { DealService } from '../../services/deal.service';
 
+interface Location {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string;
+  isPopular: boolean;
+  isActive: boolean;
+}
+
+interface Deal {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  discountedPrice: number;
+  discountPercentage: number;
+  daysCount: number;
+  nightsCount: number;
+  photos: string[];
+  rating: number | null;
+  location: {
+    id: number;
+    name: string;
+  };
+}
+
 @Component({
   selector: 'app-location-details',
   standalone: true,
@@ -12,8 +38,8 @@ import { DealService } from '../../services/deal.service';
   styleUrls: ['./location-details.component.css']
 })
 export class LocationDetailsComponent implements OnInit {
-  location: any;
-  deals: any[] = [];
+  location: Location | null = null;
+  deals: Deal[] = [];
   isLoading: boolean = true;
   errorMessage: string = '';
 
