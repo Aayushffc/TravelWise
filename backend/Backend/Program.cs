@@ -41,6 +41,19 @@ builder
 builder.Services.AddScoped<IDBHelper, DBHelper>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// CORS Configuration with fallback
+var allowedOriginsRaw =
+    builder.Configuration.GetValue<string>("allowedOrigins") ?? "http://localhost:4200";
+var allowedOrigins = allowedOriginsRaw.Split(',');
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    });
+});
+
 // JWT Authentication
 var jwtKey = builder.Configuration["JWT:Key"];
 if (string.IsNullOrEmpty(jwtKey))
@@ -120,26 +133,6 @@ builder
         options.CorrelationCookie.HttpOnly = true;
     });
 
-// CORS Configuration with fallback
-var allowedOriginsRaw =
-    builder.Configuration.GetValue<string>("allowedOrigins") ?? "http://localhost:4200";
-var allowedOrigins = string.IsNullOrEmpty(allowedOriginsRaw)
-    ? ["http://localhost:4200"]
-    : allowedOriginsRaw.Split(',');
-
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials()
-            .SetIsOriginAllowed(origin => true); // Remove this in production if not needed
-    });
-});
-
 builder.Services.AddHealthChecks();
 
 // Distributed Memory Cache and Session
@@ -204,7 +197,6 @@ app.UseSwaggerUI();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    app.UseHttpsRedirection(); // Only in development
 }
 else
 {
