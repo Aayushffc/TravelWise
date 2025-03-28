@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 
+// Add this type definition
+type PasswordRequirementKey = 'minLength' | 'hasNumber' | 'hasSpecial' | 'hasUppercase' | 'hasLowercase';
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -22,14 +25,52 @@ export class RegisterComponent {
   errorMessage: string = '';
   isLoading: boolean = false;
 
+  // Add these new properties
+  passwordRequirements: Record<PasswordRequirementKey, boolean> = {
+    minLength: false,
+    hasNumber: false,
+    hasSpecial: false,
+    hasUppercase: false,
+    hasLowercase: false
+  };
+
+  // Update the requirements array type in the template
+  passwordRequirementItems: Array<{ key: PasswordRequirementKey; text: string }> = [
+    { key: 'minLength', text: '8+ chars' },
+    { key: 'hasNumber', text: 'number' },
+    { key: 'hasSpecial', text: 'special char' },
+    { key: 'hasUppercase', text: 'uppercase' },
+    { key: 'hasLowercase', text: 'lowercase' }
+  ];
+
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
 
+  // Add this method to check password requirements
+  checkPasswordStrength() {
+    const password = this.password;
+
+    this.passwordRequirements = {
+      minLength: password.length >= 8,
+      hasNumber: /\d/.test(password),
+      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password)
+    };
+  }
+
   nextStep() {
     if (!this.firstName || !this.lastName || !this.email || !this.password || !this.confirmPassword) {
       this.errorMessage = 'Please fill in all fields';
+      return;
+    }
+
+    // Add password requirements check
+    const allRequirementsMet = Object.values(this.passwordRequirements).every(req => req);
+    if (!allRequirementsMet) {
+      this.errorMessage = 'Please meet all password requirements';
       return;
     }
 

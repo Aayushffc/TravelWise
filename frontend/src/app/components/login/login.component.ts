@@ -29,6 +29,13 @@ export class LoginComponent {
       return;
     }
 
+    // Add email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.email)) {
+      this.errorMessage = 'Please enter a valid email address';
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -50,7 +57,17 @@ export class LoginComponent {
         error: (error) => {
           console.error('Login error:', error);
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'An error occurred during login';
+
+          // Handle specific error cases
+          if (error.status === 401) {
+            this.errorMessage = 'Invalid email or password';
+          } else if (error.status === 0) {
+            this.errorMessage = 'Unable to connect to server. Please check your internet connection';
+          } else if (error.error?.message) {
+            this.errorMessage = error.error.message;
+          } else {
+            this.errorMessage = 'An unexpected error occurred. Please try again later';
+          }
         },
         complete: () => {
           this.isLoading = false;
@@ -69,6 +86,12 @@ export class LoginComponent {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.email)) {
+      this.errorMessage = 'Please enter a valid email address';
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -79,8 +102,19 @@ export class LoginComponent {
         });
       },
       error: (error) => {
+        console.error('Forgot password error:', error);
         this.isLoading = false;
-        this.errorMessage = error.error?.message || 'An error occurred while processing your request';
+
+        // Handle specific error cases for forgot password
+        if (error.status === 404) {
+          this.errorMessage = 'No account found with this email address';
+        } else if (error.status === 0) {
+          this.errorMessage = 'Unable to connect to server. Please check your internet connection';
+        } else if (error.error?.message) {
+          this.errorMessage = error.error.message;
+        } else {
+          this.errorMessage = 'An unexpected error occurred. Please try again later';
+        }
       },
       complete: () => {
         this.isLoading = false;

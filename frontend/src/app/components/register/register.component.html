@@ -85,9 +85,26 @@
             id="password"
             name="password"
             [(ngModel)]="password"
+            (ngModelChange)="checkPasswordStrength()"
             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             required
           >
+
+          <!-- Updated password requirements checklist -->
+          <div class="mt-2 flex flex-wrap gap-2 text-xs">
+            <div
+              *ngFor="let req of passwordRequirementItems"
+              class="flex items-center px-2 py-1 rounded-full"
+              [class]="passwordRequirements[req.key] ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'"
+            >
+              <i
+                class="text-xs mr-1"
+                [class]="passwordRequirements[req.key] ? 'fas fa-check' : 'fas fa-circle'"
+                [style.fontSize]="'0.7rem'"
+              ></i>
+              {{ req.text }}
+            </div>
+          </div>
         </div>
 
         <div class="mt-4">

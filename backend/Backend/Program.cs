@@ -68,7 +68,13 @@ builder
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     })
-    .AddCookie()
+    .AddCookie(options =>
+    {
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Works for HTTP locally
+        options.Cookie.SameSite = SameSiteMode.None; // Cross-site compatibility
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true; // Ensure it’s not blocked by consent
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -126,11 +132,14 @@ builder
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.SaveTokens = true;
         options.CallbackPath = "/api/auth/google-callback";
-        options.UsePkce = false;
-        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always; // Secure in production
-        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-        options.CorrelationCookie.IsEssential = true;
+
+        // Explicitly configure correlation cookie
+        options.CorrelationCookie.Name = "AspNetCore.Correlation.Google";
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // HTTP locally
+        options.CorrelationCookie.SameSite = SameSiteMode.None; // Cross-site
         options.CorrelationCookie.HttpOnly = true;
+        options.CorrelationCookie.IsEssential = true;
+        options.CorrelationCookie.Path = "/"; // Ensure it’s available site-wide
     });
 
 builder.Services.AddHealthChecks();
@@ -142,15 +151,15 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Secure in production
+    options.Cookie.SameSite = SameSiteMode.None; // Match Google’s cookie
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // HTTP locally
 });
 
 // Cookie Policy
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.MinimumSameSitePolicy = SameSiteMode.Lax;
-    options.Secure = CookieSecurePolicy.Always; // Secure in production
+    options.MinimumSameSitePolicy = SameSiteMode.None; // Match Google’s cookie
+    options.Secure = CookieSecurePolicy.SameAsRequest; // options.Secure = CookieSecurePolicy.Always; // Secure in production
 });
 
 // AWS S3 Configuration
@@ -191,6 +200,8 @@ builder.WebHost.ConfigureKestrel(options =>
 var app = builder.Build();
 
 // Middleware
+app.UseCors();
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -204,11 +215,11 @@ else
 }
 
 app.UseHealthChecks("/health");
-app.UseCors();
 app.UseCookiePolicy();
-app.UseSession();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 
 app.MapControllers();
 

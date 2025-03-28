@@ -6,6 +6,7 @@ using Backend.DBContext;
 using Backend.DTOs.Auth;
 using Backend.Helper;
 using Backend.Models.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -156,18 +157,8 @@ namespace TravelWiseAPI.Controllers
         [HttpGet("google-login")]
         public IActionResult GoogleLogin()
         {
-            var properties = _signInManager.ConfigureExternalAuthenticationProperties(
-                "Google",
-                Url.Action(
-                    "GoogleCallback",
-                    "Auth",
-                    new { returnUrl = _configuration["FrontendUrl"] + "/auth/callback" }
-                )
-            );
-            properties.SetParameter("UsePkce", false);
-            properties.SetParameter("AccessType", "offline");
-            properties.SetParameter("Prompt", "consent");
-            properties.SetParameter("state", Guid.NewGuid().ToString());
+            var returnUrl = _configuration["FrontendUrl"] + "/auth/callback";
+            var properties = new AuthenticationProperties { RedirectUri = returnUrl };
             return Challenge(properties, "Google");
         }
 
@@ -176,16 +167,11 @@ namespace TravelWiseAPI.Controllers
         {
             try
             {
-                _logger.LogInformation(
-                    "Google callback received. ReturnUrl: {ReturnUrl}",
-                    returnUrl
-                );
-
                 var info = await _signInManager.GetExternalLoginInfoAsync();
                 if (info == null)
                 {
                     _logger.LogError("Failed to get external login info");
-                    return Redirect($"{returnUrl}?error=external_login_failed");
+                    return Redirect($"{_configuration["FrontendUrl"]}/auth/callback?error=external_login_failed");
                 }
 
                 _logger.LogInformation(
