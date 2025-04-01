@@ -1,0 +1,44 @@
+
+.photo-upload-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.photo-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 2px solid #e5e7eb;
+}
+.photo-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-preview-item button {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  padding: 0.25rem;
+  background-color: rgba(239, 68, 68, 0.9);
+  border-radius: 9999px;
+  color: white;
+  transition: all 0.2s;
+}
+.photo-preview-item button:hover {
+  background-color: rgba(220, 38, 38, 0.9);
+}
+.drop-zone {
+  border: 2px dashed #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.drop-zone.drag-over {
+  border-color: #6366f1;
+  background-color: rgba(99, 102, 241, 0.05);
+}

@@ -470,7 +470,7 @@ namespace Backend.Helper
                            l.Continent as LocationContinent
                     FROM Deals d
                     INNER JOIN Locations l ON d.LocationId = l.Id
-                    WHERE d.Id = @Id AND d.IsActive = 1";
+                    WHERE d.Id = @Id";
 
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@Id", id);
@@ -715,7 +715,7 @@ namespace Backend.Helper
                            l.Continent as LocationContinent
                     FROM Deals d
                     INNER JOIN Locations l ON d.LocationId = l.Id
-                    WHERE d.IsActive = 1 AND d.UserId = @UserId";
+                    WHERE d.UserId = @UserId";
 
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@UserId", userId);

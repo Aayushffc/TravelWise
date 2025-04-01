@@ -40,6 +40,7 @@ export interface Deal {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
+  clickCount?: number;
 }
 
 export interface ItineraryDay {

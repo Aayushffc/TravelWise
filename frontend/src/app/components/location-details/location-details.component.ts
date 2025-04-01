@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterModule } from '@angular/router';
 import { LocationService } from '../../services/location.service';
 import { DealService } from '../../services/deal.service';
+import { DealCardComponent } from '../deal-card/deal-card.component';
+import { FormsModule } from '@angular/forms';
 
 interface Location {
   id: number;
@@ -33,7 +35,7 @@ interface Deal {
 @Component({
   selector: 'app-location-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, RouterModule, DealCardComponent],
   templateUrl: './location-details.component.html',
   styleUrls: ['./location-details.component.css']
 })

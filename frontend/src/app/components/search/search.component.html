@@ -228,6 +228,15 @@
             </button>
           </nav>
         </div>
+
+        <!-- For search component -->
+        <div class="search-results">
+          <app-deal-card
+            *ngFor="let deal of searchResponse.deals"
+            [deal]="deal"
+            (click)="onDealClick(deal.id)">
+          </app-deal-card>
+        </div>
       </div>
     </div>
   </div>

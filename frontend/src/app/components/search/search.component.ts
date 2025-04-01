@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { SearchService, SearchParams } from '../../services/search.service';
+import { DealCardComponent } from '../deal-card/deal-card.component';
 
 interface Deal {
   price: number;
@@ -12,7 +13,7 @@ interface Deal {
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, DealCardComponent],
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.css']
 })

@@ -5,6 +5,7 @@ import { Router, RouterLink, RouterModule } from '@angular/router';
 import { LocationService } from '../../services/location.service';
 import { DealService } from '../../services/deal.service';
 import { AuthService } from '../../services/auth.service';
+import { DealCardComponent } from '../deal-card/deal-card.component';
 
 interface Location {
   id: number;
@@ -33,7 +34,7 @@ interface Deal {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterModule],
+  imports: [CommonModule, FormsModule, RouterLink, RouterModule, DealCardComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })

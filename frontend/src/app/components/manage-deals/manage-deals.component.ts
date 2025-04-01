@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DealService } from '../../services/deal.service';
 import { LocationService } from '../../services/location.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink, RouterModule } from '@angular/router';
 import { Location as NgLocation } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { FileUploadService } from '../../services/file-upload.service';
 import { Deal } from '../../models/deal.model';
+import { ManageDealCardComponent } from '../manage-deal-card/manage-deal-card.component';
 
 interface Location {
   id: number;
@@ -23,53 +24,14 @@ interface Location {
 @Component({
   selector: 'app-manage-deals',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    ManageDealCardComponent
+  ],
   templateUrl: './manage-deals.component.html',
-  styles: [`
-    .photo-upload-preview {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .photo-preview-item {
-      position: relative;
-      aspect-ratio: 1;
-      overflow: hidden;
-      border-radius: 0.5rem;
-      border: 2px solid #e5e7eb;
-    }
-    .photo-preview-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .photo-preview-item button {
-      position: absolute;
-      top: 0.25rem;
-      right: 0.25rem;
-      padding: 0.25rem;
-      background-color: rgba(239, 68, 68, 0.9);
-      border-radius: 9999px;
-      color: white;
-      transition: all 0.2s;
-    }
-    .photo-preview-item button:hover {
-      background-color: rgba(220, 38, 38, 0.9);
-    }
-    .drop-zone {
-      border: 2px dashed #e5e7eb;
-      border-radius: 0.5rem;
-      padding: 2rem;
-      text-align: center;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-    .drop-zone.drag-over {
-      border-color: #6366f1;
-      background-color: rgba(99, 102, 241, 0.05);
-    }
-  `]
+  styleUrls: ['./manage-deals.component.css']
 })
 export class ManageDealsComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef;
@@ -132,6 +94,9 @@ export class ManageDealsComponent implements OnInit {
     policies: []
   };
 
+  showInactiveDeals: boolean = false;
+  filteredDeals: Deal[] = [];
+
   constructor(
     private dealService: DealService,
     private locationService: LocationService,
@@ -152,34 +117,69 @@ export class ManageDealsComponent implements OnInit {
       this.currentUserId = user.id;
       this.loadDeals();
     } else {
-      this.error = 'User not authenticated';
-      this.isLoading = false;
-      this.router.navigate(['/login']);
+      // Try to get user data with subscription in case it's loaded asynchronously
+      this.authService.user$.subscribe(userData => {
+        if (userData && userData.id) {
+          this.currentUserId = userData.id;
+          this.loadDeals();
+        } else {
+          this.error = 'User not authenticated';
+          this.isLoading = false;
+          this.router.navigate(['/login']);
+        }
+      });
     }
   }
 
   loadDeals(): void {
+    this.isLoading = true;
     if (!this.currentUserId) {
-      this.error = 'User not authenticated';
+      this.showErrorMessage('User not authenticated');
       this.isLoading = false;
-      this.router.navigate(['/login']);
       return;
     }
 
-    this.isLoading = true;
-    this.error = null;
-
     this.dealService.getDealsByUserId(this.currentUserId).subscribe({
       next: (deals: Deal[]) => {
+        console.log("Deals loaded:", deals.length);
+
+        // Check if deals have the isActive property
+        deals.forEach((deal, index) => {
+          console.log(`Deal ${index + 1} (${deal.title}) - isActive:`, deal.isActive);
+          // Ensure isActive is always a boolean
+          if (deal.isActive === undefined || deal.isActive === null) {
+            deal.isActive = true; // Default to true if not specified
+            console.log(`Fixed isActive for deal ${index + 1}`);
+          }
+        });
+
         this.deals = deals;
+        this.filterDeals();
         this.isLoading = false;
       },
       error: (error: any) => {
-        this.error = 'Failed to load deals';
-        this.isLoading = false;
+        this.showErrorMessage('Failed to load deals');
         console.error('Load deals error:', error);
+        this.isLoading = false;
       }
     });
+  }
+
+  filterDeals(): void {
+    if (this.showInactiveDeals) {
+      this.filteredDeals = [...this.deals]; // Show all deals
+    } else {
+      this.filteredDeals = this.deals.filter(deal => {
+        const isActive = deal.isActive === true;
+        console.log(`Deal "${deal.title}" (${deal.id}) - isActive: ${deal.isActive}, type: ${typeof deal.isActive}, passes filter: ${isActive}`);
+        return isActive;
+      });
+    }
+  }
+
+  toggleInactiveDeals(): void {
+    this.showInactiveDeals = !this.showInactiveDeals;
+    this.filterDeals();
   }
 
   loadLocations(): void {
@@ -490,12 +490,13 @@ export class ManageDealsComponent implements OnInit {
   deleteDeal(id: number): void {
     this.dealService.deleteDeal(id).subscribe({
       next: () => {
-        this.success = 'Deal deleted successfully';
+        this.showSuccessMessage('Deal deleted successfully');
         this.deals = this.deals.filter(deal => deal.id !== id);
+        this.filterDeals();
       },
       error: (error) => {
         console.error('Delete deal error:', error);
-        this.error = 'Failed to delete deal. Please try again later.';
+        this.showErrorMessage('Failed to delete deal. Please try again later.');
       }
     });
   }
@@ -528,8 +529,8 @@ export class ManageDealsComponent implements OnInit {
   }
 
   viewDealDetails(deal: Deal): void {
-    this.selectedDeal = deal;
-    this.showDetailsModal = true;
+    console.log('Navigating to deal details:', deal.id, deal.title);
+    this.router.navigate(['/agency/agency-deal-details', deal.id]);
   }
 
   closeDetailsModal(): void {
@@ -542,16 +543,57 @@ export class ManageDealsComponent implements OnInit {
     event.target.src = 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg';
   }
 
-  navigateToDealDetails(dealId: number): void {
-    this.router.navigate(['/agency/agency-deal-details', dealId]).then(
-      (success) => console.log('Navigation success:', success),
-      (error) => console.error('Navigation error:', error)
-    );
-  }
-
   confirmDelete(id: number): void {
     if (confirm('Are you sure you want to delete this deal? This action cannot be undone.')) {
       this.deleteDeal(id);
+    }
+  }
+
+  selectDeal(deal: Deal): void {
+    this.router.navigate(['/agency/agency-deal-details', deal.id]);
+  }
+
+  private showSuccessMessage(message: string): void {
+    this.success = message;
+    this.error = null;
+    setTimeout(() => {
+      this.success = null;
+    }, 3000); // Clear after 3 seconds
+  }
+
+  private showErrorMessage(message: string): void {
+    this.error = message;
+    this.success = null;
+    setTimeout(() => {
+      this.error = null;
+    }, 3000); // Clear after 3 seconds
+  }
+
+  toggleDealStatus(event: { id: number, isActive: boolean }): void {
+    const dealIndex = this.deals.findIndex(d => d.id === event.id);
+    if (dealIndex !== -1) {
+      // Create a copy of the deal to update
+      const updatedDeal = { ...this.deals[dealIndex], isActive: event.isActive };
+
+      this.dealService.updateDeal(event.id, updatedDeal).subscribe({
+        next: (response) => {
+          this.showSuccessMessage(`Deal ${event.isActive ? 'activated' : 'deactivated'} successfully`);
+
+          // Update the local deals array
+          this.deals[dealIndex].isActive = event.isActive;
+          this.filterDeals();
+        },
+        error: (error) => {
+          console.error('Toggle deal status error:', error);
+          this.showErrorMessage(`Failed to ${event.isActive ? 'activate' : 'deactivate'} deal`);
+
+          // Revert the local change if the server update failed
+          this.loadDeals(); // Reload all deals to ensure consistency
+        }
+      });
+    } else {
+      console.error("Deal not found in the deals array. ID:", event.id);
+      this.showErrorMessage("Deal not found");
     }
   }
 }
