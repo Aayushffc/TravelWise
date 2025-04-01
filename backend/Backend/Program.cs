@@ -41,22 +41,17 @@ builder
 builder.Services.AddScoped<IDBHelper, DBHelper>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Add CORS
+// CORS Configuration with fallback
+var allowedOriginsRaw =
+    builder.Configuration.GetValue<string>("allowedOrigins") ?? "http://localhost:4200";
+var allowedOrigins = allowedOriginsRaw.Split(',');
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(
-        "AllowSpecificOrigins",
-        policy =>
-        {
-            var allowedOrigins = builder.Configuration.GetValue<string>("allowedOrigins")?.Split(',')
-                ?? new[] { "http://localhost:4200", "https://travelwiseapp.netlify.app" };
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials()
-                  .WithExposedHeaders("Token-Expired");
-        }
-    );
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    });
 });
 
 // JWT Authentication
