@@ -13,7 +13,6 @@ export class AuthGuard {
     return this.authService.user$.pipe(
       map(user => {
         if (user !== null) {
-          // If user is authenticated, allow access to any route
           return true;
         }
 

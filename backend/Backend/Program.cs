@@ -200,7 +200,7 @@ builder.WebHost.ConfigureKestrel(options =>
 var app = builder.Build();
 
 // Middleware
-app.UseCors("AllowSpecificOrigins");
+app.UseCors();
 
 app.UseSwagger();
 app.UseSwaggerUI();
