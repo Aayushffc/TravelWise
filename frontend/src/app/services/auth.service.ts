@@ -79,7 +79,17 @@ export class AuthService {
       .pipe(
         tap(response => {
           if (response.token) {
-            this.saveToken(response);
+            // Create a proper AuthResponse object from the registration response
+            const authResponse: AuthResponse = {
+              id: response.id,
+              token: response.token,
+              email: response.email,
+              firstName: response.firstName,
+              lastName: response.lastName,
+              fullName: response.fullName,
+              emailConfirmed: response.emailConfirmed
+            };
+            this.saveToken(authResponse);
             this.startRefreshTokenTimer();
           }
         }),

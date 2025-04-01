@@ -107,10 +107,22 @@ export class RegisterComponent {
     };
 
     this.authService.register(userData).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         if (response.token) {
+          // Create a proper auth response object
+          const authResponse = {
+            id: response.user.id,
+            token: response.token,
+            email: response.user.email,
+            firstName: response.user.firstName,
+            lastName: response.user.lastName,
+            fullName: response.user.fullName,
+            emailConfirmed: response.user.emailConfirmed
+          };
+
           // Store the auth state
-          this.authService.saveToken(response);
+          this.authService.saveToken(authResponse);
+
           // Navigate to home and replace the current history entry
           this.router.navigate(['/home'], { replaceUrl: true });
         } else {
