@@ -41,7 +41,14 @@ namespace Backend.DTOs
         public bool IsActive { get; set; }
     }
 
-    public class DealUpdateDto : DealCreateDto { }
+    public class DealUpdateDto : DealCreateDto
+    {
+        public int? ViewCount { get; set; }
+        public DateTime? LastViewed { get; set; }
+        public int? ClickCount { get; set; }
+        public DateTime? LastClicked { get; set; }
+        public decimal? RelevanceScore { get; set; }
+    }
 
     public class DealResponseDto : DealCreateDto
     {
@@ -49,6 +56,24 @@ namespace Backend.DTOs
         public LocationResponseDto? Location { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public string? Status { get; set; }
+        public string? ApprovalStatus { get; set; }
+        public string? SearchKeywords { get; set; }
+        public int ClickCount { get; set; }
+        public int ViewCount { get; set; }
+        public DateTime LastClicked { get; set; }
+        public DateTime LastViewed { get; set; }
+        public decimal RelevanceScore { get; set; }
+        public decimal? AverageRating { get; set; }
+        public string? AgencyId { get; set; }
+        public string? Tags { get; set; }
+        public string? Categories { get; set; }
+        public string? Seasons { get; set; }
+        public string? DifficultyLevel { get; set; }
+        public bool IsInstantBooking { get; set; }
+        public bool IsLastMinuteDeal { get; set; }
+        public DateTime? ValidFrom { get; set; }
+        public DateTime? ValidUntil { get; set; }
     }
 
     public class ItineraryDay

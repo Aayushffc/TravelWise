@@ -1,7 +1,7 @@
 import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterModule } from '@angular/router';
 import { LocationService } from '../../services/location.service';
 import { DealService } from '../../services/deal.service';
 import { AuthService } from '../../services/auth.service';
@@ -33,7 +33,7 @@ interface Deal {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, RouterModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
@@ -137,7 +137,11 @@ export class HomeComponent implements OnInit {
 
   search(): void {
     if (this.searchTerm.trim()) {
-      this.router.navigate(['/search'], { queryParams: { term: this.searchTerm } });
+      this.router.navigate(['/home/search'], {
+        queryParams: {
+          searchTerm: this.searchTerm.trim()
+        }
+      });
     }
   }
 

@@ -1,0 +1,234 @@
+<div class="min-h-screen bg-gray-100">
+  <!-- Search Header -->
+  <div class="bg-white shadow">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 max-w-2xl">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="searchParams.searchTerm"
+              (ngModelChange)="onSearchTermChange()"
+              placeholder="Search destinations, deals, or agencies..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            >
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <i class="fas fa-search text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- Filters Sidebar -->
+      <div class="lg:w-64 flex-shrink-0">
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
+
+          <!-- Sort By -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+            <select
+              [(ngModel)]="searchParams.sortBy"
+              (ngModelChange)="onFilterChange()"
+              class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option *ngFor="let option of sortOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Price Range -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+            <div class="flex gap-2">
+              <input
+                type="number"
+                [(ngModel)]="searchParams.minPrice"
+                (ngModelChange)="onFilterChange()"
+                placeholder="Min"
+                class="w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+              <input
+                type="number"
+                [(ngModel)]="searchParams.maxPrice"
+                (ngModelChange)="onFilterChange()"
+                placeholder="Max"
+                class="w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+            </div>
+          </div>
+
+          <!-- Days Range -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Duration (Days)</label>
+            <div class="flex gap-2">
+              <input
+                type="number"
+                [(ngModel)]="searchParams.minDays"
+                (ngModelChange)="onFilterChange()"
+                placeholder="Min"
+                class="w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+              <input
+                type="number"
+                [(ngModel)]="searchParams.maxDays"
+                (ngModelChange)="onFilterChange()"
+                placeholder="Max"
+                class="w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+            </div>
+          </div>
+
+          <!-- Package Type -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Package Type</label>
+            <select
+              [(ngModel)]="searchParams.packageType"
+              (ngModelChange)="onFilterChange()"
+              class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Types</option>
+              <option *ngFor="let type of packageTypes" [value]="type">
+                {{ type }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Difficulty Level -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty Level</label>
+            <select
+              [(ngModel)]="searchParams.difficultyLevel"
+              (ngModelChange)="onFilterChange()"
+              class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Levels</option>
+              <option *ngFor="let level of difficultyLevels" [value]="level">
+                {{ level }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Season -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Season</label>
+            <select
+              [(ngModel)]="searchParams.seasons"
+              (ngModelChange)="onFilterChange()"
+              class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Seasons</option>
+              <option *ngFor="let season of seasons" [value]="season">
+                {{ season }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Additional Filters -->
+          <div class="space-y-2">
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                [(ngModel)]="searchParams.isInstantBooking"
+                (ngModelChange)="onFilterChange()"
+                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              >
+              <span class="ml-2 text-sm text-gray-700">Instant Booking</span>
+            </label>
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                [(ngModel)]="searchParams.isLastMinuteDeal"
+                (ngModelChange)="onFilterChange()"
+                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              >
+              <span class="ml-2 text-sm text-gray-700">Last Minute Deals</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="flex-1">
+        <!-- Results Header -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6">
+          <div class="flex justify-between items-center">
+            <h2 class="text-lg font-medium text-gray-900">
+              {{ searchResponse.totalCount }} deals found
+            </h2>
+            <div class="text-sm text-gray-500">
+              Page {{ searchResponse.currentPage }} of {{ searchResponse.totalPages }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="errorMessage" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p class="text-sm text-red-600">{{ errorMessage }}</p>
+        </div>
+
+        <!-- Results Grid -->
+        <div *ngIf="!isLoading && !errorMessage" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let deal of searchResponse.deals"
+               class="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow duration-200">
+            <a [routerLink]="['/deals', deal.id]" (click)="onDealClick(deal.id)">
+              <div class="relative">
+                <img [src]="deal.photos?.[0] || 'assets/images/placeholder.jpg'"
+                     [alt]="deal.title"
+                     class="w-full h-48 object-cover">
+                <div *ngIf="deal.discountPercentage > 0"
+                     class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-sm">
+                  {{ deal.discountPercentage }}% OFF
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">{{ deal.title }}</h3>
+                <p class="text-sm text-gray-500 mb-2">{{ deal.locationName }}</p>
+                <div class="flex items-center mb-2">
+                  <i class="fas fa-star text-yellow-400 mr-1"></i>
+                  <span class="text-sm text-gray-600">{{ deal.averageRating | number:'1.1-1' }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <div class="text-lg font-bold text-indigo-600">
+                    ${{ deal.price | number:'1.0-0' }}
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    {{ deal.daysCount }} days
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="searchResponse.totalPages > 1" class="mt-6 flex justify-center">
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            <button
+              *ngFor="let page of [].constructor(searchResponse.totalPages); let i = index"
+              (click)="onPageChange(i + 1)"
+              [class.bg-indigo-50]="searchResponse.currentPage === i + 1"
+              [class.text-indigo-600]="searchResponse.currentPage === i + 1"
+              [class.bg-white]="searchResponse.currentPage !== i + 1"
+              [class.text-gray-500]="searchResponse.currentPage !== i + 1"
+              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium hover:bg-gray-50"
+            >
+              {{ i + 1 }}
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

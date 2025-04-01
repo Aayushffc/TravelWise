@@ -159,7 +159,8 @@ namespace Backend.Helper
             const string sql =
                 @"
                 SELECT Id, Name, Description, ImageUrl, IsPopular, IsActive, 
-                       ClickCount, RequestCallCount, CreatedAt, UpdatedAt
+                       ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
+                       Country, Continent
                 FROM Locations
                 WHERE IsActive = 1
                 ORDER BY Name";
@@ -184,7 +185,8 @@ namespace Backend.Helper
             const string sql =
                 @"
                 SELECT TOP (@Limit) Id, Name, Description, ImageUrl, IsPopular, IsActive, 
-                       ClickCount, RequestCallCount, CreatedAt, UpdatedAt
+                       ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
+                       Country, Continent
                 FROM Locations
                 WHERE IsActive = 1 AND IsPopular = 1
                 ORDER BY ClickCount DESC";
@@ -210,7 +212,8 @@ namespace Backend.Helper
             const string sql =
                 @"
                 SELECT Id, Name, Description, ImageUrl, IsPopular, IsActive, 
-                       ClickCount, RequestCallCount, CreatedAt, UpdatedAt
+                       ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
+                       Country, Continent
                 FROM Locations
                 WHERE Id = @Id AND IsActive = 1";
 
@@ -346,68 +349,137 @@ namespace Backend.Helper
 
         public async Task<IEnumerable<DealResponseDto>> GetDeals(int? locationId = null)
         {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            var sql =
-                @"
-                SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
-                       l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
-                       l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
-                       l.RequestCallCount as LocationRequestCallCount,
-                       l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
-                FROM Deals d
-                INNER JOIN Locations l ON d.LocationId = l.Id
-                WHERE d.IsActive = 1";
-
-            if (locationId.HasValue)
+            try
             {
-                sql += " AND d.LocationId = @LocationId";
-            }
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            using var command = new SqlCommand(sql, connection);
-            if (locationId.HasValue)
+                var sql =
+                    @"
+                    SELECT d.Id, d.Title, d.LocationId, d.UserId, d.Price, d.DiscountedPrice, 
+                           d.DiscountPercentage, d.Rating, d.DaysCount, d.NightsCount, 
+                           d.StartPoint, d.EndPoint, d.Duration, d.Description, d.Photos,
+                           d.ElderlyFriendly, d.InternetIncluded, d.TravelIncluded, 
+                           d.MealsIncluded, d.SightseeingIncluded, d.StayIncluded,
+                           d.AirTransfer, d.RoadTransfer, d.TrainTransfer, 
+                           d.TravelCostIncluded, d.GuideIncluded, d.PhotographyIncluded,
+                           d.InsuranceIncluded, d.VisaIncluded, d.Itinerary, 
+                           d.PackageOptions, d.MapUrl, d.Policies, d.PackageType,
+                           d.IsActive, d.CreatedAt, d.UpdatedAt, d.Status,
+                           d.ApprovalStatus, d.SearchKeywords,
+                           l.Name as LocationName, 
+                           l.Description as LocationDescription,
+                           l.ImageUrl as LocationImageUrl, 
+                           l.IsPopular as LocationIsPopular,
+                           l.IsActive as LocationIsActive, 
+                           l.ClickCount as LocationClickCount,
+                           l.RequestCallCount as LocationRequestCallCount,
+                           l.CreatedAt as LocationCreatedAt, 
+                           l.UpdatedAt as LocationUpdatedAt,
+                           l.Country as LocationCountry,
+                           l.Continent as LocationContinent
+                    FROM Deals d
+                    INNER JOIN Locations l ON d.LocationId = l.Id
+                    WHERE d.IsActive = 1";
+
+                if (locationId.HasValue)
+                {
+                    sql += " AND d.LocationId = @LocationId";
+                }
+
+                using var command = new SqlCommand(sql, connection);
+                if (locationId.HasValue)
+                {
+                    command.Parameters.AddWithValue("@LocationId", locationId.Value);
+                }
+
+                var deals = new List<DealResponseDto>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    try
+                    {
+                        deals.Add(MapToDealResponseDto(reader));
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but continue processing other deals
+                        Console.WriteLine($"Error mapping deal: {ex.Message}");
+                        continue;
+                    }
+                }
+
+                return deals;
+            }
+            catch (Exception ex)
             {
-                command.Parameters.AddWithValue("@LocationId", locationId.Value);
+                Console.WriteLine($"Error in GetDeals: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
             }
-
-            var deals = new List<DealResponseDto>();
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                deals.Add(MapToDealResponseDto(reader));
-            }
-
-            return deals;
         }
 
         public async Task<DealResponseDto> GetDealById(int id)
         {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            const string sql =
-                @"
-                SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
-                       l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
-                       l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
-                       l.RequestCallCount as LocationRequestCallCount,
-                       l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt,
-                       d.UserId
-                FROM Deals d
-                INNER JOIN Locations l ON d.LocationId = l.Id
-                WHERE d.Id = @Id AND d.IsActive = 1";
-
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Id", id);
-
-            using var reader = await command.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+            try
             {
-                return MapToDealResponseDto(reader);
-            }
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            return null;
+                const string sql =
+                    @"
+                    SELECT d.Id, d.Title, d.LocationId, d.UserId, d.Price, d.DiscountedPrice, 
+                           d.DiscountPercentage, d.Rating, d.DaysCount, d.NightsCount, 
+                           d.StartPoint, d.EndPoint, d.Duration, d.Description, d.Photos,
+                           d.ElderlyFriendly, d.InternetIncluded, d.TravelIncluded, 
+                           d.MealsIncluded, d.SightseeingIncluded, d.StayIncluded,
+                           d.AirTransfer, d.RoadTransfer, d.TrainTransfer, 
+                           d.TravelCostIncluded, d.GuideIncluded, d.PhotographyIncluded,
+                           d.InsuranceIncluded, d.VisaIncluded, d.Itinerary, 
+                           d.PackageOptions, d.MapUrl, d.Policies, d.PackageType,
+                           d.IsActive, d.CreatedAt, d.UpdatedAt, d.Status,
+                           d.ApprovalStatus, d.SearchKeywords,
+                           l.Name as LocationName, 
+                           l.Description as LocationDescription,
+                           l.ImageUrl as LocationImageUrl, 
+                           l.IsPopular as LocationIsPopular,
+                           l.IsActive as LocationIsActive, 
+                           l.ClickCount as LocationClickCount,
+                           l.RequestCallCount as LocationRequestCallCount,
+                           l.CreatedAt as LocationCreatedAt, 
+                           l.UpdatedAt as LocationUpdatedAt,
+                           l.Country as LocationCountry,
+                           l.Continent as LocationContinent
+                    FROM Deals d
+                    INNER JOIN Locations l ON d.LocationId = l.Id
+                    WHERE d.Id = @Id AND d.IsActive = 1";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    try
+                    {
+                        return MapToDealResponseDto(reader);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error mapping deal: {ex.Message}");
+                        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                        throw;
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetDealById: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         public async Task<DealResponseDto> CreateDeal(DealCreateDto deal)
@@ -594,31 +666,66 @@ namespace Backend.Helper
 
         public async Task<IEnumerable<DealResponseDto>> GetDealsByUserId(string userId)
         {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            const string sql =
-                @"
-                SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
-                       l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
-                       l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
-                       l.RequestCallCount as LocationRequestCallCount,
-                       l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
-                FROM Deals d
-                INNER JOIN Locations l ON d.LocationId = l.Id
-                WHERE d.IsActive = 1 AND d.UserId = @UserId";
-
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@UserId", userId);
-
-            var deals = new List<DealResponseDto>();
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            try
             {
-                deals.Add(MapToDealResponseDto(reader));
-            }
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            return deals;
+                const string sql =
+                    @"
+                    SELECT d.Id, d.Title, d.LocationId, d.UserId, d.Price, d.DiscountedPrice, 
+                           d.DiscountPercentage, d.Rating, d.DaysCount, d.NightsCount, 
+                           d.StartPoint, d.EndPoint, d.Duration, d.Description, d.Photos,
+                           d.ElderlyFriendly, d.InternetIncluded, d.TravelIncluded, 
+                           d.MealsIncluded, d.SightseeingIncluded, d.StayIncluded,
+                           d.AirTransfer, d.RoadTransfer, d.TrainTransfer, 
+                           d.TravelCostIncluded, d.GuideIncluded, d.PhotographyIncluded,
+                           d.InsuranceIncluded, d.VisaIncluded, d.Itinerary, 
+                           d.PackageOptions, d.MapUrl, d.Policies, d.PackageType,
+                           d.IsActive, d.CreatedAt, d.UpdatedAt, d.Status,
+                           d.ApprovalStatus, d.SearchKeywords,
+                           l.Name as LocationName, 
+                           l.Description as LocationDescription,
+                           l.ImageUrl as LocationImageUrl, 
+                           l.IsPopular as LocationIsPopular,
+                           l.IsActive as LocationIsActive, 
+                           l.ClickCount as LocationClickCount,
+                           l.RequestCallCount as LocationRequestCallCount,
+                           l.CreatedAt as LocationCreatedAt, 
+                           l.UpdatedAt as LocationUpdatedAt,
+                           l.Country as LocationCountry,
+                           l.Continent as LocationContinent
+                    FROM Deals d
+                    INNER JOIN Locations l ON d.LocationId = l.Id
+                    WHERE d.IsActive = 1 AND d.UserId = @UserId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                var deals = new List<DealResponseDto>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    try
+                    {
+                        deals.Add(MapToDealResponseDto(reader));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error mapping deal: {ex.Message}");
+                        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                        continue;
+                    }
+                }
+
+                return deals;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetDealsByUserId: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         #endregion
@@ -637,6 +744,12 @@ namespace Backend.Helper
                 ImageUrl = reader.IsDBNull(reader.GetOrdinal("ImageUrl"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("ImageUrl")),
+                Country = reader.IsDBNull(reader.GetOrdinal("Country"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Country")),
+                Continent = reader.IsDBNull(reader.GetOrdinal("Continent"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Continent")),
                 IsPopular = reader.GetBoolean(reader.GetOrdinal("IsPopular")),
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                 ClickCount = reader.GetInt32(reader.GetOrdinal("ClickCount")),
@@ -695,6 +808,15 @@ namespace Backend.Helper
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                Status = reader.IsDBNull(reader.GetOrdinal("Status"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Status")),
+                ApprovalStatus = reader.IsDBNull(reader.GetOrdinal("ApprovalStatus"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("ApprovalStatus")),
+                SearchKeywords = reader.IsDBNull(reader.GetOrdinal("SearchKeywords"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("SearchKeywords")),
                 Location = new LocationResponseDto
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("LocationId")),
@@ -705,6 +827,12 @@ namespace Backend.Helper
                     ImageUrl = reader.IsDBNull(reader.GetOrdinal("LocationImageUrl"))
                         ? null
                         : reader.GetString(reader.GetOrdinal("LocationImageUrl")),
+                    Country = reader.IsDBNull(reader.GetOrdinal("LocationCountry"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("LocationCountry")),
+                    Continent = reader.IsDBNull(reader.GetOrdinal("LocationContinent"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("LocationContinent")),
                     IsPopular = reader.GetBoolean(reader.GetOrdinal("LocationIsPopular")),
                     IsActive = reader.GetBoolean(reader.GetOrdinal("LocationIsActive")),
                     ClickCount = reader.GetInt32(reader.GetOrdinal("LocationClickCount")),

@@ -19,6 +19,7 @@ import { ManageLocationsComponent } from './components/admin/manage-locations/ma
 import { ManageDealsComponent } from './components/manage-deals/manage-deals.component';
 import { AgencyDealDetailsComponent } from './components/agency-deal-details/agency-deal-details.component';
 import { DealDetailsComponent } from './components/deal-details/deal-details.component';
+import { SearchComponent } from './components/search/search.component';
 
 export const routes: Routes = [
   {
@@ -65,6 +66,11 @@ export const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'home/search',
+    component: SearchComponent,
     canActivate: [AuthGuard]
   },
   {

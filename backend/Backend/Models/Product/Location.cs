@@ -8,6 +8,8 @@ namespace Backend.Models
         public string? Name { get; set; }
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
+        public string? Country { get; set; }
+        public string? Continent { get; set; }
         public int ClickCount { get; set; } = 0;
         public int RequestCallCount { get; set; } = 0;
         public bool IsPopular { get; set; } = false;

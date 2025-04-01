@@ -20,6 +20,27 @@ namespace Backend.DBContext
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<Deal>(entity =>
+            {
+                entity.Property(e => e.AverageRating).HasPrecision(10, 2);
+
+                entity.Property(e => e.DiscountedPrice).HasPrecision(18, 2);
+
+                entity.Property(e => e.Latitude).HasPrecision(9, 6);
+
+                entity.Property(e => e.Longitude).HasPrecision(9, 6);
+
+                entity.Property(e => e.Price).HasPrecision(18, 2);
+
+                entity.Property(e => e.Rating).HasPrecision(10, 2);
+
+                entity.Property(e => e.RelevanceScore).HasPrecision(12, 4);
+
+                entity.Property(e => e.ServiceCharge).HasPrecision(18, 2);
+
+                entity.Property(e => e.TaxAmount).HasPrecision(18, 2);
+            });
+
             builder
                 .Entity<AgencyApplication>()
                 .HasOne(a => a.User)
