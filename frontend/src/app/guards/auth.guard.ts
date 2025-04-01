@@ -13,9 +13,15 @@ export class AuthGuard {
     return this.authService.user$.pipe(
       map(user => {
         if (user !== null) {
+          // If user is authenticated, allow access to any route
           return true;
         }
-        this.router.navigate(['/login']);
+
+        // If user is not authenticated, redirect to login
+        // but preserve the attempted URL for redirect after login
+        this.router.navigate(['/login'], {
+          queryParams: { returnUrl: this.router.url }
+        });
         return false;
       })
     );

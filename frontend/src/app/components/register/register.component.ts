@@ -109,10 +109,14 @@ export class RegisterComponent {
     this.authService.register(userData).subscribe({
       next: (response) => {
         if (response.token) {
-          this.router.navigate(['/home']);
+          // Store the auth state
+          this.authService.saveToken(response);
+          // Navigate to home and replace the current history entry
+          this.router.navigate(['/home'], { replaceUrl: true });
         } else {
           this.router.navigate(['/verify-email'], {
-            queryParams: { email: this.email }
+            queryParams: { email: this.email },
+            replaceUrl: true
           });
         }
       },
