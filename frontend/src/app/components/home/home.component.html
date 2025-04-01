@@ -100,35 +100,48 @@
   </div>
 
   <!-- Locations Scroll Section -->
-  <section *ngIf="!isLoading" class="py-8 bg-gray-50">
+  <section *ngIf="!isLoading" class="py-6 bg-gray-50">
     <div class="container mx-auto px-6">
-      <h2 class="text-2xl font-semibold text-gray-800 mb-6">Popular Destinations</h2>
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Popular Destinations</h2>
 
       <div class="relative">
         <!-- Left Arrow -->
         <button
           (click)="scrollLocations('left')"
-          class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-2 z-10"
+          class="arrow-left scroll-arrow"
+          aria-label="Scroll locations left"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
-        <div id="locations-container" class="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
+        <div id="locations-container" class="flex space-x-3 overflow-x-auto pb-3 scrollbar-hide scroll-smooth">
           <div
             *ngFor="let location of locations"
-            class="flex-shrink-0 w-48 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
+            class="flex-shrink-0 w-36 location-card cursor-pointer"
             (click)="viewLocation(location.id)"
           >
-            <img
-              [src]="location.imageUrl || 'assets/placeholder-location.jpg'"
-              [alt]="location.name"
-              class="w-full h-32 object-cover"
-            >
-            <div class="p-3">
-              <h3 class="text-md font-semibold text-gray-800">{{ location.name }}</h3>
-              <p class="text-gray-600 text-xs mt-1">{{ location.description ? (location.description | slice:0:60) + (location.description.length > 60 ? '...' : '') : 'No description available' }}</p>
+            <!-- Location Image with Overlay -->
+            <div class="relative h-40 w-full overflow-hidden rounded-lg">
+              <img
+                [src]="location.imageUrl || 'assets/placeholder-location.jpg'"
+                [alt]="location.name"
+                class="location-image w-full h-full object-cover"
+              >
+              <!-- Gradient Overlay -->
+              <div class="location-overlay absolute inset-0"></div>
+
+              <!-- Popular/New Badge - Top Right -->
+              <span class="location-badge absolute top-2 right-2 z-10"
+                [ngClass]="location.isPopular ? 'badge-popular' : 'badge-new'">
+                {{location.isPopular ? 'Popular' : 'New'}}
+              </span>
+
+              <!-- Location Name (on image) -->
+              <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
+                <h3 class="location-name">{{ location.name }}</h3>
+              </div>
             </div>
           </div>
         </div>
@@ -136,9 +149,10 @@
         <!-- Right Arrow -->
         <button
           (click)="scrollLocations('right')"
-          class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-2 z-10"
+          class="arrow-right scroll-arrow"
+          aria-label="Scroll locations right"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>

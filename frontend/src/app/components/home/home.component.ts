@@ -12,6 +12,8 @@ interface Location {
   name: string;
   description: string | null;
   imageUrl: string;
+  isPopular?: boolean;
+  clickCount?: number;
 }
 
 interface Deal {
