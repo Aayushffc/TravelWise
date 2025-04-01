@@ -153,28 +153,46 @@ namespace Backend.Helper
 
         public async Task<IEnumerable<LocationResponseDto>> GetLocations()
         {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            const string sql =
-                @"
-                SELECT Id, Name, Description, ImageUrl, IsPopular, IsActive, 
-                       ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
-                       Country, Continent
-                FROM Locations
-                WHERE IsActive = 1
-                ORDER BY Name";
-
-            using var command = new SqlCommand(sql, connection);
-            var locations = new List<LocationResponseDto>();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            try
             {
-                locations.Add(MapToLocationResponseDto(reader));
-            }
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            return locations;
+                const string sql =
+                    @"
+                    SELECT Id, Name, Description, ImageUrl, IsPopular, IsActive, 
+                           ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
+                           Country, Continent
+                    FROM Locations
+                    WHERE IsActive = 1
+                    ORDER BY Name";
+
+                using var command = new SqlCommand(sql, connection);
+                var locations = new List<LocationResponseDto>();
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    try
+                    {
+                        locations.Add(MapToLocationResponseDto(reader));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error mapping location: {ex.Message}");
+                        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                        continue;
+                    }
+                }
+
+                return locations;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetLocations: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         public async Task<IEnumerable<LocationResponseDto>> GetPopularLocations(int limit = 10)

@@ -48,10 +48,13 @@ builder.Services.AddCors(options =>
         "AllowSpecificOrigins",
         policy =>
         {
-            var allowedOrigins =
-                builder.Configuration.GetValue<string>("allowedOrigins")?.Split(',')
-                ?? new[] { "http://localhost:4200" };
-            policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+            var allowedOrigins = builder.Configuration.GetValue<string>("allowedOrigins")?.Split(',')
+                ?? new[] { "http://localhost:4200", "https://travelwiseapp.netlify.app" };
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials()
+                  .WithExposedHeaders("Token-Expired");
         }
     );
 });
