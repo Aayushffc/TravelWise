@@ -51,6 +51,7 @@ namespace Backend.Controllers
                     return NotFound($"Deal with ID {id} not found");
                 }
 
+                await _dbHelper.IncrementDealClickCount(id);
                 return deal;
             }
             catch (Exception ex)

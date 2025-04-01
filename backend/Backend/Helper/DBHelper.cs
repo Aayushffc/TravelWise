@@ -541,48 +541,57 @@ namespace Backend.Helper
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            const string sql =
-                @"
+            // Build SQL dynamically to only update the fields that are provided
+            var updateFields = new List<string>();
+            var parameters = new List<SqlParameter>();
+
+            // Add parameters only for properties that have values
+            if (deal.ViewCount.HasValue)
+            {
+                updateFields.Add("ViewCount = @ViewCount");
+                parameters.Add(new SqlParameter("@ViewCount", deal.ViewCount.Value));
+            }
+
+            if (deal.LastViewed.HasValue)
+            {
+                updateFields.Add("LastViewed = @LastViewed");
+                parameters.Add(new SqlParameter("@LastViewed", deal.LastViewed.Value));
+            }
+
+            if (deal.ClickCount.HasValue)
+            {
+                updateFields.Add("ClickCount = @ClickCount");
+                parameters.Add(new SqlParameter("@ClickCount", deal.ClickCount.Value));
+            }
+
+            if (deal.LastClicked.HasValue)
+            {
+                updateFields.Add("LastClicked = @LastClicked");
+                parameters.Add(new SqlParameter("@LastClicked", deal.LastClicked.Value));
+            }
+
+            if (deal.RelevanceScore.HasValue)
+            {
+                updateFields.Add("RelevanceScore = @RelevanceScore");
+                parameters.Add(new SqlParameter("@RelevanceScore", deal.RelevanceScore.Value));
+            }
+
+            // Only proceed if there are fields to update
+            if (updateFields.Count == 0)
+            {
+                return true; // Nothing to update
+            }
+
+            updateFields.Add("UpdatedAt = GETUTCDATE()");
+
+            var sql = $@"
                 UPDATE Deals
-                SET Title = @Title,
-                    LocationId = @LocationId,
-                    Price = @Price,
-                    DiscountedPrice = @DiscountedPrice,
-                    DiscountPercentage = @DiscountPercentage,
-                    Rating = @Rating,
-                    DaysCount = @DaysCount,
-                    NightsCount = @NightsCount,
-                    StartPoint = @StartPoint,
-                    EndPoint = @EndPoint,
-                    Duration = @Duration,
-                    Description = @Description,
-                    Photos = @Photos,
-                    ElderlyFriendly = @ElderlyFriendly,
-                    InternetIncluded = @InternetIncluded,
-                    TravelIncluded = @TravelIncluded,
-                    MealsIncluded = @MealsIncluded,
-                    SightseeingIncluded = @SightseeingIncluded,
-                    StayIncluded = @StayIncluded,
-                    AirTransfer = @AirTransfer,
-                    RoadTransfer = @RoadTransfer,
-                    TrainTransfer = @TrainTransfer,
-                    TravelCostIncluded = @TravelCostIncluded,
-                    GuideIncluded = @GuideIncluded,
-                    PhotographyIncluded = @PhotographyIncluded,
-                    InsuranceIncluded = @InsuranceIncluded,
-                    VisaIncluded = @VisaIncluded,
-                    Itinerary = @Itinerary,
-                    PackageOptions = @PackageOptions,
-                    MapUrl = @MapUrl,
-                    Policies = @Policies,
-                    PackageType = @PackageType,
-                    IsActive = @IsActive,
-                    UpdatedAt = GETUTCDATE()
+                SET {string.Join(", ", updateFields)}
                 WHERE Id = @Id";
 
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Id", id);
-            AddDealParameters(command, deal);
+            command.Parameters.AddRange(parameters.ToArray());
 
             return await command.ExecuteNonQueryAsync() > 0;
         }
@@ -744,6 +753,24 @@ namespace Backend.Helper
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }
+        }
+
+        public async Task<bool> IncrementDealClickCount(int id)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql =
+                @"
+                UPDATE Deals
+                SET ClickCount = ClickCount + 1,
+                    UpdatedAt = GETUTCDATE()
+                WHERE Id = @Id";
+
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+            return await command.ExecuteNonQueryAsync() > 0;
         }
 
         #endregion

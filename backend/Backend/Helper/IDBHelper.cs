@@ -40,5 +40,6 @@ namespace Backend.Helper
             int? maxDays = null,
             string? packageType = null
         );
+        Task<bool> IncrementDealClickCount(int id);
     }
 }

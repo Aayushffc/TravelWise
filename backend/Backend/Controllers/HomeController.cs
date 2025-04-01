@@ -50,23 +50,51 @@ namespace Backend.Controllers
             {
                 var deals = await _dbHelper.GetDeals(null);
 
-                // Apply search filters
-                var filteredDeals = deals.Where(d =>
-                    d.Status == "Active" && d.ApprovalStatus == "Approved"
-                );
+                _logger.LogInformation($"Total deals before filtering: {deals.Count()}");
+
+                // Apply search filters - make status filtering more lenient
+                var filteredDeals = deals;
+
+                // Optional status filtering - only if the fields have values
+                if (deals.Any(d => d.Status != null && d.ApprovalStatus != null))
+                {
+                    filteredDeals = filteredDeals.Where(d =>
+                        (d.Status == null || d.Status == "Active") &&
+                        (d.ApprovalStatus == null || d.ApprovalStatus == "Approved")
+                    );
+                }
+
+                _logger.LogInformation($"Deals after status filtering: {filteredDeals.Count()}");
 
                 // Apply search term
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
                     searchTerm = searchTerm.ToLower();
+                    _logger.LogInformation($"Searching for term: '{searchTerm}'");
+
+                    var beforeCount = filteredDeals.Count();
                     filteredDeals = filteredDeals.Where(d =>
-                        d.Title?.ToLower().Contains(searchTerm) == true
-                        || d.Description?.ToLower().Contains(searchTerm) == true
-                        || d.Location?.Name?.ToLower().Contains(searchTerm) == true
-                        || d.Location?.Country?.ToLower().Contains(searchTerm) == true
-                        || d.Location?.Continent?.ToLower().Contains(searchTerm) == true
-                        || d.SearchKeywords?.ToLower().Contains(searchTerm) == true
+                        (d.Title != null && d.Title.ToLower().Contains(searchTerm))
+                        || (d.Description != null && d.Description.ToLower().Contains(searchTerm))
+                        || (d.Location?.Name != null && d.Location.Name.ToLower().Contains(searchTerm))
+                        || (d.Location?.Country != null && d.Location.Country.ToLower().Contains(searchTerm))
+                        || (d.Location?.Continent != null && d.Location.Continent.ToLower().Contains(searchTerm))
+                        || (d.SearchKeywords != null && d.SearchKeywords.ToLower().Contains(searchTerm))
+                        // Check exact match on title as well
+                        || (d.Title != null && d.Title.ToLower() == searchTerm)
                     );
+
+                    _logger.LogInformation($"Deals after search term filtering: {filteredDeals.Count()} (from {beforeCount})");
+
+                    // If no deals found, log some sample titles for debugging
+                    if (filteredDeals.Count() == 0 && deals.Any())
+                    {
+                        _logger.LogInformation("Sample deal titles available:");
+                        foreach (var deal in deals.Take(5))
+                        {
+                            _logger.LogInformation($"  - Deal {deal.Id}: '{deal.Title}' (Status: {deal.Status}, Approval: {deal.ApprovalStatus})");
+                        }
+                    }
                 }
 
                 // Apply price filter
@@ -147,20 +175,7 @@ namespace Backend.Controllers
                     .Take(pageSize)
                     .ToList();
 
-                // Update view count for viewed deals
-                foreach (var deal in paginatedDeals)
-                {
-                    deal.ViewCount++;
-                    deal.LastViewed = DateTime.UtcNow;
-                    await _dbHelper.UpdateDeal(
-                        deal.Id,
-                        new DealUpdateDto
-                        {
-                            ViewCount = deal.ViewCount,
-                            LastViewed = deal.LastViewed,
-                        }
-                    );
-                }
+                // We're no longer updating view counts automatically for search results to avoid SQL parameter issues
 
                 return Ok(
                     new SearchResponseDto

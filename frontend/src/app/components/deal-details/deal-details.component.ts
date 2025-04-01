@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DealService } from '../../services/deal.service';
 import { FormsModule } from '@angular/forms';
+import { Location } from '@angular/common';
 
 interface Deal {
   id: number;
@@ -80,7 +81,8 @@ export class DealDetailsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private dealService: DealService
+    private dealService: DealService,
+    private location: Location
   ) {}
 
   ngOnInit(): void {
@@ -135,7 +137,7 @@ export class DealDetailsComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/home']);
+    this.location.back();
   }
 
   addToWishlist(): void {
