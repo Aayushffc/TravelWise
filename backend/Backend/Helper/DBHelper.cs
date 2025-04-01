@@ -584,7 +584,8 @@ namespace Backend.Helper
 
             updateFields.Add("UpdatedAt = GETUTCDATE()");
 
-            var sql = $@"
+            var sql =
+                $@"
                 UPDATE Deals
                 SET {string.Join(", ", updateFields)}
                 WHERE Id = @Id";

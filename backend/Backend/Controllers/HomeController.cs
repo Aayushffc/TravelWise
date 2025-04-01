@@ -59,8 +59,8 @@ namespace Backend.Controllers
                 if (deals.Any(d => d.Status != null && d.ApprovalStatus != null))
                 {
                     filteredDeals = filteredDeals.Where(d =>
-                        (d.Status == null || d.Status == "Active") &&
-                        (d.ApprovalStatus == null || d.ApprovalStatus == "Approved")
+                        (d.Status == null || d.Status == "Active")
+                        && (d.ApprovalStatus == null || d.ApprovalStatus == "Approved")
                     );
                 }
 
@@ -76,15 +76,29 @@ namespace Backend.Controllers
                     filteredDeals = filteredDeals.Where(d =>
                         (d.Title != null && d.Title.ToLower().Contains(searchTerm))
                         || (d.Description != null && d.Description.ToLower().Contains(searchTerm))
-                        || (d.Location?.Name != null && d.Location.Name.ToLower().Contains(searchTerm))
-                        || (d.Location?.Country != null && d.Location.Country.ToLower().Contains(searchTerm))
-                        || (d.Location?.Continent != null && d.Location.Continent.ToLower().Contains(searchTerm))
-                        || (d.SearchKeywords != null && d.SearchKeywords.ToLower().Contains(searchTerm))
+                        || (
+                            d.Location?.Name != null
+                            && d.Location.Name.ToLower().Contains(searchTerm)
+                        )
+                        || (
+                            d.Location?.Country != null
+                            && d.Location.Country.ToLower().Contains(searchTerm)
+                        )
+                        || (
+                            d.Location?.Continent != null
+                            && d.Location.Continent.ToLower().Contains(searchTerm)
+                        )
+                        || (
+                            d.SearchKeywords != null
+                            && d.SearchKeywords.ToLower().Contains(searchTerm)
+                        )
                         // Check exact match on title as well
                         || (d.Title != null && d.Title.ToLower() == searchTerm)
                     );
 
-                    _logger.LogInformation($"Deals after search term filtering: {filteredDeals.Count()} (from {beforeCount})");
+                    _logger.LogInformation(
+                        $"Deals after search term filtering: {filteredDeals.Count()} (from {beforeCount})"
+                    );
 
                     // If no deals found, log some sample titles for debugging
                     if (filteredDeals.Count() == 0 && deals.Any())
@@ -92,7 +106,9 @@ namespace Backend.Controllers
                         _logger.LogInformation("Sample deal titles available:");
                         foreach (var deal in deals.Take(5))
                         {
-                            _logger.LogInformation($"  - Deal {deal.Id}: '{deal.Title}' (Status: {deal.Status}, Approval: {deal.ApprovalStatus})");
+                            _logger.LogInformation(
+                                $"  - Deal {deal.Id}: '{deal.Title}' (Status: {deal.Status}, Approval: {deal.ApprovalStatus})"
+                            );
                         }
                     }
                 }

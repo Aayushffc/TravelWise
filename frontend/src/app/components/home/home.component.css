@@ -127,11 +127,11 @@
   transform: translateY(-50%);
   background-color: white;
   border-radius: 50%;
-  padding: 0.35rem;
+  padding: 0.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 20;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .arrow-left {
@@ -144,5 +144,66 @@
 
 .arrow-left:hover, .arrow-right:hover {
   background-color: #f3f4f6;
-  transform: translateY(-50%) scale(1.05);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* Add some subtle animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.container {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+section {
+  animation: slideUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+section:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+section:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+/* Subtle hover effects */
+button, a {
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover, a:hover {
+  transform: translateY(-2px);
+}
+
+/* Dark mode toggle animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+button svg {
+  transition: transform 0.3s ease;
+}
+
+button:hover svg {
+  transform: rotate(20deg);
 }
