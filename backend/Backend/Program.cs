@@ -41,17 +41,19 @@ builder
 builder.Services.AddScoped<IDBHelper, DBHelper>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// CORS Configuration with fallback
-var allowedOriginsRaw =
-    builder.Configuration.GetValue<string>("allowedOrigins") ?? "http://localhost:4200";
-var allowedOrigins = allowedOriginsRaw.Split(',');
-
+// Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
-    });
+    options.AddPolicy(
+        "AllowSpecificOrigins",
+        policy =>
+        {
+            var allowedOrigins =
+                builder.Configuration.GetValue<string>("allowedOrigins")?.Split(',')
+                ?? new[] { "http://localhost:4200" };
+            policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        }
+    );
 });
 
 // JWT Authentication
@@ -73,7 +75,7 @@ builder
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Works for HTTP locally
         options.Cookie.SameSite = SameSiteMode.None; // Cross-site compatibility
         options.Cookie.HttpOnly = true;
-        options.Cookie.IsEssential = true; // Ensure it’s not blocked by consent
+        options.Cookie.IsEssential = true; // Ensure it's not blocked by consent
     })
     .AddJwtBearer(options =>
     {
@@ -139,7 +141,7 @@ builder
         options.CorrelationCookie.SameSite = SameSiteMode.None; // Cross-site
         options.CorrelationCookie.HttpOnly = true;
         options.CorrelationCookie.IsEssential = true;
-        options.CorrelationCookie.Path = "/"; // Ensure it’s available site-wide
+        options.CorrelationCookie.Path = "/"; // Ensure it's available site-wide
     });
 
 builder.Services.AddHealthChecks();
@@ -151,14 +153,14 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.None; // Match Google’s cookie
+    options.Cookie.SameSite = SameSiteMode.None; // Match Google's cookie
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // HTTP locally
 });
 
 // Cookie Policy
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.MinimumSameSitePolicy = SameSiteMode.None; // Match Google’s cookie
+    options.MinimumSameSitePolicy = SameSiteMode.None; // Match Google's cookie
     options.Secure = CookieSecurePolicy.SameAsRequest; // options.Secure = CookieSecurePolicy.Always; // Secure in production
 });
 
@@ -200,7 +202,7 @@ builder.WebHost.ConfigureKestrel(options =>
 var app = builder.Build();
 
 // Middleware
-app.UseCors();
+app.UseCors("AllowSpecificOrigins");
 
 app.UseSwagger();
 app.UseSwaggerUI();
