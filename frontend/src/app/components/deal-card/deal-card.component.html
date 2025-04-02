@@ -1,22 +1,23 @@
-<div class="group relative overflow-hidden bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer" (click)="onDealClick()">
+<div class="group relative overflow-hidden bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer" (click)="onDealClick()">
   <!-- Full Image Background -->
   <div class="relative aspect-[4/3] w-full overflow-hidden">
     <img
       [src]="deal.photos?.[0] || 'assets/placeholder.jpg'"
       [alt]="deal.title"
-      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      loading="lazy"
     >
     <!-- Gradient Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
 
     <!-- Discount Badge -->
     <div *ngIf="deal.discountPercentage"
-         class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+         class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">
       {{deal.discountPercentage}}% OFF
     </div>
 
     <!-- Duration Badge -->
-    <div class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+    <div class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium shadow-md">
       {{deal.daysCount}}D/{{deal.nightsCount}}N
     </div>
 
@@ -55,7 +56,7 @@
           </div>
 
           <!-- View Details Button -->
-          <button class="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors">
+          <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors shadow-md">
             View Details
           </button>
         </div>

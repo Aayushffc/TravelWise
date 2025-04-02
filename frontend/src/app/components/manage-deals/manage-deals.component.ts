@@ -572,10 +572,8 @@ export class ManageDealsComponent implements OnInit {
   toggleDealStatus(event: { id: number, isActive: boolean }): void {
     const dealIndex = this.deals.findIndex(d => d.id === event.id);
     if (dealIndex !== -1) {
-      // Create a copy of the deal to update
-      const updatedDeal = { ...this.deals[dealIndex], isActive: event.isActive };
-
-      this.dealService.updateDeal(event.id, updatedDeal).subscribe({
+      // Use the new toggleDealStatus method
+      this.dealService.toggleDealStatus(event.id, event.isActive).subscribe({
         next: (response) => {
           this.showSuccessMessage(`Deal ${event.isActive ? 'activated' : 'deactivated'} successfully`);
 

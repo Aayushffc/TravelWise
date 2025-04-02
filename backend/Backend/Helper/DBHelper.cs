@@ -576,6 +576,10 @@ namespace Backend.Helper
                 parameters.Add(new SqlParameter("@RelevanceScore", deal.RelevanceScore.Value));
             }
 
+            // Always include IsActive in the update
+            updateFields.Add("IsActive = @IsActive");
+            parameters.Add(new SqlParameter("@IsActive", deal.IsActive));
+
             // Only proceed if there are fields to update
             if (updateFields.Count == 0)
             {
@@ -770,6 +774,25 @@ namespace Backend.Helper
 
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Id", id);
+
+            return await command.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<bool> ToggleDealStatus(int id, bool isActive)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql =
+                @"
+                UPDATE Deals
+                SET IsActive = @IsActive,
+                    UpdatedAt = GETUTCDATE()
+                WHERE Id = @Id";
+
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Id", id);
+            command.Parameters.AddWithValue("@IsActive", isActive);
 
             return await command.ExecuteNonQueryAsync() > 0;
         }

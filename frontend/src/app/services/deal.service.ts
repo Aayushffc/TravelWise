@@ -64,4 +64,8 @@ export class DealService {
   getDealsByUserId(userId: string): Observable<Deal[]> {
     return this.http.get<Deal[]>(`${this.apiUrl}/user/${userId}`);
   }
+
+  toggleDealStatus(id: number, isActive: boolean): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/toggle-status`, { isActive });
+  }
 }

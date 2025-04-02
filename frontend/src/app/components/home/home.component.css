@@ -51,27 +51,39 @@
 /* Location card styles */
 .location-card {
   transition: all 0.3s ease;
-  overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  will-change: transform;
+  position: relative;
+  z-index: 1;
 }
 
 .location-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.location-image-container {
+  overflow: hidden;
+  border-radius: 0.75rem;
 }
 
 .location-image {
   transition: transform 0.5s ease;
+  will-change: transform;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .location-card:hover .location-image {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .location-overlay {
   background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%);
   transition: opacity 0.3s ease;
+  z-index: 1;
 }
 
 .location-card:hover .location-overlay {
@@ -80,10 +92,12 @@
 
 .location-name {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   text-shadow: 0 1px 3px rgba(0,0,0,0.9);
   margin: 0;
   line-height: 1.2;
+  position: relative;
+  z-index: 2;
 }
 
 /* Badge styles */
@@ -113,6 +127,7 @@
   transition: all 0.2s ease;
   opacity: 0.7;
   z-index: 20;
+  will-change: transform, opacity;
 }
 
 .scroll-arrow:hover {
@@ -129,17 +144,23 @@
   border-radius: 50%;
   padding: 0.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 20;
+  z-index: 30;
   cursor: pointer;
   transition: all 0.3s ease;
+  will-change: transform;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .arrow-left {
-  left: -8px;
+  left: 0;
 }
 
 .arrow-right {
-  right: -8px;
+  right: 0;
 }
 
 .arrow-left:hover, .arrow-right:hover {
@@ -188,6 +209,7 @@ section:nth-child(4) {
 /* Subtle hover effects */
 button, a {
   transition: all 0.2s ease-in-out;
+  will-change: transform;
 }
 
 button:hover, a:hover {
@@ -202,8 +224,224 @@ button:hover, a:hover {
 
 button svg {
   transition: transform 0.3s ease;
+  will-change: transform;
 }
 
 button:hover svg {
   transform: rotate(20deg);
+}
+
+/* Performance optimizations */
+img {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Hero section */
+.hero-section {
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to right, rgba(79, 70, 229, 0.9), rgba(147, 51, 234, 0.9));
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Profile dropdown styles */
+.profile-dropdown {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-dropdown-content {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 220px;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+}
+
+.profile-dropdown.active .profile-dropdown-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.profile-header {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-avatar {
+  width: 2rem;
+  height: 2rem;
+  background: #4f46e5;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.profile-role {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.profile-menu {
+  padding: 0.5rem 0;
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  color: #4b5563;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.profile-menu-item:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.profile-menu-item svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #6b7280;
+}
+
+.profile-menu-item:hover {
+  background: #f3f4f6;
+  color: #4f46e5;
+}
+
+.profile-menu-item:hover svg {
+  color: #4f46e5;
+}
+
+.profile-menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0.5rem 0;
+}
+
+.profile-menu-item.logout {
+  color: #ef4444;
+}
+
+.profile-menu-item.logout:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.profile-menu-item.logout svg {
+  color: #ef4444;
+}
+
+.profile-menu-item.logout:hover svg {
+  color: #dc2626;
+}
+
+/* Section separation */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #787b80, transparent);
+  margin: 0;
+  opacity: 0.8;
+  max-width: 100%;
+}
+
+/* Locations container */
+#locations-container {
+  position: relative;
+  z-index: 1;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: nowrap;
+  padding: 1rem 0;
+  margin: -1rem 0;
+}
+
+#locations-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.locations-section {
+  position: relative;
+  z-index: 5;
+  background-color: white;
+  padding: 0;
+  margin: 0;
+  border-bottom: none;
+  overflow: hidden;
+}
+
+/* Deals section */
+.deals-section {
+  position: relative;
+  z-index: 1;
+  background-color: white;
+  padding-top: 1.5rem;
+  padding-bottom: 1rem;
+  margin: 0;
+  border-top: none;
+}
+
+/* Location section */
+.locations-section {
+  position: relative;
+  z-index: 5;
+  background-color: white;
+  padding: 0;
+  margin: 0;
+  border-bottom: none;
+  overflow: visible;
+  padding-bottom: 1.5rem;
+}
+
+.writing-vertical-lr {
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  white-space: nowrap;
 }

@@ -241,5 +241,46 @@ namespace Backend.Controllers
                 return StatusCode(500, "An error occurred while retrieving deals");
             }
         }
+
+        // PUT: api/Deal/5/toggle-status
+        [HttpPut("{id}/toggle-status")]
+        public async Task<IActionResult> ToggleDealStatus(int id, [FromBody] DealToggleStatusDto toggleDto)
+        {
+            try
+            {
+                // Get the current user's ID
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if the deal exists and belongs to the user
+                var existingDeal = await _dbHelper.GetDealById(id);
+                if (existingDeal == null)
+                {
+                    return NotFound($"Deal with ID {id} not found");
+                }
+
+                if (existingDeal.UserId != userId)
+                {
+                    return StatusCode(403, "You don't have permission to update this deal");
+                }
+
+                var success = await _dbHelper.ToggleDealStatus(id, toggleDto.IsActive);
+
+                if (!success)
+                {
+                    return StatusCode(500, "Failed to update deal status");
+                }
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling deal status {DealId}", id);
+                return StatusCode(500, "An error occurred while updating the deal status");
+            }
+        }
     }
 }

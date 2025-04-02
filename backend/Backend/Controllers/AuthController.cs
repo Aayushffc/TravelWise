@@ -171,7 +171,9 @@ namespace TravelWiseAPI.Controllers
                 if (info == null)
                 {
                     _logger.LogError("Failed to get external login info");
-                    return Redirect($"{_configuration["FrontendUrl"]}/auth/callback?error=external_login_failed");
+                    return Redirect(
+                        $"{_configuration["FrontendUrl"]}/auth/callback?error=external_login_failed"
+                    );
                 }
 
                 _logger.LogInformation(

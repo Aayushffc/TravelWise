@@ -41,5 +41,6 @@ namespace Backend.Helper
             string? packageType = null
         );
         Task<bool> IncrementDealClickCount(int id);
+        Task<bool> ToggleDealStatus(int id, bool isActive);
     }
 }

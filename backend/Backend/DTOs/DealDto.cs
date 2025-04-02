@@ -50,6 +50,11 @@ namespace Backend.DTOs
         public decimal? RelevanceScore { get; set; }
     }
 
+    public class DealToggleStatusDto
+    {
+        public bool IsActive { get; set; }
+    }
+
     public class DealResponseDto : DealCreateDto
     {
         public int Id { get; set; }
