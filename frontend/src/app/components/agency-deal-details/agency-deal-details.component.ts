@@ -72,9 +72,15 @@ export class AgencyDealDetailsComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        this.error = 'Failed to load deal details. Please try again.';
-        this.isLoading = false;
         console.error('Error loading deal:', error);
+        if (error.status === 500) {
+          this.error = 'A server error occurred while loading the deal. Please try again later.';
+        } else if (error.status === 404) {
+          this.error = 'Deal not found. It may have been removed.';
+        } else {
+          this.error = 'Failed to load deal details. Please try again.';
+        }
+        this.isLoading = false;
       }
     });
   }

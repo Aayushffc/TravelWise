@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DealResponseDto } from '../../models/deal.model';
 import { Router } from '@angular/router';
+import { DealService } from '../../services/deal.service';
 
 @Component({
   selector: 'app-manage-deal-card',
@@ -14,8 +15,9 @@ export class ManageDealCardComponent {
   @Input() deal!: DealResponseDto;
   @Output() delete = new EventEmitter<number>();
   @Output() toggleStatus = new EventEmitter<{ id: number, isActive: boolean }>();
+  @Output() error = new EventEmitter<string>();
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private dealService: DealService) {}
 
   onCardClick(): void {
     // Navigate to agency deal details (correct route based on app.routes.ts)
@@ -31,7 +33,16 @@ export class ManageDealCardComponent {
 
     // Ask for confirmation before toggling
     if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} "${this.deal.title}"?`)) {
-      this.toggleStatus.emit({ id: this.deal.id, isActive: newStatus });
+      this.dealService.toggleDealStatus(this.deal.id, newStatus)
+        .subscribe({
+          next: () => {
+            this.toggleStatus.emit({ id: this.deal.id, isActive: newStatus });
+          },
+          error: (err) => {
+            console.error('Error toggling status:', err);
+            this.error.emit(`Failed to ${currentStatus ? 'deactivate' : 'activate'} deal. Server error occurred.`);
+          }
+        });
     }
   }
 
@@ -40,7 +51,16 @@ export class ManageDealCardComponent {
 
     // Ask for confirmation before deletion with warning about permanence
     if (confirm(`⚠️ Warning: This action is permanent and cannot be undone!\n\nAre you sure you want to delete "${this.deal.title}"?`)) {
-      this.delete.emit(this.deal.id);
+      this.dealService.deleteDeal(this.deal.id)
+        .subscribe({
+          next: () => {
+            this.delete.emit(this.deal.id);
+          },
+          error: (err) => {
+            console.error('Error deleting deal:', err);
+            this.error.emit('Failed to delete deal. Server error occurred.');
+          }
+        });
     }
   }
 

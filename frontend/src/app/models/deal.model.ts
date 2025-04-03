@@ -12,9 +12,6 @@ export interface Deal {
   rating?: number;
   daysCount: number;
   nightsCount: number;
-  startPoint: string;
-  endPoint: string;
-  duration: string;
   description: string;
   photos?: string[];
   elderlyFriendly: boolean;
@@ -42,6 +39,7 @@ export interface Deal {
   userId: string;
   clickCount?: number;
   tags?: string[];
+  headlines?: string[];
 }
 
 export interface ItineraryDay {

@@ -605,7 +605,13 @@ namespace Backend.Helper
                     return new T();
                 }
 
-                return JsonSerializer.Deserialize<T>(json) ?? new T();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true
+                };
+
+                return JsonSerializer.Deserialize<T>(json, options) ?? new T();
             }
             catch (Exception ex)
             {
@@ -625,7 +631,7 @@ namespace Backend.Helper
                     @"
                     SELECT d.Id, d.Title, d.LocationId, d.UserId, d.Price, d.DiscountedPrice, 
                            d.DiscountPercentage, d.Rating, d.DaysCount, d.NightsCount, 
-                           d.StartPoint, d.EndPoint, d.Duration, d.Description, d.Photos,
+                           d.Description, d.Photos,
                            d.ElderlyFriendly, d.InternetIncluded, d.TravelIncluded, 
                            d.MealsIncluded, d.SightseeingIncluded, d.StayIncluded,
                            d.AirTransfer, d.RoadTransfer, d.TrainTransfer, 
@@ -633,7 +639,13 @@ namespace Backend.Helper
                            d.InsuranceIncluded, d.VisaIncluded, d.Itinerary, 
                            d.PackageOptions, d.MapUrl, d.Policies, d.PackageType,
                            d.IsActive, d.CreatedAt, d.UpdatedAt,
-                           d.ApprovalStatus, d.SearchKeywords,
+                           d.SearchKeywords, d.ClickCount, d.ViewCount, d.BookingCount,
+                           d.LastClicked, d.LastViewed, d.LastBooked, d.RelevanceScore,
+                           d.IsFeatured, d.FeaturedUntil, d.Priority, d.Headlines, d.Tags,
+                           d.Seasons, d.DifficultyLevel, d.MaxGroupSize, d.MinGroupSize,
+                           d.IsInstantBooking, d.IsLastMinuteDeal, d.ValidFrom, d.ValidUntil,
+                           d.CancellationPolicy, d.RefundPolicy, d.Languages,
+                           d.Requirements, d.Restrictions,
                            l.Name as LocationName, 
                            l.Description as LocationDescription,
                            l.ImageUrl as LocationImageUrl, 
@@ -1372,16 +1384,51 @@ namespace Backend.Helper
         {
             try
             {
+                // Helper method to get string from reader that handles DBNull
+                string GetStringOrEmpty(string columnName)
+                {
+                    return reader.IsDBNull(reader.GetOrdinal(columnName))
+                        ? string.Empty
+                        : reader.GetString(reader.GetOrdinal(columnName));
+                }
+
+                // Helper method to safely deserialize JSON
+                T SafeJsonDeserialize<T>(string columnName) where T : class, new()
+                {
+                    try
+                    {
+                        string json = GetStringOrEmpty(columnName);
+
+                        if (string.IsNullOrWhiteSpace(json))
+                            return new T();
+
+                        // Handle potential bad JSON data
+                        if (!json.TrimStart().StartsWith("[") && !json.TrimStart().StartsWith("{"))
+                            return new T();
+
+                        var options = new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true,
+                            AllowTrailingCommas = true
+                        };
+
+                        return JsonSerializer.Deserialize<T>(json, options) ?? new T();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error deserializing JSON for column {Column}. Value: {Value}",
+                            columnName,
+                            reader.IsDBNull(reader.GetOrdinal(columnName)) ? "NULL" : GetStringOrEmpty(columnName));
+                        return new T();
+                    }
+                }
+
                 return new DealResponseDto
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                    Title = reader.IsDBNull(reader.GetOrdinal("Title"))
-                        ? string.Empty
-                        : reader.GetString(reader.GetOrdinal("Title")),
+                    Title = GetStringOrEmpty("Title"),
                     LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
-                    UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
-                        ? string.Empty
-                        : reader.GetString(reader.GetOrdinal("UserId")),
+                    UserId = GetStringOrEmpty("UserId"),
                     Price = reader.GetDecimal(reader.GetOrdinal("Price")),
                     DiscountedPrice = reader.IsDBNull(reader.GetOrdinal("DiscountedPrice"))
                         ? 0
@@ -1394,14 +1441,8 @@ namespace Backend.Helper
                         : reader.GetDecimal(reader.GetOrdinal("Rating")),
                     DaysCount = reader.GetInt32(reader.GetOrdinal("DaysCount")),
                     NightsCount = reader.GetInt32(reader.GetOrdinal("NightsCount")),
-                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))
-                        ? string.Empty
-                        : reader.GetString(reader.GetOrdinal("Description")),
-                    Photos = reader.IsDBNull(reader.GetOrdinal("Photos"))
-                        ? new List<string>()
-                        : JsonSerializer.Deserialize<List<string>>(
-                            reader.GetString(reader.GetOrdinal("Photos"))
-                        ) ?? new List<string>(),
+                    Description = GetStringOrEmpty("Description"),
+                    Photos = SafeJsonDeserialize<List<string>>("Photos"),
                     ElderlyFriendly = reader.GetBoolean(reader.GetOrdinal("ElderlyFriendly")),
                     InternetIncluded = reader.GetBoolean(reader.GetOrdinal("InternetIncluded")),
                     TravelIncluded = reader.GetBoolean(reader.GetOrdinal("TravelIncluded")),
@@ -1420,27 +1461,11 @@ namespace Backend.Helper
                     ),
                     InsuranceIncluded = reader.GetBoolean(reader.GetOrdinal("InsuranceIncluded")),
                     VisaIncluded = reader.GetBoolean(reader.GetOrdinal("VisaIncluded")),
-                    Itinerary = reader.IsDBNull(reader.GetOrdinal("Itinerary"))
-                        ? new List<ItineraryDay>()
-                        : JsonSerializer.Deserialize<List<ItineraryDay>>(
-                            reader.GetString(reader.GetOrdinal("Itinerary"))
-                        ) ?? new List<ItineraryDay>(),
-                    PackageOptions = reader.IsDBNull(reader.GetOrdinal("PackageOptions"))
-                        ? new List<PackageOption>()
-                        : JsonSerializer.Deserialize<List<PackageOption>>(
-                            reader.GetString(reader.GetOrdinal("PackageOptions"))
-                        ) ?? new List<PackageOption>(),
-                    MapUrl = reader.IsDBNull(reader.GetOrdinal("MapUrl"))
-                        ? string.Empty
-                        : reader.GetString(reader.GetOrdinal("MapUrl")),
-                    Policies = reader.IsDBNull(reader.GetOrdinal("Policies"))
-                        ? new List<Policy>()
-                        : JsonSerializer.Deserialize<List<Policy>>(
-                            reader.GetString(reader.GetOrdinal("Policies"))
-                        ) ?? new List<Policy>(),
-                    PackageType = reader.IsDBNull(reader.GetOrdinal("PackageType"))
-                        ? string.Empty
-                        : reader.GetString(reader.GetOrdinal("PackageType")),
+                    Itinerary = SafeJsonDeserialize<List<ItineraryDay>>("Itinerary"),
+                    PackageOptions = SafeJsonDeserialize<List<PackageOption>>("PackageOptions"),
+                    MapUrl = GetStringOrEmpty("MapUrl"),
+                    Policies = SafeJsonDeserialize<List<Policy>>("Policies"),
+                    PackageType = GetStringOrEmpty("PackageType"),
                     IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
@@ -1462,11 +1487,47 @@ namespace Backend.Helper
                     SearchKeywords = reader.IsDBNull(reader.GetOrdinal("SearchKeywords"))
                         ? null
                         : reader.GetString(reader.GetOrdinal("SearchKeywords")),
-                    Tags = reader.IsDBNull(reader.GetOrdinal("Tags"))
-                        ? new List<string>()
-                        : JsonSerializer.Deserialize<List<string>>(
-                            reader.GetString(reader.GetOrdinal("Tags"))
-                        ) ?? new List<string>(),
+                    Tags = SafeJsonDeserialize<List<string>>("Tags"),
+                    Headlines = SafeJsonDeserialize<List<string>>("Headlines"),
+                    IsFeatured = reader.IsDBNull(reader.GetOrdinal("IsFeatured"))
+                        ? false
+                        : reader.GetBoolean(reader.GetOrdinal("IsFeatured")),
+                    FeaturedUntil = reader.IsDBNull(reader.GetOrdinal("FeaturedUntil"))
+                        ? DateTime.MinValue
+                        : reader.GetDateTime(reader.GetOrdinal("FeaturedUntil")),
+                    Priority = reader.IsDBNull(reader.GetOrdinal("Priority"))
+                        ? 0
+                        : reader.GetInt32(reader.GetOrdinal("Priority")),
+                    DifficultyLevel = reader.IsDBNull(reader.GetOrdinal("DifficultyLevel"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("DifficultyLevel")),
+                    MaxGroupSize = reader.IsDBNull(reader.GetOrdinal("MaxGroupSize"))
+                        ? null
+                        : reader.GetInt32(reader.GetOrdinal("MaxGroupSize")),
+                    MinGroupSize = reader.IsDBNull(reader.GetOrdinal("MinGroupSize"))
+                        ? null
+                        : reader.GetInt32(reader.GetOrdinal("MinGroupSize")),
+                    IsInstantBooking = reader.IsDBNull(reader.GetOrdinal("IsInstantBooking"))
+                        ? false
+                        : reader.GetBoolean(reader.GetOrdinal("IsInstantBooking")),
+                    IsLastMinuteDeal = reader.IsDBNull(reader.GetOrdinal("IsLastMinuteDeal"))
+                        ? false
+                        : reader.GetBoolean(reader.GetOrdinal("IsLastMinuteDeal")),
+                    ValidFrom = reader.IsDBNull(reader.GetOrdinal("ValidFrom"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("ValidFrom")),
+                    ValidUntil = reader.IsDBNull(reader.GetOrdinal("ValidUntil"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("ValidUntil")),
+                    CancellationPolicy = reader.IsDBNull(reader.GetOrdinal("CancellationPolicy"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("CancellationPolicy")),
+                    RefundPolicy = reader.IsDBNull(reader.GetOrdinal("RefundPolicy"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("RefundPolicy")),
+                    Languages = SafeJsonDeserialize<List<string>>("Languages"),
+                    Requirements = SafeJsonDeserialize<List<string>>("Requirements"),
+                    Restrictions = SafeJsonDeserialize<List<string>>("Restrictions")
                 };
             }
             catch (Exception ex)

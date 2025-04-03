@@ -102,22 +102,22 @@
         <div class="lg:col-span-2 space-y-8">
           <!-- Quick Info -->
           <div class="bg-white rounded-xl shadow-lg p-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div class="text-center">
-                <span class="block text-gray-500 text-sm">Duration</span>
-                <span class="block text-gray-900 font-medium">{{ deal.daysCount }}D/{{ deal.nightsCount }}N</span>
+            <div class="grid grid-cols-4 gap-4 mb-6">
+              <div class="info-item">
+                <span class="block text-gray-500 text-sm">Days</span>
+                <span class="block text-gray-900 font-medium">{{ deal.daysCount || 'N/A' }}</span>
               </div>
-              <div class="text-center">
-                <span class="block text-gray-500 text-sm">Start Point</span>
-                <span class="block text-gray-900 font-medium">{{ deal.startPoint }}</span>
+              <div class="info-item">
+                <span class="block text-gray-500 text-sm">Nights</span>
+                <span class="block text-gray-900 font-medium">{{ deal.nightsCount || 'N/A' }}</span>
               </div>
-              <div class="text-center">
-                <span class="block text-gray-500 text-sm">End Point</span>
-                <span class="block text-gray-900 font-medium">{{ deal.endPoint }}</span>
+              <div class="info-item">
+                <span class="block text-gray-500 text-sm">Trip Type</span>
+                <span class="block text-gray-900 font-medium">{{ deal.packageType || 'Standard' }}</span>
               </div>
-              <div class="text-center">
-                <span class="block text-gray-500 text-sm">Package Type</span>
-                <span class="block text-gray-900 font-medium">{{ deal.packageType }}</span>
+              <div class="info-item">
+                <span class="block text-gray-500 text-sm">Status</span>
+                <span class="block text-gray-900 font-medium">{{ deal.isActive ? 'Active' : 'Inactive' }}</span>
               </div>
             </div>
           </div>
@@ -153,89 +153,96 @@
 
             <!-- Tab Content -->
             <div class="p-6">
-              <!-- Overview -->
-              <div *ngIf="activeTab === 'overview'" class="space-y-6">
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900 mb-4">About This Tour</h3>
-                  <p class="text-gray-700">{{ deal.description }}</p>
-                </div>
+              <!-- Overview Tab -->
+              <div *ngIf="activeTab === 'overview'" class="tab-panel">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Overview</h3>
+                <p class="text-gray-700 mb-4">{{ deal.description }}</p>
 
-                <!-- Amenities Grid -->
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900 mb-4">Highlights</h3>
-                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div *ngIf="deal.elderlyFriendly" class="flex items-center text-gray-700">
-                      <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Elderly Friendly
-                    </div>
-                    <div *ngIf="deal.internetIncluded" class="flex items-center text-gray-700">
-                      <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Internet Included
-                    </div>
-                    <div *ngIf="deal.mealsIncluded" class="flex items-center text-gray-700">
-                      <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Meals Included
-                    </div>
+                <div *ngIf="deal.tags && deal.tags.length > 0" class="mb-4">
+                  <div class="flex flex-wrap gap-2">
+                    <span *ngFor="let tag of deal.tags" class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                      {{ tag }}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <!-- Inclusions -->
-              <div *ngIf="activeTab === 'inclusions'" class="space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <!-- Inclusions -->
-                  <div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-4">What's Included</h3>
-                    <ul class="space-y-3">
-                      <li *ngIf="deal.airTransfer" class="flex items-center text-gray-700">
-                        <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Air Transfer
-                      </li>
-                    </ul>
+              <!-- Inclusions Tab -->
+              <div *ngIf="activeTab === 'inclusions'" class="tab-panel">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Inclusions</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div *ngIf="deal.elderlyFriendly" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Elderly Friendly</span>
                   </div>
-
-                  <!-- Exclusions -->
-                  <div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-4">What's Not Included</h3>
-                    <ul class="space-y-3">
-                      <li class="flex items-center text-gray-700">
-                        <svg class="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Personal Expenses
-                      </li>
-                    </ul>
+                  <div *ngIf="deal.internetIncluded" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Internet Included</span>
+                  </div>
+                  <div *ngIf="deal.travelIncluded" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Travel Included</span>
+                  </div>
+                  <div *ngIf="deal.mealsIncluded" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Meals Included</span>
+                  </div>
+                  <div *ngIf="deal.sightseeingIncluded" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Sightseeing Included</span>
+                  </div>
+                  <div *ngIf="deal.stayIncluded" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Accommodation Included</span>
+                  </div>
+                  <div *ngIf="deal.guideIncluded" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Tour Guide</span>
+                  </div>
+                  <div *ngIf="deal.insuranceIncluded" class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Insurance Included</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Itinerary -->
-              <div *ngIf="activeTab === 'itinerary'" class="space-y-6">
-                <div *ngFor="let day of deal.itinerary" class="border-l-4 border-indigo-600 pl-4">
-                  <h3 class="text-xl font-semibold text-gray-900">Day {{ day.dayNumber }}: {{ day.title }}</h3>
-                  <p class="text-gray-700 mt-2">{{ day.description }}</p>
-                  <ul class="mt-4 space-y-2">
-                    <li *ngFor="let activity of day.activities" class="flex items-center text-gray-700">
-                      <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                      </svg>
-                      {{ activity }}
-                    </li>
+              <!-- Itinerary Tab -->
+              <div *ngIf="activeTab === 'itinerary'" class="tab-panel">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Itinerary ({{ deal.daysCount }} Days)</h3>
+
+                <div *ngIf="!deal.itinerary || deal.itinerary.length === 0" class="text-gray-500 italic">
+                  No detailed itinerary available for this package.
+                </div>
+
+                <div *ngFor="let day of deal.itinerary" class="mb-4">
+                  <h4 class="text-md font-medium text-gray-800">{{ day.title }}</h4>
+                  <p class="text-gray-700 mb-2">{{ day.description }}</p>
+                  <ul *ngIf="day.activities && day.activities.length > 0" class="list-disc list-inside text-gray-600 ml-4">
+                    <li *ngFor="let activity of day.activities">{{ activity }}</li>
                   </ul>
                 </div>
               </div>
 
-              <!-- Reviews -->
-              <div *ngIf="activeTab === 'reviews'" class="space-y-6">
-                <p class="text-gray-700">Reviews coming soon...</p>
+              <!-- Reviews Tab -->
+              <div *ngIf="activeTab === 'reviews'" class="tab-panel">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Reviews</h3>
+                <p class="text-gray-500 italic">No reviews yet for this package.</p>
               </div>
             </div>
           </div>
@@ -283,3 +290,4 @@
     </div>
   </div>
 </div>
+

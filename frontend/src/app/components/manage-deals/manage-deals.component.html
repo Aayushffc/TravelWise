@@ -209,7 +209,8 @@
           *ngFor="let deal of deals"
           [deal]="deal"
           (delete)="deleteDeal($event)"
-          (toggleStatus)="onToggleStatus($event)">
+          (toggleStatus)="onToggleStatus($event)"
+          (error)="showError($event)">
         </app-manage-deal-card>
       </div>
             </div>

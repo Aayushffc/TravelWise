@@ -72,7 +72,13 @@ export class DealDetailsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading deal details:', error);
-        this.errorMessage = 'Failed to load deal details.';
+        if (error.status === 500) {
+          this.errorMessage = 'A server error occurred while loading the deal. Please try again later.';
+        } else if (error.status === 404) {
+          this.errorMessage = 'Deal not found. It may have been removed.';
+        } else {
+          this.errorMessage = 'Failed to load deal details. Please try again.';
+        }
         this.isLoading = false;
       }
     });

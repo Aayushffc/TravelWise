@@ -371,16 +371,12 @@ export class ManageDealsComponent implements OnInit {
   }
 
   deleteDeal(dealId: number): void {
-    if (confirm('Are you sure you want to delete this deal?')) {
-      this.http.delete(`${environment.apiUrl}/api/Deal/${dealId}`)
-        .subscribe({
-          next: () => {
-            this.loadData();
-          },
-          error: (err) => {
-            console.error('Failed to delete deal:', err);
-          }
-        });
+    // This method now just receives the ID from the card component
+    // The actual delete API call is handled in the card component
+    const dealIndex = this.deals.findIndex(d => d.id === dealId);
+    if (dealIndex !== -1) {
+      this.deals.splice(dealIndex, 1);
+      this.updateStats(this.deals);
     }
   }
 
@@ -458,6 +454,14 @@ export class ManageDealsComponent implements OnInit {
 
   toggleFilters(): void {
     this.showFilters = !this.showFilters;
+  }
+
+  showError(message: string): void {
+    this.error = message;
+    // Auto hide the error after 5 seconds
+    setTimeout(() => {
+      this.error = null;
+    }, 5000);
   }
 
   onDragOver(event: DragEvent): void {

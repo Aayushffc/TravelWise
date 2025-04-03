@@ -253,7 +253,7 @@ namespace Backend.Controllers
                     return StatusCode(500, "Failed to delete deal");
                 }
 
-                return NoContent();
+                return Ok(new { Success = true, Message = "Deal deleted successfully" });
             }
             catch (Exception ex)
             {
@@ -352,7 +352,7 @@ namespace Backend.Controllers
 
         // PUT: api/Deal/5/toggle-status
         [HttpPut("{id}/toggle-status")]
-        public async Task<IActionResult> ToggleDealStatus(
+        public async Task<ActionResult<DealResponseDto>> ToggleDealStatus(
             int id,
             [FromBody] DealToggleStatusDto toggleDto
         )
@@ -385,7 +385,9 @@ namespace Backend.Controllers
                     return StatusCode(500, "Failed to update deal status");
                 }
 
-                return NoContent();
+                // Get the updated deal and return it
+                var updatedDeal = await _dbHelper.GetDealById(id);
+                return Ok(updatedDeal);
             }
             catch (Exception ex)
             {
