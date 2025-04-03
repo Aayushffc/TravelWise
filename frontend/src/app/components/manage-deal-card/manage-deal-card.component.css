@@ -2,113 +2,251 @@
   display: block;
   height: 100%;
 }
-/* Status badge styles */
-.status-badge {
+
+/* Card container with glass morphism */
+.card-container {
+  height: 100%;
+  transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+  will-change: transform, box-shadow;
+  border-radius: 1rem;
+  overflow: hidden;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  cursor: pointer;
+  position: relative;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.card-container:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Subtle shimmer effect on hover */
+.card-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.card-container:hover::after {
+  transform: translateX(0);
+}
+
+/* Glass content */
+.glass-content {
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Glass item styling */
+.glass-item {
+  transition: all 0.3s ease;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-container:hover .glass-item {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.glass-item:hover {
+  background: rgba(238, 242, 255, 0.9);
+  color: #4f46e5;
+  transform: translateX(5px);
+  box-shadow: 0 5px 15px rgba(79, 70, 229, 0.1);
+  border-color: rgba(79, 70, 229, 0.2);
+}
+
+/* Price tag - update styling for the new position */
+.price-tag {
   display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  transition: all 200ms;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.8), rgba(99, 102, 241, 0.9));
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  transform-origin: left center;
 }
-.status-active {
-  background-color: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+.card-container:hover .price-tag {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
 }
-.status-inactive {
-  background-color: #f3f4f6;
-  color: #1f2937;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-.status-indicator {
+
+/* Status dot */
+.status-dot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  margin-right: 5px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+  transition: all 0.5s ease;
+  animation: pulse 2s infinite;
 }
-.status-indicator-active {
+
+.status-dot.active {
   background-color: #16a34a;
 }
-.status-indicator-inactive {
+
+.status-dot.inactive {
   background-color: #ef4444;
 }
 
-/* Action button styles */
-.action-btn {
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5), 0 0 0 0 rgba(0, 0, 0, 0.2);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0), 0 0 0 3px rgba(0, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0), 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+/* Image container */
+.image-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.image-container img {
+  transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 1s ease;
+}
+
+.card-container:hover .image-container img {
+  transform: scale(1.05);
+  filter: brightness(1.05) contrast(1.05) saturate(1.05);
+}
+
+/* Gradient overlay */
+.gradient-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 75%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  opacity: 0.7;
+  transition: opacity 0.4s ease, height 0.5s ease;
+}
+
+.card-container:hover .gradient-overlay {
+  opacity: 0.8;
+  height: 80%;
+}
+
+/* Glass buttons */
+.glass-btn {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.375rem 0.75rem;
+  padding: 6px 12px;
   font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.25rem;
-  transition: all 200ms;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   position: relative;
-  z-index: 10;
-}
-.action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-.btn-edit {
-  color: #374151;
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
-}
-.btn-edit:hover {
-  background-color: #e5e7eb;
-}
-.btn-view {
-  color: #4338ca;
-  background-color: #eef2ff;
-  border: 1px solid #c7d2fe;
-}
-.btn-view:hover {
-  background-color: #e0e7ff;
-}
-.btn-toggle-active {
-  color: #92400e;
-  background-color: #fef3c7;
-  border: 1px solid #fcd34d;
-}
-.btn-toggle-active:hover {
-  background-color: #fde68a;
-}
-.btn-toggle-inactive {
-  color: #065f46;
-  background-color: #d1fae5;
-  border: 1px solid #86efac;
-}
-.btn-toggle-inactive:hover {
-  background-color: #a7f3d0;
-}
-.btn-delete {
-  color: #b91c1c;
-  background-color: #fee2e2;
-  border: 1px solid #fecaca;
-}
-.btn-delete:hover {
-  background-color: #fecaca;
+  overflow: hidden;
+  letter-spacing: 0.025em;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Icon colors */
-.icon-edit {
-  color: #4b5563;
+.glass-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
 }
-.icon-view {
-  color: #4f46e5;
+
+.glass-btn:active {
+  transform: translateY(-1px);
 }
-.icon-toggle-active {
-  color: #d97706;
+
+.glass-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(100%);
+  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+  z-index: -1;
 }
-.icon-toggle-inactive {
-  color: #059669;
+
+.glass-btn:hover::before {
+  transform: translateY(0);
 }
-.icon-delete {
-  color: #dc2626;
+
+/* Button variants */
+.active-btn {
+  color: #92400e;
+  background: rgba(254, 243, 199, 0.7);
+  border-color: rgba(253, 230, 138, 0.5);
+}
+
+.active-btn:hover {
+  background: rgba(253, 230, 138, 0.8);
+}
+
+.inactive-btn {
+  color: #065f46;
+  background: rgba(209, 250, 229, 0.7);
+  border-color: rgba(167, 243, 208, 0.5);
+}
+
+.inactive-btn:hover {
+  background: rgba(167, 243, 208, 0.8);
+}
+
+.delete-btn {
+  color: #b91c1c;
+  background: rgba(254, 226, 226, 0.7);
+  border-color: rgba(254, 202, 202, 0.5);
+}
+
+.delete-btn:hover {
+  background: rgba(254, 202, 202, 0.8);
+}
+
+/* Text shadow for better readability */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Truncate text */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }

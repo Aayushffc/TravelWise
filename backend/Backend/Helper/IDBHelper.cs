@@ -26,20 +26,42 @@ namespace Backend.Helper
         Task<bool> IncrementLocationRequestCallCount(int id);
 
         // Deal operations
-        Task<IEnumerable<DealResponseDto>> GetDeals(int? locationId = null);
+        Task<IEnumerable<DealResponseDto>> GetDeals(
+            int? locationId = null,
+            string? status = null,
+            bool? isActive = null,
+            bool? isFeatured = null,
+            string? packageType = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            int? minDays = null,
+            int? maxDays = null
+        );
+
         Task<DealResponseDto> GetDealById(int id);
         Task<DealResponseDto> CreateDeal(DealCreateDto deal);
-        Task<IEnumerable<DealResponseDto>> GetDealsByUserId(string userId);
         Task<bool> UpdateDeal(int id, DealUpdateDto deal);
         Task<bool> DeleteDeal(int id);
+
         Task<IEnumerable<DealResponseDto>> SearchDeals(
             string? searchTerm = null,
             decimal? minPrice = null,
             decimal? maxPrice = null,
             int? minDays = null,
             int? maxDays = null,
-            string? packageType = null
+            string? packageType = null,
+            string? difficultyLevel = null,
+            bool? isInstantBooking = null,
+            bool? isLastMinuteDeal = null,
+            string? status = null
         );
+
+        Task<IEnumerable<DealResponseDto>> GetDealsByUserId(
+            string userId,
+            string? status = null,
+            bool? isActive = null
+        );
+
         Task<bool> IncrementDealClickCount(int id);
         Task<bool> ToggleDealStatus(int id, bool isActive);
     }

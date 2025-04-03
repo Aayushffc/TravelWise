@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { DealCardComponent } from '../deal-card/deal-card.component';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, map, take } from 'rxjs/operators';
+import { DealResponseDto } from '../../models/deal.model';
 
 interface Location {
   id: number;
@@ -18,22 +19,8 @@ interface Location {
   clickCount?: number;
 }
 
-interface Deal {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice: number;
-  discountPercentage: number;
-  daysCount: number;
-  nightsCount: number;
-  photos: string[];
-  rating: number | null;
-  location: {
-    id: number;
-    name: string;
-  };
-}
+// Using DealResponseDto from models instead of local interface
+type Deal = DealResponseDto;
 
 interface Destination {
   id: string;

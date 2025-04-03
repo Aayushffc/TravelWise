@@ -10,6 +10,7 @@ namespace Backend.Models
         public string? ImageUrl { get; set; }
         public string? Country { get; set; }
         public string? Continent { get; set; }
+        public string? Currency { get; set; }
         public int ClickCount { get; set; } = 0;
         public int RequestCallCount { get; set; } = 0;
         public bool IsPopular { get; set; } = false;

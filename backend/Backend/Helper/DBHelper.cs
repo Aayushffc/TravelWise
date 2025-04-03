@@ -18,17 +18,20 @@ namespace Backend.Helper
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly string _connectionString;
+        private readonly ILogger<DBHelper> _logger;
 
         public DBHelper(
             IConfiguration configuration,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager
+            RoleManager<IdentityRole> roleManager,
+            ILogger<DBHelper> logger
         )
         {
             _configuration = configuration;
             _userManager = userManager;
             _roleManager = roleManager;
             _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _logger = logger;
         }
 
         public async Task<string> GenerateJwtToken(ApplicationUser user)
@@ -162,7 +165,7 @@ namespace Backend.Helper
                     @"
                     SELECT Id, Name, Description, ImageUrl, IsPopular, IsActive, 
                            ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
-                           Country, Continent
+                           Country, Continent, Currency
                     FROM Locations
                     WHERE IsActive = 1
                     ORDER BY Name";
@@ -204,7 +207,7 @@ namespace Backend.Helper
                 @"
                 SELECT TOP (@Limit) Id, Name, Description, ImageUrl, IsPopular, IsActive, 
                        ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
-                       Country, Continent
+                       Country, Continent, Currency
                 FROM Locations
                 WHERE IsActive = 1 AND IsPopular = 1
                 ORDER BY ClickCount DESC";
@@ -231,7 +234,7 @@ namespace Backend.Helper
                 @"
                 SELECT Id, Name, Description, ImageUrl, IsPopular, IsActive, 
                        ClickCount, RequestCallCount, CreatedAt, UpdatedAt,
-                       Country, Continent
+                       Country, Continent, Currency
                 FROM Locations
                 WHERE Id = @Id AND IsActive = 1";
 
@@ -254,9 +257,9 @@ namespace Backend.Helper
 
             const string sql =
                 @"
-                INSERT INTO Locations (Name, Description, ImageUrl, IsPopular, IsActive, CreatedAt, UpdatedAt, ClickCount, RequestCallCount)
+                INSERT INTO Locations (Name, Description, ImageUrl, IsPopular, IsActive, CreatedAt, UpdatedAt, ClickCount, RequestCallCount, Currency)
                 OUTPUT INSERTED.*
-                VALUES (@Name, @Description, @ImageUrl, @IsPopular, @IsActive, GETUTCDATE(), GETUTCDATE(), 0, 0)";
+                VALUES (@Name, @Description, @ImageUrl, @IsPopular, @IsActive, GETUTCDATE(), GETUTCDATE(), 0, 0, @Currency)";
 
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Name", location.Name);
@@ -267,6 +270,7 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@ImageUrl", (object)location.ImageUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("@IsPopular", location.IsPopular);
             command.Parameters.AddWithValue("@IsActive", location.IsActive);
+            command.Parameters.AddWithValue("@Currency", (object)location.Currency ?? DBNull.Value);
 
             using var reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
@@ -290,6 +294,7 @@ namespace Backend.Helper
                     ImageUrl = @ImageUrl,
                     IsPopular = @IsPopular,
                     IsActive = @IsActive,
+                    Currency = @Currency,
                     UpdatedAt = GETUTCDATE()
                 WHERE Id = @Id";
 
@@ -303,6 +308,7 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@ImageUrl", (object)location.ImageUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("@IsPopular", location.IsPopular);
             command.Parameters.AddWithValue("@IsActive", location.IsActive);
+            command.Parameters.AddWithValue("@Currency", (object)location.Currency ?? DBNull.Value);
 
             return await command.ExecuteNonQueryAsync() > 0;
         }
@@ -365,7 +371,17 @@ namespace Backend.Helper
 
         #region Deal Operations
 
-        public async Task<IEnumerable<DealResponseDto>> GetDeals(int? locationId = null)
+        public async Task<IEnumerable<DealResponseDto>> GetDeals(
+            int? locationId = null,
+            string? status = null,
+            bool? isActive = null,
+            bool? isFeatured = null,
+            string? packageType = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            int? minDays = null,
+            int? maxDays = null
+        )
         {
             try
             {
@@ -376,64 +392,225 @@ namespace Backend.Helper
                     @"
                     SELECT d.Id, d.Title, d.LocationId, d.UserId, d.Price, d.DiscountedPrice, 
                            d.DiscountPercentage, d.Rating, d.DaysCount, d.NightsCount, 
-                           d.StartPoint, d.EndPoint, d.Duration, d.Description, d.Photos,
-                           d.ElderlyFriendly, d.InternetIncluded, d.TravelIncluded, 
-                           d.MealsIncluded, d.SightseeingIncluded, d.StayIncluded,
-                           d.AirTransfer, d.RoadTransfer, d.TrainTransfer, 
-                           d.TravelCostIncluded, d.GuideIncluded, d.PhotographyIncluded,
-                           d.InsuranceIncluded, d.VisaIncluded, d.Itinerary, 
-                           d.PackageOptions, d.MapUrl, d.Policies, d.PackageType,
-                           d.IsActive, d.CreatedAt, d.UpdatedAt, d.Status,
-                           d.ApprovalStatus, d.SearchKeywords,
-                           l.Name as LocationName, 
-                           l.Description as LocationDescription,
-                           l.ImageUrl as LocationImageUrl, 
-                           l.IsPopular as LocationIsPopular,
-                           l.IsActive as LocationIsActive, 
-                           l.ClickCount as LocationClickCount,
+                           d.Description, d.Photos, d.PackageType, d.IsActive, d.CreatedAt, 
+                           d.UpdatedAt, d.Headlines, d.Tags, d.Seasons,
+                           l.Name as LocationName, l.Description as LocationDescription,
+                           l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
+                           l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
                            l.RequestCallCount as LocationRequestCallCount,
-                           l.CreatedAt as LocationCreatedAt, 
-                           l.UpdatedAt as LocationUpdatedAt,
-                           l.Country as LocationCountry,
-                           l.Continent as LocationContinent
+                           l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
                     FROM Deals d
                     INNER JOIN Locations l ON d.LocationId = l.Id
-                    WHERE d.IsActive = 1";
+                    WHERE 1=1";
+
+                var parameters = new List<SqlParameter>();
 
                 if (locationId.HasValue)
                 {
                     sql += " AND d.LocationId = @LocationId";
+                    parameters.Add(new SqlParameter("@LocationId", locationId.Value));
                 }
 
-                using var command = new SqlCommand(sql, connection);
-                if (locationId.HasValue)
+                if (isActive.HasValue)
                 {
-                    command.Parameters.AddWithValue("@LocationId", locationId.Value);
+                    sql += " AND d.IsActive = @IsActive";
+                    parameters.Add(new SqlParameter("@IsActive", isActive.Value));
                 }
+
+                if (isFeatured.HasValue)
+                {
+                    sql += " AND d.IsFeatured = @IsFeatured";
+                    parameters.Add(new SqlParameter("@IsFeatured", isFeatured.Value));
+                }
+
+                if (!string.IsNullOrEmpty(packageType))
+                {
+                    sql += " AND d.PackageType = @PackageType";
+                    parameters.Add(new SqlParameter("@PackageType", packageType));
+                }
+
+                if (minPrice.HasValue)
+                {
+                    sql += " AND d.Price >= @MinPrice";
+                    parameters.Add(new SqlParameter("@MinPrice", minPrice.Value));
+                }
+
+                if (maxPrice.HasValue)
+                {
+                    sql += " AND d.Price <= @MaxPrice";
+                    parameters.Add(new SqlParameter("@MaxPrice", maxPrice.Value));
+                }
+
+                if (minDays.HasValue)
+                {
+                    sql += " AND d.DaysCount >= @MinDays";
+                    parameters.Add(new SqlParameter("@MinDays", minDays.Value));
+                }
+
+                if (maxDays.HasValue)
+                {
+                    sql += " AND d.DaysCount <= @MaxDays";
+                    parameters.Add(new SqlParameter("@MaxDays", maxDays.Value));
+                }
+
+                sql += " ORDER BY d.CreatedAt DESC";
+
+                _logger.LogInformation("Executing SQL query: {Sql}", sql);
+                _logger.LogInformation(
+                    "Parameters: {Parameters}",
+                    string.Join(", ", parameters.Select(p => $"{p.ParameterName}={p.Value}"))
+                );
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddRange(parameters.ToArray());
 
                 var deals = new List<DealResponseDto>();
                 using var reader = await command.ExecuteReaderAsync();
+
+                int rowCount = 0;
                 while (await reader.ReadAsync())
                 {
                     try
                     {
-                        deals.Add(MapToDealResponseDto(reader));
+                        // Log raw data for debugging
+                        _logger.LogInformation("Processing deal row {RowCount}", rowCount);
+
+                        // Safely handle JSON fields
+                        string photosJson = reader.IsDBNull(reader.GetOrdinal("Photos"))
+                            ? "[]"
+                            : reader.GetString(reader.GetOrdinal("Photos"));
+                        string headlinesJson = reader.IsDBNull(reader.GetOrdinal("Headlines"))
+                            ? "[]"
+                            : reader.GetString(reader.GetOrdinal("Headlines"));
+                        string tagsJson = reader.IsDBNull(reader.GetOrdinal("Tags"))
+                            ? "[]"
+                            : reader.GetString(reader.GetOrdinal("Tags"));
+                        string seasonsJson = reader.IsDBNull(reader.GetOrdinal("Seasons"))
+                            ? "[]"
+                            : reader.GetString(reader.GetOrdinal("Seasons"));
+
+                        _logger.LogInformation(
+                            "Raw JSON data - Photos: {Photos}, Headlines: {Headlines}, Tags: {Tags}, Seasons: {Seasons}",
+                            photosJson,
+                            headlinesJson,
+                            tagsJson,
+                            seasonsJson
+                        );
+
+                        var deal = new DealResponseDto
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Title = reader.GetString(reader.GetOrdinal("Title")),
+                            LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
+                            UserId = reader.GetString(reader.GetOrdinal("UserId")),
+                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                            DiscountedPrice = reader.IsDBNull(reader.GetOrdinal("DiscountedPrice"))
+                                ? 0
+                                : reader.GetDecimal(reader.GetOrdinal("DiscountedPrice")),
+                            DiscountPercentage = reader.IsDBNull(
+                                reader.GetOrdinal("DiscountPercentage")
+                            )
+                                ? 0
+                                : reader.GetInt32(reader.GetOrdinal("DiscountPercentage")),
+                            Rating = reader.IsDBNull(reader.GetOrdinal("Rating"))
+                                ? 0
+                                : reader.GetDecimal(reader.GetOrdinal("Rating")),
+                            DaysCount = reader.GetInt32(reader.GetOrdinal("DaysCount")),
+                            NightsCount = reader.GetInt32(reader.GetOrdinal("NightsCount")),
+                            Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                                ? string.Empty
+                                : reader.GetString(reader.GetOrdinal("Description")),
+                            Photos = SafeDeserializeJson<List<string>>(photosJson),
+                            PackageType = reader.IsDBNull(reader.GetOrdinal("PackageType"))
+                                ? string.Empty
+                                : reader.GetString(reader.GetOrdinal("PackageType")),
+                            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                            UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                            Headlines = SafeDeserializeJson<List<string>>(headlinesJson),
+                            Tags = SafeDeserializeJson<List<string>>(tagsJson),
+                            Seasons = SafeDeserializeJson<List<string>>(seasonsJson),
+                            Location = new LocationResponseDto
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("LocationId")),
+                                Name = reader.IsDBNull(reader.GetOrdinal("LocationName"))
+                                    ? string.Empty
+                                    : reader.GetString(reader.GetOrdinal("LocationName")),
+                                Description = reader.IsDBNull(
+                                    reader.GetOrdinal("LocationDescription")
+                                )
+                                    ? null
+                                    : reader.GetString(reader.GetOrdinal("LocationDescription")),
+                                ImageUrl = reader.IsDBNull(reader.GetOrdinal("LocationImageUrl"))
+                                    ? null
+                                    : reader.GetString(reader.GetOrdinal("LocationImageUrl")),
+                                IsPopular = reader.GetBoolean(
+                                    reader.GetOrdinal("LocationIsPopular")
+                                ),
+                                IsActive = reader.GetBoolean(reader.GetOrdinal("LocationIsActive")),
+                                ClickCount = reader.GetInt32(
+                                    reader.GetOrdinal("LocationClickCount")
+                                ),
+                                RequestCallCount = reader.GetInt32(
+                                    reader.GetOrdinal("LocationRequestCallCount")
+                                ),
+                                CreatedAt = reader.GetDateTime(
+                                    reader.GetOrdinal("LocationCreatedAt")
+                                ),
+                                UpdatedAt = reader.GetDateTime(
+                                    reader.GetOrdinal("LocationUpdatedAt")
+                                ),
+                            },
+                        };
+                        deals.Add(deal);
+                        rowCount++;
+                        _logger.LogInformation("Successfully mapped deal {DealId}", deal.Id);
                     }
                     catch (Exception ex)
                     {
-                        // Log the error but continue processing other deals
-                        Console.WriteLine($"Error mapping deal: {ex.Message}");
+                        _logger.LogError(
+                            ex,
+                            "Error mapping deal row {RowCount}. Raw data: {RawData}",
+                            rowCount,
+                            $"Id: {reader.GetInt32(reader.GetOrdinal("Id"))}, "
+                                + $"Title: {reader.GetString(reader.GetOrdinal("Title"))}, "
+                                + $"Photos: {(reader.IsDBNull(reader.GetOrdinal("Photos")) ? "NULL" : reader.GetString(reader.GetOrdinal("Photos")))}"
+                        );
                         continue;
                     }
                 }
 
+                _logger.LogInformation("Query returned {RowCount} deals", rowCount);
                 return deals;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in GetDeals: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                _logger.LogError(ex, "Error getting deals");
                 throw;
+            }
+        }
+
+        private T SafeDeserializeJson<T>(string json)
+            where T : class, new()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(json))
+                    return new T();
+
+                // If the string doesn't start with [ or {, it's not valid JSON
+                if (!json.TrimStart().StartsWith("[") && !json.TrimStart().StartsWith("{"))
+                {
+                    _logger.LogWarning("Invalid JSON format: {Json}", json);
+                    return new T();
+                }
+
+                return JsonSerializer.Deserialize<T>(json) ?? new T();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deserializing JSON: {Json}", json);
+                return new T();
             }
         }
 
@@ -455,7 +632,7 @@ namespace Backend.Helper
                            d.TravelCostIncluded, d.GuideIncluded, d.PhotographyIncluded,
                            d.InsuranceIncluded, d.VisaIncluded, d.Itinerary, 
                            d.PackageOptions, d.MapUrl, d.Policies, d.PackageType,
-                           d.IsActive, d.CreatedAt, d.UpdatedAt, d.Status,
+                           d.IsActive, d.CreatedAt, d.UpdatedAt,
                            d.ApprovalStatus, d.SearchKeywords,
                            l.Name as LocationName, 
                            l.Description as LocationDescription,
@@ -502,103 +679,413 @@ namespace Backend.Helper
 
         public async Task<DealResponseDto> CreateDeal(DealCreateDto deal)
         {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            const string sql =
-                @"
-                INSERT INTO Deals (
-                    Title, LocationId, Price, DiscountedPrice, DiscountPercentage,
-                    Rating, DaysCount, NightsCount, StartPoint, EndPoint, Duration,
-                    Description, Photos, ElderlyFriendly, InternetIncluded,
-                    TravelIncluded, MealsIncluded, SightseeingIncluded, StayIncluded,
-                    AirTransfer, RoadTransfer, TrainTransfer, TravelCostIncluded,
-                    GuideIncluded, PhotographyIncluded, InsuranceIncluded,
-                    VisaIncluded, Itinerary, PackageOptions, MapUrl, Policies,
-                    PackageType, IsActive, CreatedAt, UpdatedAt, UserId
-                )
-                OUTPUT INSERTED.Id
-                VALUES (
-                    @Title, @LocationId, @Price, @DiscountedPrice, @DiscountPercentage,
-                    @Rating, @DaysCount, @NightsCount, @StartPoint, @EndPoint, @Duration,
-                    @Description, @Photos, @ElderlyFriendly, @InternetIncluded,
-                    @TravelIncluded, @MealsIncluded, @SightseeingIncluded, @StayIncluded,
-                    @AirTransfer, @RoadTransfer, @TrainTransfer, @TravelCostIncluded,
-                    @GuideIncluded, @PhotographyIncluded, @InsuranceIncluded,
-                    @VisaIncluded, @Itinerary, @PackageOptions, @MapUrl, @Policies,
-                    @PackageType, @IsActive, GETUTCDATE(), GETUTCDATE(), @UserId
-                )";
+                const string sql =
+                    @"
+                    INSERT INTO Deals (
+                        Title, LocationId, UserId, Price, DiscountedPrice, DiscountPercentage,
+                        Rating, DaysCount, NightsCount, Description, Photos, ElderlyFriendly,
+                        InternetIncluded, TravelIncluded, MealsIncluded, SightseeingIncluded,
+                        StayIncluded, AirTransfer, RoadTransfer, TrainTransfer, TravelCostIncluded,
+                        GuideIncluded, PhotographyIncluded, InsuranceIncluded, VisaIncluded,
+                        Itinerary, PackageOptions, MapUrl, Policies, PackageType, IsActive,
+                        CreatedAt, UpdatedAt, Status, Headlines, Tags, Seasons, DifficultyLevel,
+                        MaxGroupSize, MinGroupSize, IsInstantBooking, IsLastMinuteDeal,
+                        ValidFrom, ValidUntil, CancellationPolicy, RefundPolicy, Languages,
+                        Requirements, Restrictions
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @Title, @LocationId, @UserId, @Price, @DiscountedPrice, @DiscountPercentage,
+                        @Rating, @DaysCount, @NightsCount, @Description, @Photos, @ElderlyFriendly,
+                        @InternetIncluded, @TravelIncluded, @MealsIncluded, @SightseeingIncluded,
+                        @StayIncluded, @AirTransfer, @RoadTransfer, @TrainTransfer, @TravelCostIncluded,
+                        @GuideIncluded, @PhotographyIncluded, @InsuranceIncluded, @VisaIncluded,
+                        @Itinerary, @PackageOptions, @MapUrl, @Policies, @PackageType, @IsActive,
+                        @CreatedAt, @UpdatedAt, @Status, @Headlines, @Tags, @Seasons, @DifficultyLevel,
+                        @MaxGroupSize, @MinGroupSize, @IsInstantBooking, @IsLastMinuteDeal,
+                        @ValidFrom, @ValidUntil, @CancellationPolicy, @RefundPolicy, @Languages,
+                        @Requirements, @Restrictions
+                    )";
 
-            using var command = new SqlCommand(sql, connection);
-            AddDealParameters(command, deal);
+                using var command = new SqlCommand(sql, connection);
+                AddDealParameters(command, deal);
 
-            var id = (int)await command.ExecuteScalarAsync();
-            return await GetDealById(id);
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToDealResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating deal");
+                throw;
+            }
         }
 
         public async Task<bool> UpdateDeal(int id, DealUpdateDto deal)
         {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            // Build SQL dynamically to only update the fields that are provided
-            var updateFields = new List<string>();
-            var parameters = new List<SqlParameter>();
-
-            // Add parameters only for properties that have values
-            if (deal.ViewCount.HasValue)
+            try
             {
-                updateFields.Add("ViewCount = @ViewCount");
-                parameters.Add(new SqlParameter("@ViewCount", deal.ViewCount.Value));
-            }
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            if (deal.LastViewed.HasValue)
+                var updateFields = new List<string>();
+                var parameters = new List<SqlParameter> { new SqlParameter("@Id", id) };
+
+                // Add parameters only for properties that have values
+                if (!string.IsNullOrEmpty(deal.Title))
+                {
+                    updateFields.Add("Title = @Title");
+                    parameters.Add(new SqlParameter("@Title", deal.Title));
+                }
+
+                if (deal.LocationId.HasValue)
+                {
+                    updateFields.Add("LocationId = @LocationId");
+                    parameters.Add(new SqlParameter("@LocationId", deal.LocationId.Value));
+                }
+
+                if (deal.Price.HasValue)
+                {
+                    updateFields.Add("Price = @Price");
+                    parameters.Add(new SqlParameter("@Price", deal.Price.Value));
+                }
+
+                if (deal.DiscountedPrice.HasValue)
+                {
+                    updateFields.Add("DiscountedPrice = @DiscountedPrice");
+                    parameters.Add(
+                        new SqlParameter("@DiscountedPrice", deal.DiscountedPrice.Value)
+                    );
+                }
+
+                if (deal.DiscountPercentage.HasValue)
+                {
+                    updateFields.Add("DiscountPercentage = @DiscountPercentage");
+                    parameters.Add(
+                        new SqlParameter("@DiscountPercentage", deal.DiscountPercentage.Value)
+                    );
+                }
+
+                if (deal.Rating.HasValue)
+                {
+                    updateFields.Add("Rating = @Rating");
+                    parameters.Add(new SqlParameter("@Rating", deal.Rating.Value));
+                }
+
+                if (deal.DaysCount.HasValue)
+                {
+                    updateFields.Add("DaysCount = @DaysCount");
+                    parameters.Add(new SqlParameter("@DaysCount", deal.DaysCount.Value));
+                }
+
+                if (deal.NightsCount.HasValue)
+                {
+                    updateFields.Add("NightsCount = @NightsCount");
+                    parameters.Add(new SqlParameter("@NightsCount", deal.NightsCount.Value));
+                }
+
+                if (!string.IsNullOrEmpty(deal.Description))
+                {
+                    updateFields.Add("Description = @Description");
+                    parameters.Add(new SqlParameter("@Description", deal.Description));
+                }
+
+                if (deal.Photos != null)
+                {
+                    updateFields.Add("Photos = @Photos");
+                    parameters.Add(
+                        new SqlParameter("@Photos", JsonSerializer.Serialize(deal.Photos))
+                    );
+                }
+
+                // Add all boolean flags
+                if (deal.ElderlyFriendly.HasValue)
+                {
+                    updateFields.Add("ElderlyFriendly = @ElderlyFriendly");
+                    parameters.Add(
+                        new SqlParameter("@ElderlyFriendly", deal.ElderlyFriendly.Value)
+                    );
+                }
+
+                if (deal.InternetIncluded.HasValue)
+                {
+                    updateFields.Add("InternetIncluded = @InternetIncluded");
+                    parameters.Add(
+                        new SqlParameter("@InternetIncluded", deal.InternetIncluded.Value)
+                    );
+                }
+
+                if (deal.TravelIncluded.HasValue)
+                {
+                    updateFields.Add("TravelIncluded = @TravelIncluded");
+                    parameters.Add(new SqlParameter("@TravelIncluded", deal.TravelIncluded.Value));
+                }
+
+                if (deal.MealsIncluded.HasValue)
+                {
+                    updateFields.Add("MealsIncluded = @MealsIncluded");
+                    parameters.Add(new SqlParameter("@MealsIncluded", deal.MealsIncluded.Value));
+                }
+
+                if (deal.SightseeingIncluded.HasValue)
+                {
+                    updateFields.Add("SightseeingIncluded = @SightseeingIncluded");
+                    parameters.Add(
+                        new SqlParameter("@SightseeingIncluded", deal.SightseeingIncluded.Value)
+                    );
+                }
+
+                if (deal.StayIncluded.HasValue)
+                {
+                    updateFields.Add("StayIncluded = @StayIncluded");
+                    parameters.Add(new SqlParameter("@StayIncluded", deal.StayIncluded.Value));
+                }
+
+                if (deal.AirTransfer.HasValue)
+                {
+                    updateFields.Add("AirTransfer = @AirTransfer");
+                    parameters.Add(new SqlParameter("@AirTransfer", deal.AirTransfer.Value));
+                }
+
+                if (deal.RoadTransfer.HasValue)
+                {
+                    updateFields.Add("RoadTransfer = @RoadTransfer");
+                    parameters.Add(new SqlParameter("@RoadTransfer", deal.RoadTransfer.Value));
+                }
+
+                if (deal.TrainTransfer.HasValue)
+                {
+                    updateFields.Add("TrainTransfer = @TrainTransfer");
+                    parameters.Add(new SqlParameter("@TrainTransfer", deal.TrainTransfer.Value));
+                }
+
+                if (deal.TravelCostIncluded.HasValue)
+                {
+                    updateFields.Add("TravelCostIncluded = @TravelCostIncluded");
+                    parameters.Add(
+                        new SqlParameter("@TravelCostIncluded", deal.TravelCostIncluded.Value)
+                    );
+                }
+
+                if (deal.GuideIncluded.HasValue)
+                {
+                    updateFields.Add("GuideIncluded = @GuideIncluded");
+                    parameters.Add(new SqlParameter("@GuideIncluded", deal.GuideIncluded.Value));
+                }
+
+                if (deal.PhotographyIncluded.HasValue)
+                {
+                    updateFields.Add("PhotographyIncluded = @PhotographyIncluded");
+                    parameters.Add(
+                        new SqlParameter("@PhotographyIncluded", deal.PhotographyIncluded.Value)
+                    );
+                }
+
+                if (deal.InsuranceIncluded.HasValue)
+                {
+                    updateFields.Add("InsuranceIncluded = @InsuranceIncluded");
+                    parameters.Add(
+                        new SqlParameter("@InsuranceIncluded", deal.InsuranceIncluded.Value)
+                    );
+                }
+
+                if (deal.VisaIncluded.HasValue)
+                {
+                    updateFields.Add("VisaIncluded = @VisaIncluded");
+                    parameters.Add(new SqlParameter("@VisaIncluded", deal.VisaIncluded.Value));
+                }
+
+                if (deal.Itinerary != null)
+                {
+                    updateFields.Add("Itinerary = @Itinerary");
+                    parameters.Add(
+                        new SqlParameter("@Itinerary", JsonSerializer.Serialize(deal.Itinerary))
+                    );
+                }
+
+                if (deal.PackageOptions != null)
+                {
+                    updateFields.Add("PackageOptions = @PackageOptions");
+                    parameters.Add(
+                        new SqlParameter(
+                            "@PackageOptions",
+                            JsonSerializer.Serialize(deal.PackageOptions)
+                        )
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(deal.MapUrl))
+                {
+                    updateFields.Add("MapUrl = @MapUrl");
+                    parameters.Add(new SqlParameter("@MapUrl", deal.MapUrl));
+                }
+
+                if (deal.Policies != null)
+                {
+                    updateFields.Add("Policies = @Policies");
+                    parameters.Add(
+                        new SqlParameter("@Policies", JsonSerializer.Serialize(deal.Policies))
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(deal.PackageType))
+                {
+                    updateFields.Add("PackageType = @PackageType");
+                    parameters.Add(new SqlParameter("@PackageType", deal.PackageType));
+                }
+
+                if (deal.IsActive.HasValue)
+                {
+                    updateFields.Add("IsActive = @IsActive");
+                    parameters.Add(new SqlParameter("@IsActive", deal.IsActive.Value));
+                }
+
+                if (deal.Headlines != null)
+                {
+                    updateFields.Add("Headlines = @Headlines");
+                    parameters.Add(
+                        new SqlParameter("@Headlines", JsonSerializer.Serialize(deal.Headlines))
+                    );
+                }
+
+                if (deal.Tags != null)
+                {
+                    updateFields.Add("Tags = @Tags");
+                    parameters.Add(new SqlParameter("@Tags", JsonSerializer.Serialize(deal.Tags)));
+                }
+
+                if (deal.Seasons != null)
+                {
+                    updateFields.Add("Seasons = @Seasons");
+                    parameters.Add(
+                        new SqlParameter("@Seasons", JsonSerializer.Serialize(deal.Seasons))
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(deal.DifficultyLevel))
+                {
+                    updateFields.Add("DifficultyLevel = @DifficultyLevel");
+                    parameters.Add(new SqlParameter("@DifficultyLevel", deal.DifficultyLevel));
+                }
+
+                if (deal.MaxGroupSize.HasValue)
+                {
+                    updateFields.Add("MaxGroupSize = @MaxGroupSize");
+                    parameters.Add(new SqlParameter("@MaxGroupSize", deal.MaxGroupSize.Value));
+                }
+
+                if (deal.MinGroupSize.HasValue)
+                {
+                    updateFields.Add("MinGroupSize = @MinGroupSize");
+                    parameters.Add(new SqlParameter("@MinGroupSize", deal.MinGroupSize.Value));
+                }
+
+                if (deal.IsInstantBooking.HasValue)
+                {
+                    updateFields.Add("IsInstantBooking = @IsInstantBooking");
+                    parameters.Add(
+                        new SqlParameter("@IsInstantBooking", deal.IsInstantBooking.Value)
+                    );
+                }
+
+                if (deal.IsLastMinuteDeal.HasValue)
+                {
+                    updateFields.Add("IsLastMinuteDeal = @IsLastMinuteDeal");
+                    parameters.Add(
+                        new SqlParameter("@IsLastMinuteDeal", deal.IsLastMinuteDeal.Value)
+                    );
+                }
+
+                if (deal.ValidFrom.HasValue)
+                {
+                    updateFields.Add("ValidFrom = @ValidFrom");
+                    parameters.Add(new SqlParameter("@ValidFrom", deal.ValidFrom.Value));
+                }
+
+                if (deal.ValidUntil.HasValue)
+                {
+                    updateFields.Add("ValidUntil = @ValidUntil");
+                    parameters.Add(new SqlParameter("@ValidUntil", deal.ValidUntil.Value));
+                }
+
+                if (!string.IsNullOrEmpty(deal.CancellationPolicy))
+                {
+                    updateFields.Add("CancellationPolicy = @CancellationPolicy");
+                    parameters.Add(
+                        new SqlParameter("@CancellationPolicy", deal.CancellationPolicy)
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(deal.RefundPolicy))
+                {
+                    updateFields.Add("RefundPolicy = @RefundPolicy");
+                    parameters.Add(new SqlParameter("@RefundPolicy", deal.RefundPolicy));
+                }
+
+                if (deal.Languages != null)
+                {
+                    updateFields.Add("Languages = @Languages");
+                    parameters.Add(
+                        new SqlParameter("@Languages", JsonSerializer.Serialize(deal.Languages))
+                    );
+                }
+
+                if (deal.Requirements != null)
+                {
+                    updateFields.Add("Requirements = @Requirements");
+                    parameters.Add(
+                        new SqlParameter(
+                            "@Requirements",
+                            JsonSerializer.Serialize(deal.Requirements)
+                        )
+                    );
+                }
+
+                if (deal.Restrictions != null)
+                {
+                    updateFields.Add("Restrictions = @Restrictions");
+                    parameters.Add(
+                        new SqlParameter(
+                            "@Restrictions",
+                            JsonSerializer.Serialize(deal.Restrictions)
+                        )
+                    );
+                }
+
+                // Always update the UpdatedAt timestamp
+                updateFields.Add("UpdatedAt = @UpdatedAt");
+                parameters.Add(new SqlParameter("@UpdatedAt", deal.UpdatedAt));
+
+                if (updateFields.Count == 0)
+                {
+                    return true; // Nothing to update
+                }
+
+                var sql =
+                    $@"
+                    UPDATE Deals
+                    SET {string.Join(", ", updateFields)}
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddRange(parameters.ToArray());
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
             {
-                updateFields.Add("LastViewed = @LastViewed");
-                parameters.Add(new SqlParameter("@LastViewed", deal.LastViewed.Value));
+                _logger.LogError(ex, "Error updating deal {DealId}", id);
+                throw;
             }
-
-            if (deal.ClickCount.HasValue)
-            {
-                updateFields.Add("ClickCount = @ClickCount");
-                parameters.Add(new SqlParameter("@ClickCount", deal.ClickCount.Value));
-            }
-
-            if (deal.LastClicked.HasValue)
-            {
-                updateFields.Add("LastClicked = @LastClicked");
-                parameters.Add(new SqlParameter("@LastClicked", deal.LastClicked.Value));
-            }
-
-            if (deal.RelevanceScore.HasValue)
-            {
-                updateFields.Add("RelevanceScore = @RelevanceScore");
-                parameters.Add(new SqlParameter("@RelevanceScore", deal.RelevanceScore.Value));
-            }
-
-            // Always include IsActive in the update
-            updateFields.Add("IsActive = @IsActive");
-            parameters.Add(new SqlParameter("@IsActive", deal.IsActive));
-
-            // Only proceed if there are fields to update
-            if (updateFields.Count == 0)
-            {
-                return true; // Nothing to update
-            }
-
-            updateFields.Add("UpdatedAt = GETUTCDATE()");
-
-            var sql =
-                $@"
-                UPDATE Deals
-                SET {string.Join(", ", updateFields)}
-                WHERE Id = @Id";
-
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Id", id);
-            command.Parameters.AddRange(parameters.ToArray());
-
-            return await command.ExecuteNonQueryAsync() > 0;
         }
 
         public async Task<bool> DeleteDeal(int id)
@@ -625,114 +1112,150 @@ namespace Backend.Helper
             decimal? maxPrice = null,
             int? minDays = null,
             int? maxDays = null,
-            string? packageType = null
+            string? packageType = null,
+            string? difficultyLevel = null,
+            bool? isInstantBooking = null,
+            bool? isLastMinuteDeal = null,
+            string? status = null
         )
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            var sql =
-                @"
-                SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
-                       l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
-                       l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
-                       l.RequestCallCount as LocationRequestCallCount,
-                       l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
-                FROM Deals d
-                INNER JOIN Locations l ON d.LocationId = l.Id
-                WHERE d.IsActive = 1";
-
-            var parameters = new List<SqlParameter>();
-
-            if (!string.IsNullOrEmpty(searchTerm))
-            {
-                sql +=
-                    @" AND (d.Title LIKE @SearchTerm 
-                          OR d.Description LIKE @SearchTerm 
-                          OR l.Name LIKE @SearchTerm)";
-                parameters.Add(new SqlParameter("@SearchTerm", $"%{searchTerm}%"));
-            }
-
-            if (minPrice.HasValue)
-            {
-                sql += " AND d.Price >= @MinPrice";
-                parameters.Add(new SqlParameter("@MinPrice", minPrice.Value));
-            }
-
-            if (maxPrice.HasValue)
-            {
-                sql += " AND d.Price <= @MaxPrice";
-                parameters.Add(new SqlParameter("@MaxPrice", maxPrice.Value));
-            }
-
-            if (minDays.HasValue)
-            {
-                sql += " AND d.DaysCount >= @MinDays";
-                parameters.Add(new SqlParameter("@MinDays", minDays.Value));
-            }
-
-            if (maxDays.HasValue)
-            {
-                sql += " AND d.DaysCount <= @MaxDays";
-                parameters.Add(new SqlParameter("@MaxDays", maxDays.Value));
-            }
-
-            if (!string.IsNullOrEmpty(packageType))
-            {
-                sql += " AND d.PackageType = @PackageType";
-                parameters.Add(new SqlParameter("@PackageType", packageType));
-            }
-
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddRange(parameters.ToArray());
-
-            var deals = new List<DealResponseDto>();
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                deals.Add(MapToDealResponseDto(reader));
-            }
-
-            return deals;
-        }
-
-        public async Task<IEnumerable<DealResponseDto>> GetDealsByUserId(string userId)
         {
             try
             {
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                const string sql =
+                var sql =
                     @"
-                    SELECT d.Id, d.Title, d.LocationId, d.UserId, d.Price, d.DiscountedPrice, 
-                           d.DiscountPercentage, d.Rating, d.DaysCount, d.NightsCount, 
-                           d.StartPoint, d.EndPoint, d.Duration, d.Description, d.Photos,
-                           d.ElderlyFriendly, d.InternetIncluded, d.TravelIncluded, 
-                           d.MealsIncluded, d.SightseeingIncluded, d.StayIncluded,
-                           d.AirTransfer, d.RoadTransfer, d.TrainTransfer, 
-                           d.TravelCostIncluded, d.GuideIncluded, d.PhotographyIncluded,
-                           d.InsuranceIncluded, d.VisaIncluded, d.Itinerary, 
-                           d.PackageOptions, d.MapUrl, d.Policies, d.PackageType,
-                           d.IsActive, d.CreatedAt, d.UpdatedAt, d.Status,
-                           d.ApprovalStatus, d.SearchKeywords,
-                           l.Name as LocationName, 
-                           l.Description as LocationDescription,
-                           l.ImageUrl as LocationImageUrl, 
-                           l.IsPopular as LocationIsPopular,
-                           l.IsActive as LocationIsActive, 
-                           l.ClickCount as LocationClickCount,
+                    SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
+                           l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
+                           l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
                            l.RequestCallCount as LocationRequestCallCount,
-                           l.CreatedAt as LocationCreatedAt, 
-                           l.UpdatedAt as LocationUpdatedAt,
-                           l.Country as LocationCountry,
-                           l.Continent as LocationContinent
+                           l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
+                    FROM Deals d
+                    INNER JOIN Locations l ON d.LocationId = l.Id
+                    WHERE d.IsActive = 1";
+
+                var parameters = new List<SqlParameter>();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    sql +=
+                        @" AND (
+                        d.Title LIKE @SearchTerm 
+                        OR d.Description LIKE @SearchTerm 
+                        OR d.SearchKeywords LIKE @SearchTerm
+                        OR l.Name LIKE @SearchTerm
+                    )";
+                    parameters.Add(new SqlParameter("@SearchTerm", $"%{searchTerm}%"));
+                }
+
+                if (minPrice.HasValue)
+                {
+                    sql += " AND d.Price >= @MinPrice";
+                    parameters.Add(new SqlParameter("@MinPrice", minPrice.Value));
+                }
+
+                if (maxPrice.HasValue)
+                {
+                    sql += " AND d.Price <= @MaxPrice";
+                    parameters.Add(new SqlParameter("@MaxPrice", maxPrice.Value));
+                }
+
+                if (minDays.HasValue)
+                {
+                    sql += " AND d.DaysCount >= @MinDays";
+                    parameters.Add(new SqlParameter("@MinDays", minDays.Value));
+                }
+
+                if (maxDays.HasValue)
+                {
+                    sql += " AND d.DaysCount <= @MaxDays";
+                    parameters.Add(new SqlParameter("@MaxDays", maxDays.Value));
+                }
+
+                if (!string.IsNullOrEmpty(packageType))
+                {
+                    sql += " AND d.PackageType = @PackageType";
+                    parameters.Add(new SqlParameter("@PackageType", packageType));
+                }
+
+                if (!string.IsNullOrEmpty(difficultyLevel))
+                {
+                    sql += " AND d.DifficultyLevel = @DifficultyLevel";
+                    parameters.Add(new SqlParameter("@DifficultyLevel", difficultyLevel));
+                }
+
+                if (isInstantBooking.HasValue)
+                {
+                    sql += " AND d.IsInstantBooking = @IsInstantBooking";
+                    parameters.Add(new SqlParameter("@IsInstantBooking", isInstantBooking.Value));
+                }
+
+                if (isLastMinuteDeal.HasValue)
+                {
+                    sql += " AND d.IsLastMinuteDeal = @IsLastMinuteDeal";
+                    parameters.Add(new SqlParameter("@IsLastMinuteDeal", isLastMinuteDeal.Value));
+                }
+
+                sql += " ORDER BY d.RelevanceScore DESC, d.Priority DESC, d.CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddRange(parameters.ToArray());
+
+                var deals = new List<DealResponseDto>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    deals.Add(MapToDealResponseDto(reader));
+                }
+
+                return deals;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching deals");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<DealResponseDto>> GetDealsByUserId(
+            string userId,
+            string? status = null,
+            bool? isActive = null
+        )
+        {
+            try
+            {
+                _logger.LogInformation("Getting deals for user ID: {UserId}", userId);
+
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
+                           l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
+                           l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
+                           l.RequestCallCount as LocationRequestCallCount,
+                           l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
                     FROM Deals d
                     INNER JOIN Locations l ON d.LocationId = l.Id
                     WHERE d.UserId = @UserId";
 
+                var parameters = new List<SqlParameter> { new SqlParameter("@UserId", userId) };
+
+                if (isActive.HasValue)
+                {
+                    sql += " AND d.IsActive = @IsActive";
+                    parameters.Add(new SqlParameter("@IsActive", isActive.Value));
+                }
+
+                sql += " ORDER BY d.CreatedAt DESC";
+
+                _logger.LogDebug("Executing SQL query: {Sql}", sql);
+
                 using var command = new SqlCommand(sql, connection);
-                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddRange(parameters.ToArray());
 
                 var deals = new List<DealResponseDto>();
                 using var reader = await command.ExecuteReaderAsync();
@@ -740,22 +1263,36 @@ namespace Backend.Helper
                 {
                     try
                     {
-                        deals.Add(MapToDealResponseDto(reader));
+                        var deal = MapToDealResponseDto(reader);
+                        deals.Add(deal);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error mapping deal: {ex.Message}");
-                        Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                        continue;
+                        _logger.LogError(
+                            ex,
+                            "Error mapping deal for user {UserId}. Skipping this deal. Exception: {Exception}",
+                            userId,
+                            ex.Message
+                        );
+                        // Skip this deal and continue with others
                     }
                 }
 
+                _logger.LogInformation(
+                    "Retrieved {Count} deals for user {UserId}",
+                    deals.Count,
+                    userId
+                );
                 return deals;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in GetDealsByUserId: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                _logger.LogError(
+                    ex,
+                    "Error getting deals for user {UserId}. Exception: {Exception}",
+                    userId,
+                    ex.Message
+                );
                 throw;
             }
         }
@@ -819,6 +1356,9 @@ namespace Backend.Helper
                 Continent = reader.IsDBNull(reader.GetOrdinal("Continent"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("Continent")),
+                Currency = reader.IsDBNull(reader.GetOrdinal("Currency"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Currency")),
                 IsPopular = reader.GetBoolean(reader.GetOrdinal("IsPopular")),
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                 ClickCount = reader.GetInt32(reader.GetOrdinal("ClickCount")),
@@ -830,88 +1370,114 @@ namespace Backend.Helper
 
         private DealResponseDto MapToDealResponseDto(SqlDataReader reader)
         {
-            return new DealResponseDto
+            try
             {
-                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                Title = reader.GetString(reader.GetOrdinal("Title")),
-                LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
-                UserId = reader.GetString(reader.GetOrdinal("UserId")),
-                Price = reader.GetDecimal(reader.GetOrdinal("Price")),
-                DiscountedPrice = reader.GetDecimal(reader.GetOrdinal("DiscountedPrice")),
-                DiscountPercentage = reader.GetInt32(reader.GetOrdinal("DiscountPercentage")),
-                Rating = reader.GetDecimal(reader.GetOrdinal("Rating")),
-                DaysCount = reader.GetInt32(reader.GetOrdinal("DaysCount")),
-                NightsCount = reader.GetInt32(reader.GetOrdinal("NightsCount")),
-                StartPoint = reader.GetString(reader.GetOrdinal("StartPoint")),
-                EndPoint = reader.GetString(reader.GetOrdinal("EndPoint")),
-                Duration = reader.GetString(reader.GetOrdinal("Duration")),
-                Description = reader.GetString(reader.GetOrdinal("Description")),
-                Photos = JsonSerializer.Deserialize<List<string>>(
-                    reader.GetString(reader.GetOrdinal("Photos"))
-                ),
-                ElderlyFriendly = reader.GetBoolean(reader.GetOrdinal("ElderlyFriendly")),
-                InternetIncluded = reader.GetBoolean(reader.GetOrdinal("InternetIncluded")),
-                TravelIncluded = reader.GetBoolean(reader.GetOrdinal("TravelIncluded")),
-                MealsIncluded = reader.GetBoolean(reader.GetOrdinal("MealsIncluded")),
-                SightseeingIncluded = reader.GetBoolean(reader.GetOrdinal("SightseeingIncluded")),
-                StayIncluded = reader.GetBoolean(reader.GetOrdinal("StayIncluded")),
-                AirTransfer = reader.GetBoolean(reader.GetOrdinal("AirTransfer")),
-                RoadTransfer = reader.GetBoolean(reader.GetOrdinal("RoadTransfer")),
-                TrainTransfer = reader.GetBoolean(reader.GetOrdinal("TrainTransfer")),
-                TravelCostIncluded = reader.GetBoolean(reader.GetOrdinal("TravelCostIncluded")),
-                GuideIncluded = reader.GetBoolean(reader.GetOrdinal("GuideIncluded")),
-                PhotographyIncluded = reader.GetBoolean(reader.GetOrdinal("PhotographyIncluded")),
-                InsuranceIncluded = reader.GetBoolean(reader.GetOrdinal("InsuranceIncluded")),
-                VisaIncluded = reader.GetBoolean(reader.GetOrdinal("VisaIncluded")),
-                Itinerary = JsonSerializer.Deserialize<List<ItineraryDay>>(
-                    reader.GetString(reader.GetOrdinal("Itinerary"))
-                ),
-                PackageOptions = JsonSerializer.Deserialize<List<PackageOption>>(
-                    reader.GetString(reader.GetOrdinal("PackageOptions"))
-                ),
-                MapUrl = reader.GetString(reader.GetOrdinal("MapUrl")),
-                Policies = JsonSerializer.Deserialize<List<Policy>>(
-                    reader.GetString(reader.GetOrdinal("Policies"))
-                ),
-                PackageType = reader.GetString(reader.GetOrdinal("PackageType")),
-                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                Status = reader.IsDBNull(reader.GetOrdinal("Status"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("Status")),
-                ApprovalStatus = reader.IsDBNull(reader.GetOrdinal("ApprovalStatus"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("ApprovalStatus")),
-                SearchKeywords = reader.IsDBNull(reader.GetOrdinal("SearchKeywords"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("SearchKeywords")),
-                Location = new LocationResponseDto
+                return new DealResponseDto
                 {
-                    Id = reader.GetInt32(reader.GetOrdinal("LocationId")),
-                    Name = reader.GetString(reader.GetOrdinal("LocationName")),
-                    Description = reader.IsDBNull(reader.GetOrdinal("LocationDescription"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("LocationDescription")),
-                    ImageUrl = reader.IsDBNull(reader.GetOrdinal("LocationImageUrl"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("LocationImageUrl")),
-                    Country = reader.IsDBNull(reader.GetOrdinal("LocationCountry"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("LocationCountry")),
-                    Continent = reader.IsDBNull(reader.GetOrdinal("LocationContinent"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("LocationContinent")),
-                    IsPopular = reader.GetBoolean(reader.GetOrdinal("LocationIsPopular")),
-                    IsActive = reader.GetBoolean(reader.GetOrdinal("LocationIsActive")),
-                    ClickCount = reader.GetInt32(reader.GetOrdinal("LocationClickCount")),
-                    RequestCallCount = reader.GetInt32(
-                        reader.GetOrdinal("LocationRequestCallCount")
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Title = reader.IsDBNull(reader.GetOrdinal("Title"))
+                        ? string.Empty
+                        : reader.GetString(reader.GetOrdinal("Title")),
+                    LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
+                    UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
+                        ? string.Empty
+                        : reader.GetString(reader.GetOrdinal("UserId")),
+                    Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                    DiscountedPrice = reader.IsDBNull(reader.GetOrdinal("DiscountedPrice"))
+                        ? 0
+                        : reader.GetDecimal(reader.GetOrdinal("DiscountedPrice")),
+                    DiscountPercentage = reader.IsDBNull(reader.GetOrdinal("DiscountPercentage"))
+                        ? 0
+                        : reader.GetInt32(reader.GetOrdinal("DiscountPercentage")),
+                    Rating = reader.IsDBNull(reader.GetOrdinal("Rating"))
+                        ? 0
+                        : reader.GetDecimal(reader.GetOrdinal("Rating")),
+                    DaysCount = reader.GetInt32(reader.GetOrdinal("DaysCount")),
+                    NightsCount = reader.GetInt32(reader.GetOrdinal("NightsCount")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                        ? string.Empty
+                        : reader.GetString(reader.GetOrdinal("Description")),
+                    Photos = reader.IsDBNull(reader.GetOrdinal("Photos"))
+                        ? new List<string>()
+                        : JsonSerializer.Deserialize<List<string>>(
+                            reader.GetString(reader.GetOrdinal("Photos"))
+                        ) ?? new List<string>(),
+                    ElderlyFriendly = reader.GetBoolean(reader.GetOrdinal("ElderlyFriendly")),
+                    InternetIncluded = reader.GetBoolean(reader.GetOrdinal("InternetIncluded")),
+                    TravelIncluded = reader.GetBoolean(reader.GetOrdinal("TravelIncluded")),
+                    MealsIncluded = reader.GetBoolean(reader.GetOrdinal("MealsIncluded")),
+                    SightseeingIncluded = reader.GetBoolean(
+                        reader.GetOrdinal("SightseeingIncluded")
                     ),
-                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("LocationCreatedAt")),
-                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("LocationUpdatedAt")),
-                },
-            };
+                    StayIncluded = reader.GetBoolean(reader.GetOrdinal("StayIncluded")),
+                    AirTransfer = reader.GetBoolean(reader.GetOrdinal("AirTransfer")),
+                    RoadTransfer = reader.GetBoolean(reader.GetOrdinal("RoadTransfer")),
+                    TrainTransfer = reader.GetBoolean(reader.GetOrdinal("TrainTransfer")),
+                    TravelCostIncluded = reader.GetBoolean(reader.GetOrdinal("TravelCostIncluded")),
+                    GuideIncluded = reader.GetBoolean(reader.GetOrdinal("GuideIncluded")),
+                    PhotographyIncluded = reader.GetBoolean(
+                        reader.GetOrdinal("PhotographyIncluded")
+                    ),
+                    InsuranceIncluded = reader.GetBoolean(reader.GetOrdinal("InsuranceIncluded")),
+                    VisaIncluded = reader.GetBoolean(reader.GetOrdinal("VisaIncluded")),
+                    Itinerary = reader.IsDBNull(reader.GetOrdinal("Itinerary"))
+                        ? new List<ItineraryDay>()
+                        : JsonSerializer.Deserialize<List<ItineraryDay>>(
+                            reader.GetString(reader.GetOrdinal("Itinerary"))
+                        ) ?? new List<ItineraryDay>(),
+                    PackageOptions = reader.IsDBNull(reader.GetOrdinal("PackageOptions"))
+                        ? new List<PackageOption>()
+                        : JsonSerializer.Deserialize<List<PackageOption>>(
+                            reader.GetString(reader.GetOrdinal("PackageOptions"))
+                        ) ?? new List<PackageOption>(),
+                    MapUrl = reader.IsDBNull(reader.GetOrdinal("MapUrl"))
+                        ? string.Empty
+                        : reader.GetString(reader.GetOrdinal("MapUrl")),
+                    Policies = reader.IsDBNull(reader.GetOrdinal("Policies"))
+                        ? new List<Policy>()
+                        : JsonSerializer.Deserialize<List<Policy>>(
+                            reader.GetString(reader.GetOrdinal("Policies"))
+                        ) ?? new List<Policy>(),
+                    PackageType = reader.IsDBNull(reader.GetOrdinal("PackageType"))
+                        ? string.Empty
+                        : reader.GetString(reader.GetOrdinal("PackageType")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                    ClickCount = reader.GetInt32(reader.GetOrdinal("ClickCount")),
+                    ViewCount = reader.GetInt32(reader.GetOrdinal("ViewCount")),
+                    BookingCount = reader.GetInt32(reader.GetOrdinal("BookingCount")),
+                    LastClicked = reader.IsDBNull(reader.GetOrdinal("LastClicked"))
+                        ? DateTime.MinValue
+                        : reader.GetDateTime(reader.GetOrdinal("LastClicked")),
+                    LastViewed = reader.IsDBNull(reader.GetOrdinal("LastViewed"))
+                        ? DateTime.MinValue
+                        : reader.GetDateTime(reader.GetOrdinal("LastViewed")),
+                    LastBooked = reader.IsDBNull(reader.GetOrdinal("LastBooked"))
+                        ? DateTime.MinValue
+                        : reader.GetDateTime(reader.GetOrdinal("LastBooked")),
+                    RelevanceScore = reader.IsDBNull(reader.GetOrdinal("RelevanceScore"))
+                        ? 0
+                        : reader.GetDecimal(reader.GetOrdinal("RelevanceScore")),
+                    SearchKeywords = reader.IsDBNull(reader.GetOrdinal("SearchKeywords"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("SearchKeywords")),
+                    Tags = reader.IsDBNull(reader.GetOrdinal("Tags"))
+                        ? new List<string>()
+                        : JsonSerializer.Deserialize<List<string>>(
+                            reader.GetString(reader.GetOrdinal("Tags"))
+                        ) ?? new List<string>(),
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error mapping deal from database. Exception: {Exception}",
+                    ex.Message
+                );
+                throw;
+            }
         }
 
         private void AddDealParameters(SqlCommand command, DealCreateDto deal)
@@ -924,9 +1490,6 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@Rating", deal.Rating);
             command.Parameters.AddWithValue("@DaysCount", deal.DaysCount);
             command.Parameters.AddWithValue("@NightsCount", deal.NightsCount);
-            command.Parameters.AddWithValue("@StartPoint", deal.StartPoint);
-            command.Parameters.AddWithValue("@EndPoint", deal.EndPoint);
-            command.Parameters.AddWithValue("@Duration", deal.Duration);
             command.Parameters.AddWithValue("@Description", deal.Description);
             command.Parameters.AddWithValue("@Photos", JsonSerializer.Serialize(deal.Photos));
             command.Parameters.AddWithValue("@ElderlyFriendly", deal.ElderlyFriendly);
@@ -952,6 +1515,27 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@Policies", JsonSerializer.Serialize(deal.Policies));
             command.Parameters.AddWithValue("@PackageType", deal.PackageType);
             command.Parameters.AddWithValue("@IsActive", deal.IsActive);
+            command.Parameters.AddWithValue("@Headlines", JsonSerializer.Serialize(deal.Headlines));
+            command.Parameters.AddWithValue("@Tags", JsonSerializer.Serialize(deal.Tags));
+            command.Parameters.AddWithValue("@Seasons", JsonSerializer.Serialize(deal.Seasons));
+            command.Parameters.AddWithValue("@DifficultyLevel", deal.DifficultyLevel);
+            command.Parameters.AddWithValue("@MaxGroupSize", deal.MaxGroupSize);
+            command.Parameters.AddWithValue("@MinGroupSize", deal.MinGroupSize);
+            command.Parameters.AddWithValue("@IsInstantBooking", deal.IsInstantBooking);
+            command.Parameters.AddWithValue("@IsLastMinuteDeal", deal.IsLastMinuteDeal);
+            command.Parameters.AddWithValue("@ValidFrom", deal.ValidFrom);
+            command.Parameters.AddWithValue("@ValidUntil", deal.ValidUntil);
+            command.Parameters.AddWithValue("@CancellationPolicy", deal.CancellationPolicy);
+            command.Parameters.AddWithValue("@RefundPolicy", deal.RefundPolicy);
+            command.Parameters.AddWithValue("@Languages", JsonSerializer.Serialize(deal.Languages));
+            command.Parameters.AddWithValue(
+                "@Requirements",
+                JsonSerializer.Serialize(deal.Requirements)
+            );
+            command.Parameters.AddWithValue(
+                "@Restrictions",
+                JsonSerializer.Serialize(deal.Restrictions)
+            );
             command.Parameters.AddWithValue("@UserId", deal.UserId);
         }
 

@@ -4,44 +4,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DealService } from '../../services/deal.service';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
+import { DealResponseDto } from '../../models/deal.model';
 
-interface Deal {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice: number;
-  discountPercentage: number;
-  daysCount: number;
-  nightsCount: number;
-  photos: string[];
-  rating: number | null;
-  startPoint: string;
-  endPoint: string;
-  elderlyFriendly: boolean;
-  internetIncluded: boolean;
-  travelIncluded: boolean;
-  mealsIncluded: boolean;
-  sightseeingIncluded: boolean;
-  stayIncluded: boolean;
-  airTransfer: boolean;
-  roadTransfer: boolean;
-  trainTransfer: boolean;
-  travelCostIncluded: boolean;
-  guideIncluded: boolean;
-  photographyIncluded: boolean;
-  insuranceIncluded: boolean;
-  visaIncluded: boolean;
-  itinerary: ItineraryDay[];
-  packageOptions: PackageOption[];
-  mapUrl?: string;
-  policies: Policy[];
-  packageType: string;
-  location: {
-    id: number;
-    name: string;
-  };
-}
+// Use DealResponseDto directly instead of custom Deal interface
+type Deal = DealResponseDto;
 
 interface ItineraryDay {
   dayNumber: number;
@@ -113,13 +79,13 @@ export class DealDetailsComponent implements OnInit {
   }
 
   nextImage(): void {
-    if (this.deal?.photos) {
+    if (this.deal?.photos && this.deal.photos.length > 0) {
       this.currentImageIndex = (this.currentImageIndex + 1) % this.deal.photos.length;
     }
   }
 
   previousImage(): void {
-    if (this.deal?.photos) {
+    if (this.deal?.photos && this.deal.photos.length > 0) {
       this.currentImageIndex = (this.currentImageIndex - 1 + this.deal.photos.length) % this.deal.photos.length;
     }
   }

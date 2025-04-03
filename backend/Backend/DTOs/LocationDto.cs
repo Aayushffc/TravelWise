@@ -5,6 +5,7 @@ namespace Backend.DTOs
         public string? Name { get; set; }
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
+        public string? Currency { get; set; }
         public bool IsPopular { get; set; }
         public bool IsActive { get; set; }
     }
@@ -19,6 +20,7 @@ namespace Backend.DTOs
         public string? ImageUrl { get; set; }
         public string? Country { get; set; }
         public string? Continent { get; set; }
+        public string? Currency { get; set; }
         public bool IsPopular { get; set; }
         public bool IsActive { get; set; }
         public int ClickCount { get; set; }

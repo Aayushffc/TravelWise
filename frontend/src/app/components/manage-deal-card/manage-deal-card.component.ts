@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Deal } from '../../models/deal.model';
+import { DealResponseDto } from '../../models/deal.model';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-manage-deal-card',
@@ -10,44 +11,50 @@ import { Deal } from '../../models/deal.model';
   styleUrls: ['./manage-deal-card.component.css']
 })
 export class ManageDealCardComponent {
-  @Input() deal!: Deal;
-  @Output() edit = new EventEmitter<Deal>();
+  @Input() deal!: DealResponseDto;
   @Output() delete = new EventEmitter<number>();
   @Output() toggleStatus = new EventEmitter<{ id: number, isActive: boolean }>();
-  @Output() view = new EventEmitter<Deal>();
 
-  onEdit(event: Event): void {
-    event.stopPropagation();
-    this.edit.emit(this.deal);
-  }
+  constructor(private router: Router) {}
 
-  onDelete(event: Event): void {
-    event.stopPropagation();
-    this.delete.emit(this.deal.id);
+  onCardClick(): void {
+    // Navigate to agency deal details (correct route based on app.routes.ts)
+    this.router.navigate(['/agency/agency-deal-details', this.deal.id]);
   }
 
   onToggleStatus(event: Event): void {
     event.stopPropagation();
-    console.log("Current deal isActive:", this.deal.isActive);
-    console.log("Current deal isActive type:", typeof this.deal.isActive);
 
     // Ensure isActive is a boolean
     const currentStatus = this.deal.isActive === true;
     const newStatus = !currentStatus;
 
-    console.log("Current status (normalized):", currentStatus);
-    console.log("New status to emit:", newStatus);
-
-    this.toggleStatus.emit({ id: this.deal.id, isActive: newStatus });
+    // Ask for confirmation before toggling
+    if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} "${this.deal.title}"?`)) {
+      this.toggleStatus.emit({ id: this.deal.id, isActive: newStatus });
+    }
   }
 
-  onView(event: Event): void {
+  onDelete(event: Event): void {
     event.stopPropagation();
-    this.view.emit(this.deal);
+
+    // Ask for confirmation before deletion with warning about permanence
+    if (confirm(`⚠️ Warning: This action is permanent and cannot be undone!\n\nAre you sure you want to delete "${this.deal.title}"?`)) {
+      this.delete.emit(this.deal.id);
+    }
   }
 
   formatDate(date: Date | undefined): string {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString();
+  }
+
+  getLocationName(): string {
+    // Get the location name from the proper nested object
+    if (this.deal.location && this.deal.location.name) {
+      return this.deal.location.name;
+    }
+
+    return 'Unknown Location';
   }
 }

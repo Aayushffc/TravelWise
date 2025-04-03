@@ -2,30 +2,30 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Deal } from '../models/deal.model';
+import { Deal, DealResponseDto } from '../models/deal.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DealService {
-  private apiUrl = `${environment.apiUrl}/api/deal`;
+  private apiUrl = `${environment.apiUrl}/api/Deal`;
 
   constructor(private http: HttpClient) { }
 
-  getDeals(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl);
+  getDeals(): Observable<DealResponseDto[]> {
+    return this.http.get<DealResponseDto[]>(this.apiUrl);
   }
 
-  getDealsByLocation(locationId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}?locationId=${locationId}`);
+  getDealsByLocation(locationId: number): Observable<DealResponseDto[]> {
+    return this.http.get<DealResponseDto[]>(`${this.apiUrl}?locationId=${locationId}`);
   }
 
-  getDealById(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  getDealById(id: number): Observable<DealResponseDto> {
+    return this.http.get<DealResponseDto>(`${this.apiUrl}/${id}`);
   }
 
-  createDeal(deal: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, deal);
+  createDeal(deal: any): Observable<DealResponseDto> {
+    return this.http.post<DealResponseDto>(this.apiUrl, deal);
   }
 
   updateDeal(id: number, deal: any): Observable<any> {
@@ -43,7 +43,7 @@ export class DealService {
     minDays?: number,
     maxDays?: number,
     packageType?: string
-  ): Observable<any[]> {
+  ): Observable<DealResponseDto[]> {
     let queryParams = '';
 
     if (searchTerm) queryParams += `searchTerm=${searchTerm}&`;
@@ -58,11 +58,11 @@ export class DealService {
       ? queryParams.slice(0, -1)
       : queryParams;
 
-    return this.http.get<any[]>(`${this.apiUrl}/search?${queryParams}`);
+    return this.http.get<DealResponseDto[]>(`${this.apiUrl}/search?${queryParams}`);
   }
 
-  getDealsByUserId(userId: string): Observable<Deal[]> {
-    return this.http.get<Deal[]>(`${this.apiUrl}/user/${userId}`);
+  getDealsByUserId(userId: string): Observable<DealResponseDto[]> {
+    return this.http.get<DealResponseDto[]>(`${this.apiUrl}/user/${userId}`);
   }
 
   toggleDealStatus(id: number, isActive: boolean): Observable<any> {

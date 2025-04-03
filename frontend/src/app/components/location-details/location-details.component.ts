@@ -5,6 +5,7 @@ import { LocationService } from '../../services/location.service';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../deal-card/deal-card.component';
 import { FormsModule } from '@angular/forms';
+import { DealResponseDto } from '../../models/deal.model';
 
 interface Location {
   id: number;
@@ -15,22 +16,8 @@ interface Location {
   isActive: boolean;
 }
 
-interface Deal {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice: number;
-  discountPercentage: number;
-  daysCount: number;
-  nightsCount: number;
-  photos: string[];
-  rating: number | null;
-  location: {
-    id: number;
-    name: string;
-  };
-}
+// Using DealResponseDto from models
+type Deal = DealResponseDto;
 
 @Component({
   selector: 'app-location-details',

@@ -50,21 +50,8 @@ namespace Backend.Controllers
             {
                 var deals = await _dbHelper.GetDeals(null);
 
-                _logger.LogInformation($"Total deals before filtering: {deals.Count()}");
-
                 // Apply search filters - make status filtering more lenient
                 var filteredDeals = deals;
-
-                // Optional status filtering - only if the fields have values
-                if (deals.Any(d => d.Status != null && d.ApprovalStatus != null))
-                {
-                    filteredDeals = filteredDeals.Where(d =>
-                        (d.Status == null || d.Status == "Active")
-                        && (d.ApprovalStatus == null || d.ApprovalStatus == "Approved")
-                    );
-                }
-
-                _logger.LogInformation($"Deals after status filtering: {filteredDeals.Count()}");
 
                 // Apply search term
                 if (!string.IsNullOrEmpty(searchTerm))
@@ -95,22 +82,6 @@ namespace Backend.Controllers
                         // Check exact match on title as well
                         || (d.Title != null && d.Title.ToLower() == searchTerm)
                     );
-
-                    _logger.LogInformation(
-                        $"Deals after search term filtering: {filteredDeals.Count()} (from {beforeCount})"
-                    );
-
-                    // If no deals found, log some sample titles for debugging
-                    if (filteredDeals.Count() == 0 && deals.Any())
-                    {
-                        _logger.LogInformation("Sample deal titles available:");
-                        foreach (var deal in deals.Take(5))
-                        {
-                            _logger.LogInformation(
-                                $"  - Deal {deal.Id}: '{deal.Title}' (Status: {deal.Status}, Approval: {deal.ApprovalStatus})"
-                            );
-                        }
-                    }
                 }
 
                 // Apply price filter
@@ -139,10 +110,6 @@ namespace Backend.Controllers
                         d.Location?.Continent?.ToLower() == continent.ToLower()
                     );
 
-                // Apply agency filter
-                if (!string.IsNullOrEmpty(agencyId))
-                    filteredDeals = filteredDeals.Where(d => d.AgencyId == agencyId);
-
                 // Apply package type filter
                 if (!string.IsNullOrEmpty(packageType))
                     filteredDeals = filteredDeals.Where(d => d.PackageType == packageType);
@@ -150,10 +117,6 @@ namespace Backend.Controllers
                 // Apply additional filters
                 if (!string.IsNullOrEmpty(tags))
                     filteredDeals = filteredDeals.Where(d => d.Tags?.Contains(tags) == true);
-                if (!string.IsNullOrEmpty(categories))
-                    filteredDeals = filteredDeals.Where(d =>
-                        d.Categories?.Contains(categories) == true
-                    );
                 if (!string.IsNullOrEmpty(seasons))
                     filteredDeals = filteredDeals.Where(d => d.Seasons?.Contains(seasons) == true);
                 if (!string.IsNullOrEmpty(difficultyLevel))
@@ -176,7 +139,7 @@ namespace Backend.Controllers
                 {
                     "price_asc" => filteredDeals.OrderBy(d => d.Price),
                     "price_desc" => filteredDeals.OrderByDescending(d => d.Price),
-                    "rating" => filteredDeals.OrderByDescending(d => d.AverageRating),
+                    "rating" => filteredDeals.OrderByDescending(d => d.Rating),
                     "discount" => filteredDeals.OrderByDescending(d => d.DiscountPercentage),
                     "newest" => filteredDeals.OrderByDescending(d => d.CreatedAt),
                     "popular" => filteredDeals.OrderByDescending(d => d.ClickCount),
@@ -206,7 +169,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error searching deals");
                 return StatusCode(500, "An error occurred while searching deals");
             }
         }
@@ -231,6 +193,7 @@ namespace Backend.Controllers
                         ClickCount = deal.ClickCount,
                         LastClicked = deal.LastClicked,
                         RelevanceScore = deal.RelevanceScore,
+                        UpdatedAt = DateTime.UtcNow,
                     }
                 );
 
@@ -238,7 +201,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error recording deal click");
                 return StatusCode(500, "An error occurred while recording the click");
             }
         }
@@ -252,7 +214,7 @@ namespace Backend.Controllers
             score += deal.ViewCount * 0.1m;
 
             // Rating impact
-            score += (deal.AverageRating ?? 0) * 2;
+            score += deal.Rating * 2;
 
             // Discount impact
             score += deal.DiscountPercentage * 0.5m;

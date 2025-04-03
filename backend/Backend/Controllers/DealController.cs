@@ -23,12 +23,50 @@ namespace Backend.Controllers
         // GET: api/Deal
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DealResponseDto>>> GetDeals(
-            [FromQuery] int? locationId = null
+            [FromQuery] int? locationId = null,
+            [FromQuery] bool? isActive = null,
+            [FromQuery] bool? isFeatured = null,
+            [FromQuery] string? packageType = null,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] int? minDays = null,
+            [FromQuery] int? maxDays = null
         )
         {
             try
             {
-                var deals = await _dbHelper.GetDeals(locationId);
+                _logger.LogInformation(
+                    "Getting deals with parameters: LocationId={LocationId}, IsActive={IsActive}, IsFeatured={IsFeatured}, PackageType={PackageType}, MinPrice={MinPrice}, MaxPrice={MaxPrice}, MinDays={MinDays}, MaxDays={MaxDays}",
+                    locationId,
+                    isActive,
+                    isFeatured,
+                    packageType,
+                    minPrice,
+                    maxPrice,
+                    minDays,
+                    maxDays
+                );
+
+                var deals = await _dbHelper.GetDeals(
+                    locationId,
+                    null,
+                    isActive,
+                    isFeatured,
+                    packageType,
+                    minPrice,
+                    maxPrice,
+                    minDays,
+                    maxDays
+                );
+
+                _logger.LogInformation("Retrieved {Count} deals", deals?.Count() ?? 0);
+
+                if (deals == null || !deals.Any())
+                {
+                    _logger.LogWarning("No deals found for the specified criteria");
+                    return Ok(new List<DealResponseDto>());
+                }
+
                 return Ok(deals);
             }
             catch (Exception ex)
@@ -84,14 +122,26 @@ namespace Backend.Controllers
                     string.IsNullOrEmpty(dealDto.Title)
                     || dealDto.LocationId <= 0
                     || dealDto.Price <= 0
+                    || dealDto.DaysCount <= 0
+                    || dealDto.NightsCount <= 0
+                    || string.IsNullOrEmpty(dealDto.Description)
+                    || dealDto.Photos == null
+                    || !dealDto.Photos.Any()
+                    || dealDto.Itinerary == null
+                    || !dealDto.Itinerary.Any()
+                    || string.IsNullOrEmpty(dealDto.PackageType)
                 )
                 {
                     return BadRequest("Required fields are missing or invalid");
                 }
 
+                // Set default values
                 dealDto.UserId = userId;
-                var deal = await _dbHelper.CreateDeal(dealDto);
+                dealDto.IsActive = true;
+                dealDto.CreatedAt = DateTime.UtcNow;
+                dealDto.UpdatedAt = DateTime.UtcNow;
 
+                var deal = await _dbHelper.CreateDeal(dealDto);
                 if (deal == null)
                 {
                     return StatusCode(500, "Failed to create deal");
@@ -136,8 +186,27 @@ namespace Backend.Controllers
                     return StatusCode(403, "You don't have permission to update this deal");
                 }
 
-                var success = await _dbHelper.UpdateDeal(id, dealDto);
+                // Validate price if provided
+                if (dealDto.Price.HasValue && dealDto.Price.Value <= 0)
+                {
+                    return BadRequest("Price must be greater than 0");
+                }
 
+                // Validate days and nights if provided
+                if (dealDto.DaysCount.HasValue && dealDto.DaysCount.Value <= 0)
+                {
+                    return BadRequest("Days count must be greater than 0");
+                }
+
+                if (dealDto.NightsCount.HasValue && dealDto.NightsCount.Value <= 0)
+                {
+                    return BadRequest("Nights count must be greater than 0");
+                }
+
+                // Set updated timestamp
+                dealDto.UpdatedAt = DateTime.UtcNow;
+
+                var success = await _dbHelper.UpdateDeal(id, dealDto);
                 if (!success)
                 {
                     return StatusCode(500, "Failed to update deal");
@@ -201,7 +270,10 @@ namespace Backend.Controllers
             [FromQuery] decimal? maxPrice,
             [FromQuery] int? minDays,
             [FromQuery] int? maxDays,
-            [FromQuery] string? packageType
+            [FromQuery] string? packageType,
+            [FromQuery] string? difficultyLevel,
+            [FromQuery] bool? isInstantBooking,
+            [FromQuery] bool? isLastMinuteDeal
         )
         {
             try
@@ -212,7 +284,11 @@ namespace Backend.Controllers
                     maxPrice,
                     minDays,
                     maxDays,
-                    packageType
+                    packageType,
+                    difficultyLevel,
+                    isInstantBooking,
+                    isLastMinuteDeal,
+                    null
                 );
 
                 return Ok(deals);
@@ -227,17 +303,49 @@ namespace Backend.Controllers
         // GET: api/Deal/user/{userId}
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<DealResponseDto>>> GetDealsByUserId(
-            string userId
+            string userId,
+            [FromQuery] bool? isActive = null
         )
         {
             try
             {
-                var deals = await _dbHelper.GetDealsByUserId(userId);
-                return Ok(deals);
+                _logger.LogInformation("Request received for deals by user ID: {UserId}", userId);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    _logger.LogWarning("Invalid user ID provided");
+                    return BadRequest("User ID cannot be empty");
+                }
+
+                var deals = await _dbHelper.GetDealsByUserId(userId, null, isActive);
+
+                _logger.LogInformation(
+                    "Successfully retrieved {Count} deals for user {UserId}",
+                    deals?.Count() ?? 0,
+                    userId
+                );
+
+                return Ok(deals ?? new List<DealResponseDto>());
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                _logger.LogError(
+                    sqlEx,
+                    "SQL error getting deals for user {UserId}. Error: {ErrorMessage}, Number: {ErrorNumber}",
+                    userId,
+                    sqlEx.Message,
+                    sqlEx.Number
+                );
+                return StatusCode(500, "Database error occurred while retrieving deals");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting deals for user {UserId}", userId);
+                _logger.LogError(
+                    ex,
+                    "Error getting deals for user {UserId}. Exception type: {ExceptionType}",
+                    userId,
+                    ex.GetType().Name
+                );
                 return StatusCode(500, "An error occurred while retrieving deals");
             }
         }

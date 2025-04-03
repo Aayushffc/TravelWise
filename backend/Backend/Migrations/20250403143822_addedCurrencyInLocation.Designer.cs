@@ -4,6 +4,7 @@ using Backend.DBContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250403143822_addedCurrencyInLocation")]
+    partial class addedCurrencyInLocation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -247,6 +250,12 @@ namespace Backend.Migrations
                     b.Property<bool>("AirTransfer")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Availability")
                         .HasColumnType("nvarchar(max)");
 
@@ -280,6 +289,15 @@ namespace Backend.Migrations
 
                     b.Property<bool>("ElderlyFriendly")
                         .HasColumnType("bit");
+
+                    b.Property<string>("ExpirationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ExpiredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExpiredBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FeaturedUntil")
                         .HasColumnType("datetime2");
@@ -319,6 +337,12 @@ namespace Backend.Migrations
 
                     b.Property<DateTime>("LastClicked")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("LastViewed")
                         .HasColumnType("datetime2");
@@ -373,6 +397,9 @@ namespace Backend.Migrations
                     b.Property<string>("RefundPolicy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("RelevanceScore")
                         .HasPrecision(12, 4)
                         .HasColumnType("decimal(12,4)");
@@ -395,8 +422,20 @@ namespace Backend.Migrations
                     b.Property<bool>("SightseeingIncluded")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("StayIncluded")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("SuspendedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SuspendedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SuspensionReason")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Tags")
                         .HasColumnType("nvarchar(max)");

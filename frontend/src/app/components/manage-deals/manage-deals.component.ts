@@ -1,25 +1,17 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { DealService } from '../../services/deal.service';
-import { LocationService } from '../../services/location.service';
-import { Router, RouterLink, RouterModule } from '@angular/router';
-import { Location as NgLocation } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { DealResponseDto, DealCreateDto, DealUpdateDto, DealToggleStatusDto } from '../../models/deal.model';
+import { Location as AngularLocation } from '@angular/common';
+import { Location } from '../../models/location.model';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { FileUploadService } from '../../services/file-upload.service';
-import { Deal } from '../../models/deal.model';
+import { DealService } from '../../services/deal.service';
+import { tap } from 'rxjs/operators';
 import { ManageDealCardComponent } from '../manage-deal-card/manage-deal-card.component';
-
-interface Location {
-  id: number;
-  name: string;
-  description?: string;
-  imageUrl?: string;
-  isPopular: boolean;
-  isActive: boolean;
-  clickCount: number;
-  requestCallCount: number;
-}
+import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-manage-deals',
@@ -27,571 +19,503 @@ interface Location {
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule,
+    ReactiveFormsModule,
     ManageDealCardComponent
   ],
   templateUrl: './manage-deals.component.html',
-  styleUrls: ['./manage-deals.component.css']
+  styleUrls: ['./manage-deals.component.css'],
+  animations: [
+    trigger('fadeInOut', [
+      transition(':enter', [
+        style({ opacity: 0, height: 0 }),
+        animate('300ms ease-out', style({ opacity: 1, height: '*' }))
+      ]),
+      transition(':leave', [
+        style({ opacity: 1, height: '*' }),
+        animate('300ms ease-in', style({ opacity: 0, height: 0 }))
+      ])
+    ])
+  ]
 })
 export class ManageDealsComponent implements OnInit {
-  @ViewChild('fileInput') fileInput!: ElementRef;
-
-  deals: Deal[] = [];
-  locations: Location[] = [];
-  isLoading: boolean = true;
+  deals: DealResponseDto[] = [];
+  isLoading = false;
   error: string | null = null;
-  success: string | null = null;
-  showCreateModal: boolean = false;
-  showEditModal: boolean = false;
-  showLocationModal: boolean = false;
-  showDetailsModal: boolean = false;
-  selectedDeal: Deal | null = null;
-  newLocation: { name: string } = { name: '' };
-  currentUserId: string | null = null;
-  uploadProgress: number = 0;
-  maxPhotos: number = 10;
-  maxFileSize: number = 10 * 1024 * 1024; // 10MB
-
-  selectedFiles: File[] = [];
-  photoPreviewUrls: string[] = [];
-
-  dealForm: Partial<Deal> = {
-    title: '',
-    description: '',
-    price: 0,
-    discountedPrice: 0,
-    rating: 0,
-    daysCount: 0,
-    nightsCount: 0,
-    startPoint: '',
-    endPoint: '',
-    duration: '',
-    locationId: 0,
-    photos: [],
-    packageType: '',
-    isActive: true,
-
-    // Facilities
-    elderlyFriendly: false,
-    internetIncluded: false,
-    travelIncluded: false,
-    mealsIncluded: false,
-    sightseeingIncluded: false,
-    stayIncluded: false,
-    airTransfer: false,
-    roadTransfer: false,
-    trainTransfer: false,
-    travelCostIncluded: false,
-    guideIncluded: false,
-    photographyIncluded: false,
-    insuranceIncluded: false,
-    visaIncluded: false,
-
-    // Additional details
-    itinerary: [],
-    packageOptions: [],
-    mapUrl: '',
-    policies: []
+  formError: string | null = null; // Error for the form
+  locations: Location[] = [];
+  selectedStatus: string | null = null;
+  selectedLocation: number | null = null;
+  searchTerm: string = '';
+  isActiveFilter: boolean | null = null;
+  dateRange: { start: Date | null; end: Date | null } = {
+    start: null,
+    end: null
   };
+  dealForm: FormGroup;
+  showModal = false; // Renamed from isFormVisible
+  selectedDeal: DealResponseDto | null = null;
+  isEditMode = false; // Renamed from isEditing
+  showFilters = false;
+  stats = {
+    total: 0,
+    active: 0,
+    pending: 0,
+    inactive: 0
+  };
+  photos: any[] = [];
+  isDraggingOver = false;
+  isSubmitting = false;
+  activeTab = 'basic'; // For tabbed form navigation
 
-  showInactiveDeals: boolean = false;
-  filteredDeals: Deal[] = [];
+  // Categories for the form
+  categories: string[] = [
+    'Food & Dining',
+    'Entertainment',
+    'Shopping',
+    'Travel',
+    'Health & Wellness',
+    'Services',
+    'Other'
+  ];
 
   constructor(
-    private dealService: DealService,
-    private locationService: LocationService,
+    private http: HttpClient,
     private router: Router,
-    private location: NgLocation,
     private authService: AuthService,
-    private fileUploadService: FileUploadService
-  ) {}
+    private fb: FormBuilder,
+    private dealService: DealService,
+    private location: AngularLocation
+  ) {
+    this.dealForm = this.fb.group({
+      title: ['', [Validators.required, Validators.minLength(3)]],
+      locationId: [null],
+      price: [0, [Validators.required, Validators.min(0)]],
+      discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
+      description: ['', Validators.required],
+      photos: [[]],
+      category: ['', Validators.required],
+      isActive: [true],
+      tags: [[]],
+      isInstantBooking: [false],
+      isLastMinuteDeal: [false]
+    });
+  }
 
   ngOnInit(): void {
-    this.getCurrentUserId();
+    this.loadData();
     this.loadLocations();
   }
 
-  private getCurrentUserId(): void {
-    const user = this.authService.getCurrentUser();
-    if (user && user.id) {
-      this.currentUserId = user.id;
-      this.loadDeals();
-    } else {
-      // Try to get user data with subscription in case it's loaded asynchronously
-      this.authService.user$.subscribe(userData => {
-        if (userData && userData.id) {
-          this.currentUserId = userData.id;
-          this.loadDeals();
-        } else {
-          this.error = 'User not authenticated';
-          this.isLoading = false;
-          this.router.navigate(['/login']);
-        }
-      });
-    }
-  }
-
-  loadDeals(): void {
+  loadData(): void {
     this.isLoading = true;
-    if (!this.currentUserId) {
-      this.showErrorMessage('User not authenticated');
+    this.error = null;
+
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+      this.error = 'User not authenticated. Please log in again.';
       this.isLoading = false;
       return;
     }
 
-    this.dealService.getDealsByUserId(this.currentUserId).subscribe({
-      next: (deals: Deal[]) => {
-        console.log("Deals loaded:", deals.length);
-
-        // Check if deals have the isActive property
-        deals.forEach((deal, index) => {
-          console.log(`Deal ${index + 1} (${deal.title}) - isActive:`, deal.isActive);
-          // Ensure isActive is always a boolean
-          if (deal.isActive === undefined || deal.isActive === null) {
-            deal.isActive = true; // Default to true if not specified
-            console.log(`Fixed isActive for deal ${index + 1}`);
+    this.dealService.getDealsByUserId(currentUser.id)
+      .pipe(
+        tap(deals => {
+          this.updateStats(deals);
+          this.deals = deals;
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: () => {},
+        error: (err) => {
+          console.error('Failed to load deals:', err);
+          if (err.status === 500) {
+            this.error = 'Server error occurred. The team has been notified.';
+          } else if (err.status === 401 || err.status === 403) {
+            this.error = 'You are not authorized to view these deals. Please log in again.';
+          } else if (err.status === 404) {
+            this.error = 'No deals found for your account.';
+          } else {
+            this.error = 'Failed to load deals. Please try again later.';
           }
-        });
-
-        this.deals = deals;
-        this.filterDeals();
-        this.isLoading = false;
-      },
-      error: (error: any) => {
-        this.showErrorMessage('Failed to load deals');
-        console.error('Load deals error:', error);
-        this.isLoading = false;
-      }
-    });
-  }
-
-  filterDeals(): void {
-    if (this.showInactiveDeals) {
-      this.filteredDeals = [...this.deals]; // Show all deals
-    } else {
-      this.filteredDeals = this.deals.filter(deal => {
-        const isActive = deal.isActive === true;
-        console.log(`Deal "${deal.title}" (${deal.id}) - isActive: ${deal.isActive}, type: ${typeof deal.isActive}, passes filter: ${isActive}`);
-        return isActive;
+          this.isLoading = false;
+          this.deals = [];
+        }
       });
-    }
-  }
-
-  toggleInactiveDeals(): void {
-    this.showInactiveDeals = !this.showInactiveDeals;
-    this.filterDeals();
   }
 
   loadLocations(): void {
-    this.locationService.getLocations().subscribe({
-      next: (locations) => {
-        this.locations = locations;
+    this.http.get<Location[]>(`${environment.apiUrl}/api/Location`)
+      .subscribe({
+        next: (locations) => {
+          this.locations = locations;
+        },
+        error: (err) => {
+          console.error('Failed to load locations:', err);
+        }
+      });
+  }
+
+  updateStats(deals: DealResponseDto[]): void {
+    this.stats = {
+      total: deals.length,
+      active: deals.filter(d => d.isActive).length,
+      pending: deals.filter(d => d.status === 'Pending').length,
+      inactive: deals.filter(d => !d.isActive).length
+    };
+  }
+
+  applyFilter(): void {
+    let filteredData = [...this.deals];
+
+    if (this.selectedStatus) {
+      filteredData = filteredData.filter(deal => deal.status === this.selectedStatus);
+    }
+
+    if (this.selectedLocation) {
+      filteredData = filteredData.filter(deal => deal.locationId === this.selectedLocation);
+    }
+
+    if (this.searchTerm) {
+      const searchLower = this.searchTerm.toLowerCase();
+      filteredData = filteredData.filter(deal =>
+        deal.title.toLowerCase().includes(searchLower) ||
+        deal.description.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (this.isActiveFilter !== null) {
+      filteredData = filteredData.filter(deal => deal.isActive === this.isActiveFilter);
+    }
+
+    if (this.dateRange.start) {
+      filteredData = filteredData.filter(deal => new Date(deal.createdAt) >= this.dateRange.start!);
+    }
+
+    if (this.dateRange.end) {
+      filteredData = filteredData.filter(deal => new Date(deal.createdAt) <= this.dateRange.end!);
+    }
+
+    this.deals = filteredData;
+    this.updateStats(filteredData);
+  }
+
+  resetFilters(): void {
+    this.selectedStatus = null;
+    this.selectedLocation = null;
+    this.searchTerm = '';
+    this.isActiveFilter = null;
+    this.dateRange = { start: null, end: null };
+    this.loadData();
+  }
+
+  toggleDealStatus(deal: DealResponseDto): void {
+    const toggleDto: DealToggleStatusDto = {
+      isActive: !deal.isActive
+    };
+
+    this.dealService.toggleDealStatus(deal.id, !deal.isActive)
+      .subscribe({
+        next: () => {
+          deal.isActive = !deal.isActive;
+          this.updateStats(this.deals);
+        },
+        error: (err) => {
+          console.error('Failed to toggle deal status:', err);
+        }
+      });
+  }
+
+  editDeal(deal: DealResponseDto): void {
+    this.selectedDeal = deal;
+    this.isEditMode = true;
+    this.showModal = true;
+    this.photos = deal.photos || [];
+    this.activeTab = 'basic';
+    this.formError = null;
+
+    this.dealForm.patchValue({
+      title: deal.title,
+      description: deal.description,
+      price: deal.price,
+      discountPercentage: deal.discountPercentage || 0,
+      category: deal.packageType || '',
+      isActive: deal.isActive,
+      tags: deal.tags || [],
+      isInstantBooking: (deal as any).isInstantBooking || false,
+      isLastMinuteDeal: (deal as any).isLastMinuteDeal || false,
+      photos: deal.photos || []
+    });
+  }
+
+  createDeal(): void {
+    this.selectedDeal = null;
+    this.isEditMode = false;
+    this.showModal = true;
+    this.photos = [];
+    this.activeTab = 'basic';
+    this.formError = null;
+
+    this.dealForm.reset({
+      title: '',
+      description: '',
+      price: 0,
+      discountPercentage: 0,
+      category: '',
+      isActive: true,
+      tags: [],
+      isInstantBooking: false,
+      isLastMinuteDeal: false,
+      photos: []
+    });
+  }
+
+  submitDeal(): void {
+    if (this.dealForm.invalid) {
+      // Mark all fields as touched to trigger validation messages
+      Object.keys(this.dealForm.controls).forEach(key => {
+        this.dealForm.get(key)?.markAsTouched();
+      });
+
+      this.formError = 'Please fill in all required fields.';
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.formError = null;
+
+    const formData = this.dealForm.value;
+    const currentUser = this.authService.getCurrentUser();
+
+    if (!currentUser?.id) {
+      this.formError = 'User authentication error. Please log in again.';
+      this.isSubmitting = false;
+      return;
+    }
+
+    // Setup minimum required fields based on API
+    const dealData: any = {
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      discountPercentage: formData.discountPercentage || 0,
+      packageType: formData.category, // Map category to packageType
+      isActive: formData.isActive,
+      photos: this.photos.map(p => p.url || p), // Extract URLs from photo objects
+      locationId: formData.locationId || 1, // Default to 1 if not set
+      daysCount: 1, // Default values to satisfy API requirements
+      nightsCount: 1,
+      userId: currentUser.id,
+      itinerary: [{
+        dayNumber: 1,
+        title: 'Day 1',
+        description: 'Itinerary details will be added later.',
+        activities: ['Activity details will be added later.']
+      }]
+    };
+
+    // Add optional fields only if they have values
+    if (formData.tags && formData.tags.length > 0) {
+      dealData.tags = formData.tags;
+    }
+
+    if (formData.isInstantBooking) {
+      dealData.isInstantBooking = true;
+    }
+
+    if (formData.isLastMinuteDeal) {
+      dealData.isLastMinuteDeal = true;
+    }
+
+    // For updates, ensure we have an ID
+    if (this.isEditMode && this.selectedDeal) {
+      dealData.id = this.selectedDeal.id;
+    }
+
+    const request = this.isEditMode && this.selectedDeal
+      ? this.dealService.updateDeal(this.selectedDeal.id, dealData)
+      : this.dealService.createDeal(dealData);
+
+    request.subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.showModal = false;
+        this.loadData();
       },
-      error: (error) => {
-        this.error = 'Failed to load locations';
-        console.error('Load locations error:', error);
+      error: (err) => {
+        this.isSubmitting = false;
+        console.error('Failed to save deal:', err);
+
+        // Display a user-friendly error message
+        if (err.status === 400) {
+          // For validation errors
+          if (err.error && err.error.errors) {
+            const errorMessages = [];
+            for (const key in err.error.errors) {
+              const messages = Array.isArray(err.error.errors[key])
+                ? err.error.errors[key]
+                : [err.error.errors[key]];
+              errorMessages.push(...messages);
+            }
+            this.formError = errorMessages.join(' ');
+          } else {
+            this.formError = 'Please check your input and try again.';
+          }
+        } else if (err.status === 401 || err.status === 403) {
+          this.formError = 'You are not authorized to perform this action.';
+        } else {
+          this.formError = 'An error occurred while saving the deal. Please try again later.';
+        }
       }
     });
   }
 
-  openCreateModal(): void {
-    this.dealForm = {
-      title: '',
-      description: '',
-      price: 0,
-      locationId: 0,
-      duration: '',
-      packageType: '',
-      isActive: true,
-      photos: []
-    };
-    this.showCreateModal = true;
+  deleteDeal(dealId: number): void {
+    if (confirm('Are you sure you want to delete this deal?')) {
+      this.http.delete(`${environment.apiUrl}/api/Deal/${dealId}`)
+        .subscribe({
+          next: () => {
+            this.loadData();
+          },
+          error: (err) => {
+            console.error('Failed to delete deal:', err);
+          }
+        });
+    }
   }
 
-  openEditModal(deal: Deal): void {
-    this.selectedDeal = deal;
-    this.dealForm = { ...deal };
-    this.showEditModal = true;
+  viewDealDetails(deal: DealResponseDto): void {
+    this.router.navigate(['/agency/deal-details', deal.id]);
   }
 
-  openLocationModal(): void {
-    this.newLocation = { name: '' };
-    this.showLocationModal = true;
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'Active':
+        return 'bg-green-100 text-green-800';
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   }
 
-  closeModals(): void {
-    this.showCreateModal = false;
-    this.showEditModal = false;
-    this.showLocationModal = false;
-    this.selectedDeal = null;
-    this.newLocation = { name: '' };
-    this.selectedFiles = [];
-    this.photoPreviewUrls = [];
-    this.uploadProgress = 0;
+  getLocationName(locationId: number): string {
+    return this.locations.find(l => l.id === locationId)?.name || 'Unknown';
+  }
+
+  getLocationNameFromForm(): string {
+    const locationId = this.dealForm.get('locationId')?.value;
+    return this.getLocationName(locationId);
+  }
+
+  // Improved tag handling
+  getTags(): string[] {
+    return this.dealForm.get('tags')?.value || [];
+  }
+
+  addTag(event: any, inputElement: HTMLInputElement): void {
+    const value = inputElement.value?.trim();
+    if (value) {
+      const currentTags = this.getTags();
+      if (!currentTags.includes(value)) {
+        this.dealForm.patchValue({
+          tags: [...currentTags, value]
+        });
+      }
+      inputElement.value = '';
+    }
+  }
+
+  removeTag(index: number): void {
+    const currentTags = this.getTags();
+    currentTags.splice(index, 1);
+    this.dealForm.patchValue({
+      tags: currentTags
+    });
   }
 
   goBack(): void {
     this.location.back();
   }
 
+  onToggleStatus(event: { id: number, isActive: boolean }): void {
+    this.dealService.toggleDealStatus(event.id, event.isActive)
+      .subscribe({
+        next: () => {
+          const deal = this.deals.find(d => d.id === event.id);
+          if (deal) {
+            deal.isActive = event.isActive;
+            this.updateStats(this.deals);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to toggle deal status:', err);
+        }
+      });
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    const dropZone = event.target as HTMLElement;
-    dropZone.classList.add('drag-over');
+    this.isDraggingOver = true;
   }
 
-  onDragLeave(event: DragEvent): void {
+  onDropPhotos(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    const dropZone = event.target as HTMLElement;
-    dropZone.classList.remove('drag-over');
-  }
+    this.isDraggingOver = false;
 
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    const dropZone = event.target as HTMLElement;
-    dropZone.classList.remove('drag-over');
-
-    const files = event.dataTransfer?.files;
-    if (files) {
-      this.handleFiles(event);
+    if (event.dataTransfer?.files) {
+      this.handleFileInput(event.dataTransfer.files);
     }
   }
 
-  openFileInput(): void {
-    this.fileInput.nativeElement.click();
-  }
-
-  handleFiles(event: any): void {
-    const files = event.target.files;
-    if (!files) return;
-
-    // Check if adding new files would exceed the limit
-    if (this.selectedFiles.length + files.length > this.maxPhotos) {
-      this.error = `You can only upload up to ${this.maxPhotos} photos`;
-      return;
+  onPhotosSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.handleFileInput(input.files);
     }
-
-    // Process each file
-    Array.from(files).forEach((file: any) => {
-      // Validate file type
-      if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-        this.error = 'Only JPEG, PNG and GIF files are allowed';
-        return;
-      }
-
-      // Validate file size (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        this.error = 'File size should not exceed 5MB';
-        return;
-      }
-
-      // Add to selected files
-      this.selectedFiles.push(file);
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.photoPreviewUrls.push(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Reset input
-    event.target.value = '';
   }
 
-  removePhoto(index: number): void {
-    this.selectedFiles.splice(index, 1);
-    this.photoPreviewUrls.splice(index, 1);
-  }
-
-  async uploadPhotos(): Promise<string[]> {
-    if (!this.selectedFiles.length) return [];
-
-    const uploadedUrls: string[] = [];
-    let totalProgress = 0;
-
-    for (let i = 0; i < this.selectedFiles.length; i++) {
-      try {
-        const response = await this.fileUploadService.uploadFile(this.selectedFiles[i], 'deals').toPromise();
-        if (response?.url) {
-          uploadedUrls.push(response.url);
-          totalProgress = ((i + 1) / this.selectedFiles.length) * 100;
-          this.uploadProgress = Math.round(totalProgress);
-        }
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        this.error = 'Error uploading photos. Please try again.';
-        return [];
-      }
-    }
-
-    return uploadedUrls;
-  }
-
-  async createDeal(): Promise<void> {
-    try {
-      if (!this.currentUserId) {
-        this.error = 'User not authenticated';
-        this.router.navigate(['/login']);
-        return;
-      }
-
-      if (!this.validateForm()) {
-        return;
-      }
-
-      // First upload all photos
-      const uploadedUrls: string[] = [];
-      let totalProgress = 0;
-
-      // Upload photos one by one
-      for (let i = 0; i < this.selectedFiles.length; i++) {
-        try {
-          const response = await this.fileUploadService.uploadFile(this.selectedFiles[i], 'deals').toPromise();
-          if (!response?.url) {
-            throw new Error('Failed to get upload URL');
+  handleFileInput(files: FileList): void {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024) { // 10MB limit
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            this.photos.push({
+              url: e.target.result as string,
+              file: file
+            });
+            // Update the form value
+            this.dealForm.patchValue({
+              photos: this.photos
+            });
           }
-          uploadedUrls.push(response.url);
-          totalProgress = ((i + 1) / this.selectedFiles.length) * 100;
-          this.uploadProgress = Math.round(totalProgress);
-        } catch (error) {
-          console.error('Error uploading file:', error);
-          this.error = 'Error uploading photos. Please try again.';
-          return;
-        }
+        };
+        reader.readAsDataURL(file);
       }
-
-      // Calculate discount percentage
-      const discountPercentage = this.dealForm.price && this.dealForm.discountedPrice && this.dealForm.price > 0
-        ? Math.round(((this.dealForm.price - this.dealForm.discountedPrice) / this.dealForm.price) * 100)
-        : 0;
-
-      // Create a properly structured deal object
-      const dealToCreate = {
-        title: this.dealForm.title,
-        description: this.dealForm.description,
-        price: this.dealForm.price,
-        discountedPrice: this.dealForm.discountedPrice,
-        discountPercentage,
-        rating: this.dealForm.rating || 0,
-        daysCount: this.dealForm.daysCount,
-        nightsCount: this.dealForm.nightsCount,
-        startPoint: this.dealForm.startPoint,
-        endPoint: this.dealForm.endPoint,
-        duration: this.dealForm.duration,
-        locationId: this.dealForm.locationId,
-        photos: uploadedUrls,
-        packageType: this.dealForm.packageType,
-        isActive: this.dealForm.isActive ?? true,
-        userId: this.currentUserId,
-
-        // Facilities
-        elderlyFriendly: this.dealForm.elderlyFriendly ?? false,
-        internetIncluded: this.dealForm.internetIncluded ?? false,
-        travelIncluded: this.dealForm.travelIncluded ?? false,
-        mealsIncluded: this.dealForm.mealsIncluded ?? false,
-        sightseeingIncluded: this.dealForm.sightseeingIncluded ?? false,
-        stayIncluded: this.dealForm.stayIncluded ?? false,
-        airTransfer: this.dealForm.airTransfer ?? false,
-        roadTransfer: this.dealForm.roadTransfer ?? false,
-        trainTransfer: this.dealForm.trainTransfer ?? false,
-        travelCostIncluded: this.dealForm.travelCostIncluded ?? false,
-        guideIncluded: this.dealForm.guideIncluded ?? false,
-        photographyIncluded: this.dealForm.photographyIncluded ?? false,
-        insuranceIncluded: this.dealForm.insuranceIncluded ?? false,
-        visaIncluded: this.dealForm.visaIncluded ?? false,
-
-        // Additional details
-        itinerary: this.dealForm.itinerary ?? [],
-        packageOptions: this.dealForm.packageOptions ?? [],
-        mapUrl: this.dealForm.mapUrl ?? '',
-        policies: this.dealForm.policies ?? []
-      };
-
-      // Create the deal with the structured data
-      const dealResponse = await this.dealService.createDeal(dealToCreate).toPromise();
-      if (!dealResponse) {
-        throw new Error('Failed to create deal');
-      }
-
-      // Success handling
-      this.deals.push(dealResponse);
-      this.closeModals();
-      this.success = 'Deal created successfully!';
-      this.loadDeals(); // Refresh the deals list
-
-      // Reset file-related state
-      this.selectedFiles = [];
-      this.photoPreviewUrls = [];
-      this.uploadProgress = 0;
-    } catch (error) {
-      console.error('Error creating deal:', error);
-      this.error = 'Error creating deal. Please try again.';
     }
   }
 
-  private validateForm(): boolean {
-    if (!this.dealForm.title ||
-        !this.dealForm.locationId ||
-        !this.dealForm.price ||
-        !this.dealForm.discountedPrice ||
-        !this.dealForm.daysCount ||
-        !this.dealForm.nightsCount ||
-        !this.dealForm.startPoint ||
-        !this.dealForm.endPoint ||
-        !this.dealForm.packageType ||
-        !this.dealForm.description ||
-        this.selectedFiles.length === 0) {
-      this.error = 'Please fill in all required fields and select at least one photo';
-      return false;
-    }
-
-    return true;
-  }
-
-  updateDeal(): void {
-    if (!this.selectedDeal?.id || !this.dealForm.title || !this.dealForm.locationId || !this.dealForm.price ||
-        !this.dealForm.discountedPrice || !this.dealForm.daysCount || !this.dealForm.nightsCount ||
-        !this.dealForm.startPoint || !this.dealForm.endPoint || !this.dealForm.packageType ||
-        !this.dealForm.description || !this.dealForm.photos || this.dealForm.photos.length === 0) {
-      this.error = 'Please fill in all required fields and upload at least one photo';
-      return;
-    }
-
-    // Calculate discount percentage
-    const discountPercentage = Math.round(
-      ((this.dealForm.price - this.dealForm.discountedPrice) / this.dealForm.price) * 100
-    );
-
-    if (this.currentUserId) {
-      this.dealForm.userId = this.currentUserId;
-      const dealToUpdate = {
-        ...this.dealForm,
-        discountPercentage
-      };
-      this.dealService.updateDeal(this.selectedDeal.id, dealToUpdate as any).subscribe({
-        next: () => {
-          this.success = 'Deal updated successfully';
-          this.closeModals();
-          this.loadDeals();
-        },
-        error: (error) => {
-          this.error = 'Failed to update deal';
-          console.error('Update deal error:', error);
-        }
-      });
-    }
-  }
-
-  deleteDeal(id: number): void {
-    this.dealService.deleteDeal(id).subscribe({
-      next: () => {
-        this.showSuccessMessage('Deal deleted successfully');
-        this.deals = this.deals.filter(deal => deal.id !== id);
-        this.filterDeals();
-      },
-      error: (error) => {
-        console.error('Delete deal error:', error);
-        this.showErrorMessage('Failed to delete deal. Please try again later.');
-      }
+  removePhoto(index: number, event: Event): void {
+    event.stopPropagation();
+    this.photos.splice(index, 1);
+    // Update the form value
+    this.dealForm.patchValue({
+      photos: this.photos
     });
   }
 
-  createLocation(): void {
-    if (!this.newLocation.name) {
-      this.error = 'Please enter a location name';
-      return;
-    }
-
-    this.locationService.createLocation({
-      name: this.newLocation.name,
-      isPopular: false,
-      isActive: true
-    }).subscribe({
-      next: () => {
-        this.success = 'Location created successfully';
-        this.closeModals();
-        this.loadLocations();
-      },
-      error: (error) => {
-        this.error = 'Failed to create location';
-      }
-    });
-  }
-
-  getLocationName(locationId: number): string {
-    const location = this.locations.find(l => l.id === locationId);
-    return location ? location.name : 'Unknown Location';
-  }
-
-  viewDealDetails(deal: Deal): void {
-    console.log('Navigating to deal details:', deal.id, deal.title);
-    this.router.navigate(['/agency/agency-deal-details', deal.id]);
-  }
-
-  closeDetailsModal(): void {
-    this.showDetailsModal = false;
-    this.selectedDeal = null;
-  }
-
-  handleImageError(event: any): void {
-    // Set a default image when the image fails to load
-    event.target.src = 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg';
-  }
-
-  confirmDelete(id: number): void {
-    if (confirm('Are you sure you want to delete this deal? This action cannot be undone.')) {
-      this.deleteDeal(id);
-    }
-  }
-
-  selectDeal(deal: Deal): void {
-    this.router.navigate(['/agency/agency-deal-details', deal.id]);
-  }
-
-  private showSuccessMessage(message: string): void {
-    this.success = message;
-    this.error = null;
-    setTimeout(() => {
-      this.success = null;
-    }, 3000); // Clear after 3 seconds
-  }
-
-  private showErrorMessage(message: string): void {
-    this.error = message;
-    this.success = null;
-    setTimeout(() => {
-      this.error = null;
-    }, 3000); // Clear after 3 seconds
-  }
-
-  toggleDealStatus(event: { id: number, isActive: boolean }): void {
-    const dealIndex = this.deals.findIndex(d => d.id === event.id);
-    if (dealIndex !== -1) {
-      // Use the new toggleDealStatus method
-      this.dealService.toggleDealStatus(event.id, event.isActive).subscribe({
-        next: (response) => {
-          this.showSuccessMessage(`Deal ${event.isActive ? 'activated' : 'deactivated'} successfully`);
-
-          // Update the local deals array
-          this.deals[dealIndex].isActive = event.isActive;
-          this.filterDeals();
-        },
-        error: (error) => {
-          console.error('Toggle deal status error:', error);
-          this.showErrorMessage(`Failed to ${event.isActive ? 'activate' : 'deactivate'} deal`);
-
-          // Revert the local change if the server update failed
-          this.loadDeals(); // Reload all deals to ensure consistency
-        }
-      });
-    } else {
-      console.error("Deal not found in the deals array. ID:", event.id);
-      this.showErrorMessage("Deal not found");
-    }
+  closeModal(): void {
+    this.showModal = false;
+    this.formError = null;
   }
 }

@@ -6,46 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { FileUploadService } from '../../services/file-upload.service';
+import { DealResponseDto } from '../../models/deal.model';
 
-// Enhanced Deal interface with all feature properties
-export interface Deal {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  discountedPrice?: number;
-  discountPercentage?: number;
-  daysCount: number;
-  nightsCount: number;
-  photos: string[];
-  rating: number;
-  location: {
-    id?: number;
-    name: string;
-  } | string;
-  isActive: boolean;
-  packageType: string;
-  // Feature properties
-  elderlyFriendly: boolean;
-  internetIncluded: boolean;
-  travelIncluded: boolean;
-  mealsIncluded: boolean;
-  sightseeingIncluded: boolean;
-  stayIncluded: boolean;
-  airTransfer: boolean;
-  roadTransfer: boolean;
-  trainTransfer: boolean;
-  guideIncluded: boolean;
-  photographyIncluded: boolean;
-  insuranceIncluded: boolean;
-  // Itinerary
-  itinerary?: ItineraryDay[];
-  // Package options
-  packageOptions?: PackageOption[];
-  // Policies
-  policies?: Policy[];
-}
-
+// Use these interfaces for the internal components only
 interface ItineraryDay {
   dayNumber: number;
   title: string;
@@ -74,7 +37,7 @@ interface Policy {
 })
 export class AgencyDealDetailsComponent implements OnInit {
   dealId: string = '';
-  deal: Deal | null = null;
+  deal: DealResponseDto | null = null;
   isLoading: boolean = true;
   error: string = '';
   successMessage: string = '';
@@ -104,7 +67,7 @@ export class AgencyDealDetailsComponent implements OnInit {
   loadDeal(): void {
     this.isLoading = true;
     this.dealService.getDealById(Number(this.dealId)).subscribe({
-      next: (deal: Deal) => {
+      next: (deal) => {
         this.deal = deal;
         this.isLoading = false;
       },
@@ -179,6 +142,8 @@ export class AgencyDealDetailsComponent implements OnInit {
         reader.onload = (e: any) => {
           if (this.deal && this.deal.photos) {
             this.deal.photos.push(e.target.result);
+          } else if (this.deal) {
+            this.deal.photos = [e.target.result];
           }
         };
 
@@ -190,9 +155,10 @@ export class AgencyDealDetailsComponent implements OnInit {
   removePhoto(index: number): void {
     if (this.deal && this.deal.photos) {
       this.deal.photos.splice(index, 1);
-    }
-    if (this.deal && this.currentImageIndex >= this.deal.photos.length) {
-      this.currentImageIndex = Math.max(0, this.deal.photos.length - 1);
+
+      if (this.currentImageIndex >= this.deal.photos.length) {
+        this.currentImageIndex = Math.max(0, this.deal.photos.length - 1);
+      }
     }
   }
 
@@ -350,8 +316,9 @@ export class AgencyDealDetailsComponent implements OnInit {
     if (!this.deal) return '';
     if (typeof this.deal.location === 'string') {
       return this.deal.location;
-    } else {
-      return this.deal.location.name;
+    } else if (this.deal.location && typeof this.deal.location === 'object') {
+      return this.deal.location.name || '';
     }
+    return '';
   }
 }

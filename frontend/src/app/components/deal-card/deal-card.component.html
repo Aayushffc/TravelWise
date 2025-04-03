@@ -1,53 +1,58 @@
-<div class="group relative overflow-hidden bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer" (click)="onDealClick()">
+<!-- Glass Morphism Card with Premium Hover Effects -->
+<div class="group relative overflow-hidden backdrop-blur-sm bg-white/30 rounded-xl border border-white/20 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer hover:bg-white/40"
+     (click)="onDealClick()">
   <!-- Full Image Background -->
   <div class="relative aspect-[4/3] w-full overflow-hidden">
     <img
       [src]="deal.photos?.[0] || 'assets/placeholder.jpg'"
       [alt]="deal.title"
-      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:filter group-hover:brightness-110"
       loading="lazy"
     >
     <!-- Gradient Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+
+    <!-- Shimmer Effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent shimmer-effect opacity-0 group-hover:opacity-100"></div>
 
     <!-- Discount Badge -->
     <div *ngIf="deal.discountPercentage"
-         class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">
+         class="absolute top-4 left-4 bg-red-500/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-bold shadow-md transform group-hover:scale-110 transition-transform duration-300">
       {{deal.discountPercentage}}% OFF
     </div>
 
     <!-- Duration Badge -->
-    <div class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium shadow-md">
+    <div class="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium shadow-md transform group-hover:translate-y-1 transition-transform duration-300">
       {{deal.daysCount}}D/{{deal.nightsCount}}N
     </div>
 
     <!-- Content Overlay -->
     <div class="absolute inset-x-0 bottom-0 p-4 text-white">
       <!-- Title -->
-      <h3 class="text-xl font-bold mb-2 line-clamp-1">{{deal.title}}</h3>
+      <h3 class="text-xl font-bold mb-2 line-clamp-1 group-hover:text-indigo-100 transition-colors duration-300">{{deal.title}}</h3>
 
-      <!-- Location -->
-      <div class="flex items-center mb-2">
-        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Location - Modified to only transform on direct hover -->
+      <div class="location-badge flex items-center mb-2 backdrop-blur-sm bg-black/30 inline-flex px-2 py-1 rounded-full transition-all duration-300">
+        <svg class="w-4 h-4 mr-1 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-        <span class="text-sm">{{deal.location?.name}}</span>
+        <span class="text-sm">{{deal.location?.name || 'Unknown Location'}}</span>
       </div>
 
       <!-- Description -->
-      <p class="text-sm text-gray-200 mb-3 line-clamp-2">{{deal.description}}</p>
+      <p class="text-sm text-gray-200 mb-3 line-clamp-2 max-w-[90%] group-hover:text-white transition-colors duration-300">{{deal.description}}</p>
 
       <!-- Bottom Row -->
       <div class="flex items-center justify-between">
-        <!-- Price -->
-        <div class="flex items-baseline">
+        <!-- Price - Made more translucent -->
+        <div class="flex items-baseline backdrop-blur-md bg-white/20 px-3 py-1 rounded-lg border border-black/10">
           <span *ngIf="deal.discountedPrice" class="text-sm text-gray-300 line-through mr-2">${{deal.price}}</span>
-          <span class="text-xl font-bold">${{deal.discountedPrice || deal.price}}</span>
+          <span class="text-xl font-bold text-white group-hover:text-indigo-200 transition-colors duration-300">${{deal.discountedPrice || deal.price}}</span>
         </div>
 
         <!-- Rating -->
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
           <div class="flex items-center bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full" *ngIf="deal.rating">
             <svg class="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
@@ -56,7 +61,7 @@
           </div>
 
           <!-- View Details Button -->
-          <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors shadow-md">
+          <button class="bg-indigo-600/90 hover:bg-indigo-700/90 text-white px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 shadow-md transform group-hover:scale-105 backdrop-blur-sm">
             View Details
           </button>
         </div>
@@ -64,3 +69,29 @@
     </div>
   </div>
 </div>
+
+<style>
+  .shimmer-effect {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .location-badge:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+</style>

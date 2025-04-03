@@ -1,131 +1,87 @@
-<!-- Enhanced Professional Management Card with better hover effects -->
-<div class="relative bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 border overflow-hidden transform hover:-translate-y-1 cursor-pointer"
-     [ngClass]="{'border-green-300 bg-green-50/20': deal.isActive === true, 'border-gray-300 bg-gray-50/20': deal.isActive === false}"
-     (click)="onView($event)">
-  <!-- Image Section with Zoom Effect -->
-  <div class="relative h-48 w-full overflow-hidden">
+<!-- Elegant Glass Morphism Card with Premium Hover Effects -->
+<div class="card-container relative overflow-hidden"
+     [ngClass]="{'border-green-300 bg-green-50/30': deal.isActive === true, 'border-gray-300 bg-gray-50/30': deal.isActive === false}"
+     (click)="onCardClick()">
+  <!-- Image Section with Premium Effects - Only this section has backdrop blur -->
+  <div class="image-container relative h-48 w-full overflow-hidden backdrop-blur-sm bg-white/30">
     <img
       [src]="deal.photos?.[0] || 'assets/placeholder.jpg'"
       [alt]="deal.title"
-      class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+      class="w-full h-full object-cover"
     >
-    <!-- Gradient Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-60"></div>
+    <!-- Elegant Gradient Overlay -->
+    <div class="gradient-overlay"></div>
 
-    <!-- Status Indicator with Animation -->
-    <div class="absolute top-3 right-3 group-hover:scale-105 transition-transform duration-300">
-      <span [ngClass]="deal.isActive === true ? 'status-badge status-active' : 'status-badge status-inactive'">
-        <span class="inline-flex items-center">
-          <span [ngClass]="deal.isActive === true ? 'status-indicator status-indicator-active' : 'status-indicator status-indicator-inactive'"></span>
-          {{deal.isActive === true ? 'Active' : 'Inactive'}}
-        </span>
-      </span>
+    <!-- Title inside image -->
+    <div class="absolute bottom-3 left-3 right-3 z-10">
+      <h3 class="text-white font-medium text-lg line-clamp-1 text-shadow">{{deal.title}}</h3>
     </div>
 
-    <!-- Price Information with Animation -->
-    <div class="absolute bottom-3 left-3 transition-all duration-300 hover:transform hover:scale-105">
-      <div class="flex items-baseline gap-2">
-        <span class="text-white font-bold">${{deal.discountedPrice || deal.price}}</span>
-        <span *ngIf="deal.discountedPrice" class="text-xs text-gray-300 line-through">${{deal.price}}</span>
-      </div>
+    <!-- Activity Status Indicator (subtle dot, not a full badge) -->
+    <div class="absolute top-4 right-4">
+      <span class="status-dot" [ngClass]="deal.isActive ? 'active' : 'inactive'"></span>
     </div>
   </div>
 
-  <!-- Content Section -->
-  <div class="p-4">
-    <!-- Title with Truncation -->
-    <h3 class="text-gray-800 font-medium text-base mb-2 line-clamp-1 transition-colors duration-300 group-hover:text-indigo-600">{{deal.title}}</h3>
+  <!-- Content Section - No backdrop blur here -->
+  <div class="p-3 glass-content relative z-10 bg-white">
+    <!-- Price Tag moved to content section -->
+    <div class="price-tag mb-3">
+      <span class="text-white font-bold text-lg text-shadow">${{deal.discountedPrice || deal.price}}</span>
+      <span *ngIf="deal.discountedPrice" class="text-xs text-gray-300 line-through text-shadow ml-2">${{deal.price}}</span>
+    </div>
 
     <!-- Key Information with Hover Highlights -->
     <div class="flex flex-col space-y-2 mb-3">
       <!-- Location -->
-      <div class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors duration-200">
-        <svg class="w-4 h-4 text-gray-400 mr-2 transition-colors duration-200 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex items-center text-sm text-gray-600 info-item glass-item py-1">
+        <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-        <span class="line-clamp-1">{{deal.location?.name || 'No location'}}</span>
+        <span class="line-clamp-1">{{getLocationName()}}</span>
       </div>
 
-      <!-- Duration -->
-      <div class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors duration-200">
-        <svg class="w-4 h-4 text-gray-400 mr-2 transition-colors duration-200 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span>{{deal.daysCount}}D/{{deal.nightsCount}}N</span>
-      </div>
-
-      <!-- Clicks Counter -->
-      <div class="flex items-center space-x-2 mt-2">
-        <button
-          (click)="onToggleStatus($event)"
-          [ngClass]="deal.isActive === true ? 'status-badge status-active' : 'status-badge status-inactive'"
-        >
-          <span class="inline-flex items-center">
-            <span [ngClass]="deal.isActive === true ? 'status-indicator status-indicator-active' : 'status-indicator status-indicator-inactive'"></span>
-            {{deal.isActive === true ? 'Active' : 'Inactive'}}
-          </span>
-        </button>
-
-        <span class="flex items-center text-gray-500 text-xs">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      <div class="flex justify-between">
+        <!-- Duration -->
+        <div class="flex items-center text-sm text-gray-600 info-item glass-item py-1 flex-1 mr-2">
+          <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          {{deal.clickCount || 0}} clicks
-        </span>
-      </div>
+          <span>{{deal.daysCount}}D/{{deal.nightsCount}}N</span>
+        </div>
 
-      <!-- Last Updated -->
-      <div class="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors duration-200">
-        <svg class="w-4 h-4 text-gray-400 mr-2 transition-colors duration-200 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <span>Updated: {{formatDate(deal.updatedAt)}}</span>
+        <!-- Package Type -->
+        <div class="flex items-center text-sm text-gray-600 info-item glass-item py-1 flex-1">
+          <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <span class="line-clamp-1">{{deal.packageType || 'Standard'}}</span>
+        </div>
       </div>
     </div>
 
-    <!-- Action Buttons with Enhanced Hover Effects -->
-    <div class="grid grid-cols-2 gap-2 mt-3">
-      <button
-        (click)="onEdit($event)"
-        class="action-btn btn-edit"
-      >
-        <svg class="w-4 h-4 mr-1 icon-edit" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-        Edit
-      </button>
-
-      <button
-        (click)="onView($event)"
-        class="action-btn btn-view"
-      >
-        <svg class="w-4 h-4 mr-1 icon-view" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-        View
-      </button>
-
+    <!-- Action Buttons with Glass Effect -->
+    <div class="flex gap-3 mt-3">
       <button
         (click)="onToggleStatus($event)"
-        [ngClass]="deal.isActive === true ? 'action-btn btn-toggle-active' : 'action-btn btn-toggle-inactive'"
+        class="glass-btn flex-1 py-1"
+        [ngClass]="deal.isActive ? 'active-btn' : 'inactive-btn'"
       >
-        <svg *ngIf="deal.isActive === true" class="w-4 h-4 mr-1 icon-toggle-active" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg *ngIf="deal.isActive" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <svg *ngIf="deal.isActive === false" class="w-4 h-4 mr-1 icon-toggle-inactive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg *ngIf="!deal.isActive" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        {{deal.isActive === true ? 'Deactivate' : 'Activate'}}
+        {{deal.isActive ? 'Deactivate' : 'Activate'}}
       </button>
 
       <button
         (click)="onDelete($event)"
-        class="action-btn btn-delete"
+        class="glass-btn flex-1 delete-btn py-1"
       >
-        <svg class="w-4 h-4 mr-1 icon-delete" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
         Delete
@@ -136,6 +92,6 @@
 
 <style>
   .text-shadow {
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   }
 </style>

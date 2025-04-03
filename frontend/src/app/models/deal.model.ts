@@ -41,6 +41,7 @@ export interface Deal {
   updatedAt: Date;
   userId: string;
   clickCount?: number;
+  tags?: string[];
 }
 
 export interface ItineraryDay {
@@ -60,4 +61,84 @@ export interface PackageOption {
 export interface Policy {
   title: string;
   description: string;
+}
+
+export interface DealResponseDto extends Deal {
+  status: string;
+}
+
+export interface DealCreateDto {
+  title: string;
+  locationId: number;
+  price: number;
+  discountedPrice?: number;
+  discountPercentage?: number;
+  rating?: number;
+  daysCount: number;
+  nightsCount: number;
+  description: string;
+  photos: string[];
+  packageType: string;
+  isActive: boolean;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  headlines?: string[];
+  tags?: string[];
+  seasons?: string[];
+  difficultyLevel?: string;
+  maxGroupSize?: number;
+  minGroupSize?: number;
+  isInstantBooking?: boolean;
+  isLastMinuteDeal?: boolean;
+  validFrom?: Date;
+  validUntil?: Date;
+  cancellationPolicy?: string;
+  refundPolicy?: string;
+  languages?: string[];
+  requirements?: string[];
+  restrictions?: string[];
+  itinerary: ItineraryDay[];
+  packageOptions?: PackageOption[];
+  policies?: Policy[];
+}
+
+export interface DealUpdateDto {
+  title?: string;
+  locationId?: number;
+  price?: number;
+  discountedPrice?: number;
+  discountPercentage?: number;
+  rating?: number;
+  daysCount?: number;
+  nightsCount?: number;
+  description?: string;
+  photos?: string[];
+  packageType?: string;
+  isActive?: boolean;
+  status?: string;
+  updatedAt: Date;
+  headlines?: string[];
+  tags?: string[];
+  seasons?: string[];
+  difficultyLevel?: string;
+  maxGroupSize?: number;
+  minGroupSize?: number;
+  isInstantBooking?: boolean;
+  isLastMinuteDeal?: boolean;
+  validFrom?: Date;
+  validUntil?: Date;
+  cancellationPolicy?: string;
+  refundPolicy?: string;
+  languages?: string[];
+  requirements?: string[];
+  restrictions?: string[];
+  itinerary?: ItineraryDay[];
+  packageOptions?: PackageOption[];
+  policies?: Policy[];
+}
+
+export interface DealToggleStatusDto {
+  isActive: boolean;
 }
