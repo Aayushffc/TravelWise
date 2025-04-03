@@ -149,4 +149,9 @@ export class DealDetailsComponent implements OnInit {
     // Implement share logic
     console.log('Sharing deal:', this.deal?.id);
   }
+
+  bookNow(): void {
+    // Navigate to the booking page with the deal ID
+    this.router.navigate(['/booking', this.deal?.id]);
+  }
 }

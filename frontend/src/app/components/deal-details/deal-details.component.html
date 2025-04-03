@@ -1,23 +1,23 @@
 <div class="min-h-screen bg-gray-50">
   <!-- Header -->
-  <header class="bg-white shadow-sm">
-    <div class="container mx-auto py-4 px-6">
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto py-2 px-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <button (click)="goBack()" class="mr-4 text-indigo-600 hover:text-indigo-800">
+          <button (click)="goBack()" class="mr-4 text-indigo-600 hover:text-indigo-800 transition-transform hover:-translate-x-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <h1 class="text-2xl font-bold text-indigo-600">TravelWise</h1>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">{{ deal?.title }}</h1>
         </div>
         <div class="flex items-center space-x-4">
-          <button (click)="share()" class="text-gray-600 hover:text-gray-800">
+          <button (click)="share()" class="text-gray-600 hover:text-indigo-600 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
           </button>
-          <button (click)="addToWishlist()" class="text-gray-600 hover:text-red-500">
+          <button (click)="addToWishlist()" class="text-gray-600 hover:text-red-500 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
@@ -40,256 +40,242 @@
   </div>
 
   <!-- Deal Details -->
-  <div *ngIf="deal && !isLoading" class="container mx-auto px-6 py-8">
-    <!-- Image Gallery -->
-    <div class="relative bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-      <img
-        [src]="deal.photos[currentImageIndex]"
-        [alt]="deal.title"
-        class="w-full h-[500px] object-cover"
-      >
-      <!-- Image Navigation -->
-      <div class="absolute inset-0 flex items-center justify-between px-4">
-        <button
-          (click)="previousImage()"
-          class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition"
+  <div *ngIf="deal && !isLoading" class="animate-fadeIn">
+    <!-- Hero Section -->
+    <div class="container mx-auto px-6 py-8">
+      <div class="relative h-[500px] w-full overflow-hidden rounded-2xl shadow-lg">
+        <img
+          [src]="deal.photos[currentImageIndex]"
+          [alt]="deal.title"
+          class="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button
-          (click)="nextImage()"
-          class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-      <!-- Image Counter -->
-      <div class="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-        {{ currentImageIndex + 1 }}/{{ deal.photos.length }}
-      </div>
-    </div>
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Main Content -->
-      <div class="lg:col-span-2">
-        <!-- Title and Rating -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div class="flex justify-between items-start mb-4">
+        <!-- Image Navigation -->
+        <div class="absolute inset-0 flex items-center justify-between px-4">
+          <button
+            (click)="previousImage()"
+            class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            (click)="nextImage()"
+            class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Image Counter -->
+        <div class="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+          {{ currentImageIndex + 1 }}/{{ deal.photos.length }}
+        </div>
+
+        <!-- Content Overlay -->
+        <div class="absolute bottom-0 left-0 right-0 p-8">
+          <div class="flex justify-between items-end">
             <div>
-              <h1 class="text-3xl font-bold text-gray-900">{{ deal.title }}</h1>
-              <p class="text-gray-600 mt-2">{{ deal.location.name }}</p>
+              <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">{{ deal.title }}</h1>
+              <p class="text-gray-200 text-lg md:text-xl">{{ deal.location.name }}</p>
             </div>
-            <div class="flex items-center">
+            <div class="flex items-center bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
-              <span class="ml-2 text-lg font-semibold text-gray-700">{{ deal.rating || 'New' }}</span>
-            </div>
-          </div>
-
-          <!-- Quick Info -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-gray-200">
-            <div class="text-center">
-              <span class="block text-gray-500 text-sm">Duration</span>
-              <span class="block text-gray-900 font-medium">{{ deal.daysCount }}D/{{ deal.nightsCount }}N</span>
-            </div>
-            <div class="text-center">
-              <span class="block text-gray-500 text-sm">Start Point</span>
-              <span class="block text-gray-900 font-medium">{{ deal.startPoint }}</span>
-            </div>
-            <div class="text-center">
-              <span class="block text-gray-500 text-sm">End Point</span>
-              <span class="block text-gray-900 font-medium">{{ deal.endPoint }}</span>
-            </div>
-            <div class="text-center">
-              <span class="block text-gray-500 text-sm">Package Type</span>
-              <span class="block text-gray-900 font-medium">{{ deal.packageType }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-          <div class="flex border-b border-gray-200">
-            <button
-              [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'overview' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
-              (click)="setActiveTab('overview')"
-            >
-              Overview
-            </button>
-            <button
-              [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'inclusions' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
-              (click)="setActiveTab('inclusions')"
-            >
-              Inclusions
-            </button>
-            <button
-              [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'itinerary' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
-              (click)="setActiveTab('itinerary')"
-            >
-              Itinerary
-            </button>
-            <button
-              [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'reviews' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
-              (click)="setActiveTab('reviews')"
-            >
-              Reviews
-            </button>
-          </div>
-
-          <!-- Tab Content -->
-          <div class="p-6">
-            <!-- Overview -->
-            <div *ngIf="activeTab === 'overview'" class="space-y-6">
-              <div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">About This Tour</h3>
-                <p class="text-gray-700">{{ deal.description }}</p>
-              </div>
-
-              <!-- Amenities Grid -->
-              <div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">Highlights</h3>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div *ngIf="deal.elderlyFriendly" class="flex items-center text-gray-700">
-                    <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Elderly Friendly
-                  </div>
-                  <div *ngIf="deal.internetIncluded" class="flex items-center text-gray-700">
-                    <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Internet Included
-                  </div>
-                  <div *ngIf="deal.mealsIncluded" class="flex items-center text-gray-700">
-                    <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Meals Included
-                  </div>
-                  <!-- Add more amenities -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Inclusions -->
-            <div *ngIf="activeTab === 'inclusions'" class="space-y-8">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Inclusions -->
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900 mb-4">What's Included</h3>
-                  <ul class="space-y-3">
-                    <li *ngIf="deal.airTransfer" class="flex items-center text-gray-700">
-                      <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Air Transfer
-                    </li>
-                    <!-- Add more inclusions -->
-                  </ul>
-                </div>
-
-                <!-- Exclusions -->
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900 mb-4">What's Not Included</h3>
-                  <ul class="space-y-3">
-                    <li *ngIf="!deal.visaIncluded" class="flex items-center text-gray-700">
-                      <svg class="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Visa Charges
-                    </li>
-                    <!-- Add more exclusions -->
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <!-- Itinerary -->
-            <div *ngIf="activeTab === 'itinerary'" class="space-y-6">
-              <div *ngFor="let day of deal.itinerary" class="border-l-4 border-indigo-600 pl-4">
-                <h3 class="text-xl font-semibold text-gray-900">Day {{ day.dayNumber }}: {{ day.title }}</h3>
-                <p class="text-gray-700 mt-2">{{ day.description }}</p>
-                <ul class="mt-4 space-y-2">
-                  <li *ngFor="let activity of day.activities" class="flex items-center text-gray-700">
-                    <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                    {{ activity }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- Reviews -->
-            <div *ngIf="activeTab === 'reviews'" class="space-y-6">
-              <!-- Add reviews content here -->
-              <p class="text-gray-700">Reviews coming soon...</p>
+              <span class="ml-2 text-lg font-semibold text-white">{{ deal.rating || 'New' }}</span>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Booking Card -->
-      <div class="lg:col-span-1">
-        <div class="bg-white rounded-xl shadow-lg p-6 sticky top-8">
-          <div class="mb-6">
-            <div *ngIf="deal.discountedPrice" class="text-gray-500 line-through text-lg">
-              INR {{ deal.price | number:'1.0-0' }}
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-8">
+          <!-- Quick Info -->
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div class="text-center">
+                <span class="block text-gray-500 text-sm">Duration</span>
+                <span class="block text-gray-900 font-medium">{{ deal.daysCount }}D/{{ deal.nightsCount }}N</span>
+              </div>
+              <div class="text-center">
+                <span class="block text-gray-500 text-sm">Start Point</span>
+                <span class="block text-gray-900 font-medium">{{ deal.startPoint }}</span>
+              </div>
+              <div class="text-center">
+                <span class="block text-gray-500 text-sm">End Point</span>
+                <span class="block text-gray-900 font-medium">{{ deal.endPoint }}</span>
+              </div>
+              <div class="text-center">
+                <span class="block text-gray-500 text-sm">Package Type</span>
+                <span class="block text-gray-900 font-medium">{{ deal.packageType }}</span>
+              </div>
             </div>
-            <div class="text-3xl font-bold text-indigo-600">
-              INR {{ (deal.discountedPrice || deal.price) | number:'1.0-0' }}
-              <span *ngIf="deal.discountPercentage" class="ml-2 text-sm font-normal text-red-500">
-                ({{ deal.discountPercentage }}% OFF)
-              </span>
-            </div>
-            <p class="text-gray-500 text-sm mt-1">per person</p>
           </div>
 
-          <div class="space-y-4">
-            <div>
-              <label class="block text-gray-700 font-medium mb-2">Select Date</label>
-              <input
-                type="date"
-                [(ngModel)]="selectedDate"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          <!-- Tabs -->
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="flex border-b border-gray-200">
+              <button
+                [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'overview' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
+                (click)="setActiveTab('overview')"
               >
+                Overview
+              </button>
+              <button
+                [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'inclusions' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
+                (click)="setActiveTab('inclusions')"
+              >
+                Inclusions
+              </button>
+              <button
+                [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'itinerary' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
+                (click)="setActiveTab('itinerary')"
+              >
+                Itinerary
+              </button>
+              <button
+                [class]="'flex-1 py-4 px-6 text-center font-medium transition ' + (activeTab === 'reviews' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700')"
+                (click)="setActiveTab('reviews')"
+              >
+                Reviews
+              </button>
             </div>
 
-            <div>
-              <label class="block text-gray-700 font-medium mb-2">Number of Travelers</label>
-              <select
-                [(ngModel)]="selectedTravelers"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option [value]="1">1 Traveler</option>
-                <option [value]="2">2 Travelers</option>
-                <option [value]="3">3 Travelers</option>
-                <option [value]="4">4 Travelers</option>
-                <option [value]="5">5+ Travelers</option>
-              </select>
+            <!-- Tab Content -->
+            <div class="p-6">
+              <!-- Overview -->
+              <div *ngIf="activeTab === 'overview'" class="space-y-6">
+                <div>
+                  <h3 class="text-xl font-semibold text-gray-900 mb-4">About This Tour</h3>
+                  <p class="text-gray-700">{{ deal.description }}</p>
+                </div>
+
+                <!-- Amenities Grid -->
+                <div>
+                  <h3 class="text-xl font-semibold text-gray-900 mb-4">Highlights</h3>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div *ngIf="deal.elderlyFriendly" class="flex items-center text-gray-700">
+                      <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Elderly Friendly
+                    </div>
+                    <div *ngIf="deal.internetIncluded" class="flex items-center text-gray-700">
+                      <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Internet Included
+                    </div>
+                    <div *ngIf="deal.mealsIncluded" class="flex items-center text-gray-700">
+                      <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Meals Included
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Inclusions -->
+              <div *ngIf="activeTab === 'inclusions'" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <!-- Inclusions -->
+                  <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">What's Included</h3>
+                    <ul class="space-y-3">
+                      <li *ngIf="deal.airTransfer" class="flex items-center text-gray-700">
+                        <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Air Transfer
+                      </li>
+                    </ul>
+                  </div>
+
+                  <!-- Exclusions -->
+                  <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">What's Not Included</h3>
+                    <ul class="space-y-3">
+                      <li class="flex items-center text-gray-700">
+                        <svg class="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Personal Expenses
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Itinerary -->
+              <div *ngIf="activeTab === 'itinerary'" class="space-y-6">
+                <div *ngFor="let day of deal.itinerary" class="border-l-4 border-indigo-600 pl-4">
+                  <h3 class="text-xl font-semibold text-gray-900">Day {{ day.dayNumber }}: {{ day.title }}</h3>
+                  <p class="text-gray-700 mt-2">{{ day.description }}</p>
+                  <ul class="mt-4 space-y-2">
+                    <li *ngFor="let activity of day.activities" class="flex items-center text-gray-700">
+                      <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                      {{ activity }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Reviews -->
+              <div *ngIf="activeTab === 'reviews'" class="space-y-6">
+                <p class="text-gray-700">Reviews coming soon...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="lg:col-span-1">
+          <!-- Booking Card -->
+          <div class="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <span class="text-2xl font-bold text-gray-900">₹{{ deal.discountedPrice }}</span>
+                <span class="text-lg text-gray-500 line-through ml-2">₹{{ deal.price }}</span>
+              </div>
+              <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                {{ deal.discountPercentage }}% OFF
+              </span>
             </div>
 
             <button
-              (click)="checkAvailability()"
-              class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition"
+              (click)="bookNow()"
+              class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
             >
-              Check Availability
+              Book Now
             </button>
-          </div>
 
-          <!-- Cancellation Policy -->
-          <div class="mt-6 pt-6 border-t border-gray-200">
-            <div class="flex items-start">
-              <svg class="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p class="text-sm text-gray-600">Free cancellation up to 24 hours before the experience starts (local time)</p>
+            <div class="mt-6 space-y-4">
+              <div class="flex items-center text-gray-600">
+                <svg class="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Duration: {{ deal.daysCount }} Days</span>
+              </div>
+              <div class="flex items-center text-gray-600">
+                <svg class="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Location: {{ deal.location.name }}</span>
+              </div>
             </div>
           </div>
         </div>

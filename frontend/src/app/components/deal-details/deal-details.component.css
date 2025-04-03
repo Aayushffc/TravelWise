@@ -13,3 +13,112 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Image Gallery Navigation */
+.image-nav-button {
+  transition: all 0.3s ease;
+}
+
+.image-nav-button:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Content Overlay */
+.content-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
+}
+
+/* Tab Transitions */
+.tab-content {
+  transition: opacity 0.3s ease;
+}
+
+.tab-content.ng-enter {
+  opacity: 0;
+}
+
+.tab-content.ng-enter-active {
+  opacity: 1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-section {
+    height: 400px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-section {
+    height: 300px;
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Booking Card */
+.booking-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.booking-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Badge Styles */
+.badge {
+  transition: all 0.3s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  border-top-color: #4f46e5;
+  border-right-color: #4f46e5;
+  border-bottom-color: #4f46e5;
+  border-left-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
