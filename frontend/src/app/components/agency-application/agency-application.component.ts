@@ -1,98 +1,156 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { AuthService } from '../../services/auth.service';
+import { AgencyApplicationService, AgencyApplicationResponseDTO, AgencyApplicationDTO } from '../../services/agency-application.service';
+import { SidebarComponent } from '../side-bar/sidebar.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AgencyApplicationService, AgencyApplicationDTO, AgencyApplicationResponseDTO } from '../../services/agency-application.service';
-import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Observable, take } from 'rxjs';
+
+interface Message {
+  type: 'success' | 'error';
+  text: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+}
 
 @Component({
   selector: 'app-agency-application',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './agency-application.component.html'
+  templateUrl: './agency-application.component.html',
+  styleUrls: ['./agency-application.component.css'],
+  animations: [
+    trigger('fadeSlide', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('0.3s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('0.2s ease-out', style({ opacity: 1 }))
+      ])
+    ])
+  ],
+  imports: [SidebarComponent, CommonModule, FormsModule],
+  standalone: true
 })
 export class AgencyApplicationComponent implements OnInit {
+  user: User = {
+    id: '',
+    email: '',
+    fullName: '',
+    role: ''
+  };
   application: AgencyApplicationResponseDTO | null = null;
-  formData: AgencyApplicationDTO = {
+  applicationData: AgencyApplicationDTO = {
     agencyName: '',
     address: '',
     phoneNumber: '',
     description: '',
     businessRegistrationNumber: ''
   };
-  isLoading: boolean = true;
-  error: string | null = null;
-  success: string | null = null;
-  isEmailVerified: boolean = false;
-  userRole: string = '';
+  isLoading = false;
+  message: Message | null = null;
 
   constructor(
-    private agencyApplicationService: AgencyApplicationService,
+    private router: Router,
     private authService: AuthService,
-    private router: Router
+    private agencyApplicationService: AgencyApplicationService
   ) {}
 
   ngOnInit(): void {
     this.loadUserInfo();
-    this.fetchApplication();
+    this.loadApplication();
   }
 
-  loadUserInfo(): void {
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      // Get user role
-      this.authService.getUserRole().subscribe({
-        next: (role) => {
-          this.userRole = role;
-        },
-        error: (error) => {
-          console.error('Error fetching user role:', error);
+  private loadUserInfo(): void {
+    this.isLoading = true;
+    this.authService.user$.pipe(take(1)).subscribe({
+      next: (user) => {
+        if (user) {
+          this.user = {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName || user.email,
+            role: user.roles?.[0] || 'User'
+          };
+          this.isLoading = false;
+        } else {
+          this.isLoading = false;
+          this.showMessage('error', 'User not authenticated');
+          this.router.navigate(['/login']);
         }
-      });
-
-      // Get email verification status
-      this.authService.getUserProfile().subscribe({
-        next: (profile) => {
-          this.isEmailVerified = profile.emailConfirmed;
-        },
-        error: (error) => {
-          console.error('Error fetching user profile:', error);
-        }
-      });
-    }
+      },
+      error: (error: Error) => {
+        console.error('Error loading user info:', error);
+        this.isLoading = false;
+        this.showMessage('error', 'Failed to load user information');
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
-  fetchApplication(): void {
+  private loadApplication(): void {
     this.isLoading = true;
     this.agencyApplicationService.getMyApplication().subscribe({
-      next: (data) => {
-        this.application = data;
+      next: (response: AgencyApplicationResponseDTO) => {
+        this.application = response;
         this.isLoading = false;
       },
-      error: (error) => {
-        // If no application exists, this is fine
-        this.application = null;
+      error: (error: Error) => {
+        console.error('Error loading application:', error);
         this.isLoading = false;
+        this.showMessage('error', 'Failed to load application data');
       }
     });
   }
 
-  onSubmit(): void {
-    this.error = null;
-    this.success = null;
+  submitApplication(): void {
+    if (!this.validateForm()) {
+      return;
+    }
 
-    this.agencyApplicationService.apply(this.formData).subscribe({
-      next: () => {
-        this.success = 'Application submitted successfully';
-        this.fetchApplication();
+    this.isLoading = true;
+    this.agencyApplicationService.apply(this.applicationData).subscribe({
+      next: (response: any) => {
+        this.isLoading = false;
+        this.showMessage('success', 'Application submitted successfully');
+        this.loadApplication(); // Reload the application to get the updated status
       },
-      error: (error) => {
-        this.error = error.error?.message || 'Failed to submit application';
+      error: (error: Error) => {
+        console.error('Error submitting application:', error);
+        this.isLoading = false;
+        this.showMessage('error', 'Failed to submit application. Please try again.');
       }
     });
+  }
+
+  private validateForm(): boolean {
+    if (!this.applicationData.agencyName ||
+        !this.applicationData.businessRegistrationNumber ||
+        !this.applicationData.phoneNumber ||
+        !this.applicationData.address) {
+      this.showMessage('error', 'Please fill in all required fields');
+      return false;
+    }
+    return true;
+  }
+
+  private showMessage(type: 'success' | 'error', text: string): void {
+    this.message = { type, text };
+    setTimeout(() => {
+      this.message = null;
+    }, 5000);
   }
 
   goBack(): void {
-    this.router.navigate(['/home/profile']);
+    this.router.navigate(['/home']);
   }
 }

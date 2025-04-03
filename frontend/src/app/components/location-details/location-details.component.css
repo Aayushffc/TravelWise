@@ -1,1 +1,71 @@
 /* No additional styles needed - using Tailwind CSS */
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Location Badge */
+.location-badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  backdrop-filter: blur(4px);
+}
+
+.badge-popular {
+  background-color: rgba(224, 231, 255, 0.9);
+  color: #4338ca;
+  border: 1px solid rgba(67, 56, 202, 0.2);
+}
+
+.badge-new {
+  background-color: rgba(243, 244, 246, 0.9);
+  color: #374151;
+  border: 1px solid rgba(55, 65, 81, 0.2);
+}
+
+/* Image hover effect */
+.relative:hover img {
+  transform: scale(1.05);
+}
+
+/* Text overlay */
+.absolute.bottom-0 {
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+  padding-top: 4rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+
+  .relative {
+    height: 300px;
+  }
+}

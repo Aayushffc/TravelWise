@@ -127,6 +127,8 @@ export class HomeComponent implements OnInit {
 
   loadLocations(): void {
     this.isLoading = true;
+    this.cdr.detectChanges();
+
     this.locationService.getLocations().pipe(
       take(1),
       finalize(() => {

@@ -244,7 +244,10 @@ namespace Backend.Controllers
 
         // PUT: api/Deal/5/toggle-status
         [HttpPut("{id}/toggle-status")]
-        public async Task<IActionResult> ToggleDealStatus(int id, [FromBody] DealToggleStatusDto toggleDto)
+        public async Task<IActionResult> ToggleDealStatus(
+            int id,
+            [FromBody] DealToggleStatusDto toggleDto
+        )
         {
             try
             {

@@ -1,14 +1,16 @@
 <div class="min-h-screen bg-gray-50">
   <!-- Header -->
-  <header class="bg-white shadow-sm">
-    <div class="container mx-auto py-4 px-6">
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto py-2 px-6">
       <div class="flex items-center">
-        <button (click)="goBack()" class="mr-4 text-indigo-600 hover:text-indigo-800">
+        <button (click)="goBack()" class="mr-4 text-indigo-600 hover:text-indigo-800 transition-transform hover:-translate-x-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h1 class="text-2xl font-bold text-indigo-600">TravelWise</h1>
+        <div class="flex items-center">
+          <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">{{ location?.name }} Deals</h1>
+        </div>
       </div>
     </div>
   </header>
@@ -26,38 +28,54 @@
   </div>
 
   <!-- Location Details -->
-  <div *ngIf="location && !isLoading" class="container mx-auto px-6 py-8">
-    <!-- Location Info -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-      <div class="relative">
+  <div *ngIf="location && !isLoading" class="animate-fadeIn">
+    <!-- Hero Section -->
+    <div class="container mx-auto px-6 py-8">
+      <div class="relative h-[400px] w-full overflow-hidden rounded-2xl shadow-lg">
         <img
           [src]="location.imageUrl || 'assets/placeholder-location.jpg'"
           [alt]="location.name"
-          class="w-full h-64 object-cover"
+          class="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
         >
-        <div class="absolute inset-0 bg-gradient-to-t from-black opacity-60"></div>
-        <div class="absolute bottom-0 left-0 p-6">
-          <h1 class="text-3xl font-bold text-white">{{ location.name }}</h1>
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
+
+        <!-- Badge -->
+        <div class="absolute top-4 right-4 z-10">
+          <span class="location-badge" [ngClass]="location.isPopular ? 'badge-popular' : 'badge-new'">
+            {{location.isPopular ? 'Popular' : 'New'}}
+          </span>
         </div>
-      </div>
-      <div class="p-6">
-        <p class="text-gray-700">{{ location.description }}</p>
+
+        <!-- Content Overlay -->
+        <div class="absolute bottom-0 left-0 right-0 p-8">
+          <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">{{ location.name }}</h1>
+          <p class="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl">{{ location.description }}</p>
+        </div>
       </div>
     </div>
 
     <!-- Deals Section -->
-    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Available Deals</h2>
+    <div class="container mx-auto px-6 py-12">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+          <span class="inline-block w-2 h-2 rounded-full bg-indigo-600 mr-2"></span>
+          Available Deals
+        </h2>
+      </div>
 
-    <div *ngIf="deals.length === 0" class="bg-white rounded-lg shadow-md p-8 text-center">
-      <p class="text-gray-600">No deals available for this location.</p>
-    </div>
+      <div *ngIf="deals.length === 0" class="bg-white rounded-xl shadow-md p-8 text-center animate-fadeIn">
+        <p class="text-gray-600">No deals available for this location.</p>
+      </div>
 
-    <div *ngIf="deals.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <app-deal-card
-        *ngFor="let deal of deals"
-        [deal]="deal"
-        (click)="viewDeal(deal.id)">
-      </app-deal-card>
+      <div *ngIf="deals.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <app-deal-card
+          *ngFor="let deal of deals"
+          [deal]="deal"
+          (click)="viewDeal(deal.id)"
+          class="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        </app-deal-card>
+      </div>
     </div>
   </div>
 </div>

@@ -252,6 +252,33 @@ export class AuthService {
     return this.http.get<any>(`${this.apiUrl}/profile`);
   }
 
+  updateProfile(userData: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/profile`, userData).pipe(
+      tap(response => {
+        const currentUser = this.userSubject.value;
+        if (currentUser) {
+          this.userSubject.next({ ...currentUser, ...response });
+        }
+      }),
+      catchError(error => {
+        console.error('Profile update error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/change-password`, {
+      currentPassword,
+      newPassword
+    }).pipe(
+      catchError(error => {
+        console.error('Password change error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   // Add this method to check if user is admin
   isAdmin(): boolean {
     const user = this.userSubject.value;

@@ -1,23 +1,43 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
-import { Location } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { SidebarComponent } from '../side-bar/sidebar.component';
+
+interface Message {
+  type: 'success' | 'error';
+  text: string;
+}
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './profile.component.html'
+  imports: [CommonModule, FormsModule, SidebarComponent],
+  templateUrl: './profile.component.html',
+  styleUrls: ['./profile.component.css'],
+  animations: [
+    trigger('fadeSlide', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('0.3s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('0.3s ease-out', style({ opacity: 1 }))
+      ])
+    ])
+  ]
 })
 export class ProfileComponent implements OnInit {
   user: any = {};
-  isEditing = false;
-  isAgency = false;
-  passwordForm = {
+  isEditing: boolean = false;
+  isLoading: boolean = true;
+  message: Message | null = null;
+  passwordData = {
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -25,67 +45,77 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private http: HttpClient,
-    private router: Router,
-    private location: Location
+    private router: Router
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadUserProfile();
   }
 
-  loadUserProfile() {
+  loadUserProfile(): void {
+    this.isLoading = true;
     this.authService.getUserProfile().subscribe({
       next: (data) => {
         this.user = data;
-        this.isAgency = data.roles?.includes('Agency') || false;
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading profile:', error);
+        this.showMessage('error', 'Failed to load profile');
+        this.isLoading = false;
       }
     });
   }
 
-  saveProfile() {
-    this.http.put(`${environment.apiUrl}/api/auth/profile`, this.user).subscribe({
+  saveProfile(): void {
+    this.isLoading = true;
+    this.authService.updateProfile(this.user).subscribe({
       next: () => {
+        this.showMessage('success', 'Profile updated successfully');
         this.isEditing = false;
-        // Show success message
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error updating profile:', error);
-        // Show error message
+        this.showMessage('error', error.error?.message || 'Failed to update profile');
+        this.isLoading = false;
       }
     });
   }
 
-  changePassword() {
-    if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-      // Show error message
+  changePassword(): void {
+    if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+      this.showMessage('error', 'New passwords do not match');
       return;
     }
 
-    this.http.post(`${environment.apiUrl}/api/auth/change-password`, {
-      currentPassword: this.passwordForm.currentPassword,
-      newPassword: this.passwordForm.newPassword
-    }).subscribe({
+    this.isLoading = true;
+    this.authService.changePassword(
+      this.passwordData.currentPassword,
+      this.passwordData.newPassword
+    ).subscribe({
       next: () => {
-        // Show success message
-        this.passwordForm = {
+        this.showMessage('success', 'Password changed successfully');
+        this.passwordData = {
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
         };
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error changing password:', error);
-        // Show error message
+        this.showMessage('error', error.error?.message || 'Failed to change password');
+        this.isLoading = false;
       }
     });
   }
 
-  verifyPhone() {
-    // Implement phone verification logic
+  showMessage(type: 'success' | 'error', text: string) {
+    this.message = { type, text };
+    setTimeout(() => {
+      this.message = null;
+    }, 5000);
   }
 
   goBack(): void {
