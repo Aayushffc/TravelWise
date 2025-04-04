@@ -14,7 +14,6 @@
   backface-visibility: hidden;
   cursor: pointer;
   position: relative;
-  backdrop-filter: blur(8px);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -240,11 +239,6 @@
 
 .delete-btn:hover {
   background: rgba(254, 202, 202, 0.8);
-}
-
-/* Text shadow for better readability */
-.text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 /* Truncate text */

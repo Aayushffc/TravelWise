@@ -4,7 +4,7 @@
     <div class="container mx-auto py-2 px-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <button (click)="goBack()" class="mr-4 text-indigo-600 hover:text-indigo-800 transition-transform hover:-translate-x-1">
+          <button (click)="goBack()" class="mr-4 text-indigo-600 hover:text-indigo-800 transition-transform hover:-translate-x-1 hover:cursor-pointer">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -56,7 +56,7 @@
         <div class="absolute inset-0 flex items-center justify-between px-4">
           <button
             (click)="previousImage()"
-            class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110"
+            class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 hover:cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -64,7 +64,7 @@
           </button>
           <button
             (click)="nextImage()"
-            class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110"
+            class="bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 hover:cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -264,7 +264,7 @@
 
             <button
               (click)="bookNow()"
-              class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+              class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors hover:cursor-pointer"
             >
               Book Now
             </button>

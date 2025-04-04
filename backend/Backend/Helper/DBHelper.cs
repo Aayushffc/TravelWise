@@ -608,7 +608,7 @@ namespace Backend.Helper
                 var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,
-                    AllowTrailingCommas = true
+                    AllowTrailingCommas = true,
                 };
 
                 return JsonSerializer.Deserialize<T>(json, options) ?? new T();
@@ -705,7 +705,7 @@ namespace Backend.Helper
                         StayIncluded, AirTransfer, RoadTransfer, TrainTransfer, TravelCostIncluded,
                         GuideIncluded, PhotographyIncluded, InsuranceIncluded, VisaIncluded,
                         Itinerary, PackageOptions, MapUrl, Policies, PackageType, IsActive,
-                        CreatedAt, UpdatedAt, Status, Headlines, Tags, Seasons, DifficultyLevel,
+                        CreatedAt, UpdatedAt, Headlines, Tags, Seasons, DifficultyLevel,
                         MaxGroupSize, MinGroupSize, IsInstantBooking, IsLastMinuteDeal,
                         ValidFrom, ValidUntil, CancellationPolicy, RefundPolicy, Languages,
                         Requirements, Restrictions
@@ -718,7 +718,7 @@ namespace Backend.Helper
                         @StayIncluded, @AirTransfer, @RoadTransfer, @TrainTransfer, @TravelCostIncluded,
                         @GuideIncluded, @PhotographyIncluded, @InsuranceIncluded, @VisaIncluded,
                         @Itinerary, @PackageOptions, @MapUrl, @Policies, @PackageType, @IsActive,
-                        @CreatedAt, @UpdatedAt, @Status, @Headlines, @Tags, @Seasons, @DifficultyLevel,
+                        @CreatedAt, @UpdatedAt, @Headlines, @Tags, @Seasons, @DifficultyLevel,
                         @MaxGroupSize, @MinGroupSize, @IsInstantBooking, @IsLastMinuteDeal,
                         @ValidFrom, @ValidUntil, @CancellationPolicy, @RefundPolicy, @Languages,
                         @Requirements, @Restrictions
@@ -1393,7 +1393,8 @@ namespace Backend.Helper
                 }
 
                 // Helper method to safely deserialize JSON
-                T SafeJsonDeserialize<T>(string columnName) where T : class, new()
+                T SafeJsonDeserialize<T>(string columnName)
+                    where T : class, new()
                 {
                     try
                     {
@@ -1409,18 +1410,47 @@ namespace Backend.Helper
                         var options = new JsonSerializerOptions
                         {
                             PropertyNameCaseInsensitive = true,
-                            AllowTrailingCommas = true
+                            AllowTrailingCommas = true,
                         };
 
                         return JsonSerializer.Deserialize<T>(json, options) ?? new T();
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error deserializing JSON for column {Column}. Value: {Value}",
+                        _logger.LogError(
+                            ex,
+                            "Error deserializing JSON for column {Column}. Value: {Value}",
                             columnName,
-                            reader.IsDBNull(reader.GetOrdinal(columnName)) ? "NULL" : GetStringOrEmpty(columnName));
+                            reader.IsDBNull(reader.GetOrdinal(columnName))
+                                ? "NULL"
+                                : GetStringOrEmpty(columnName)
+                        );
                         return new T();
                     }
+                }
+
+                // Helper method to get decimal with default value
+                decimal GetDecimalOrDefault(string columnName, decimal defaultValue = 0)
+                {
+                    return reader.IsDBNull(reader.GetOrdinal(columnName))
+                        ? defaultValue
+                        : reader.GetDecimal(reader.GetOrdinal(columnName));
+                }
+
+                // Helper method to get int with default value
+                int GetIntOrDefault(string columnName, int defaultValue = 0)
+                {
+                    return reader.IsDBNull(reader.GetOrdinal(columnName))
+                        ? defaultValue
+                        : reader.GetInt32(reader.GetOrdinal(columnName));
+                }
+
+                // Helper method to get bool with default value
+                bool GetBoolOrDefault(string columnName, bool defaultValue = false)
+                {
+                    return reader.IsDBNull(reader.GetOrdinal(columnName))
+                        ? defaultValue
+                        : reader.GetBoolean(reader.GetOrdinal(columnName));
                 }
 
                 return new DealResponseDto
@@ -1429,49 +1459,39 @@ namespace Backend.Helper
                     Title = GetStringOrEmpty("Title"),
                     LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
                     UserId = GetStringOrEmpty("UserId"),
-                    Price = reader.GetDecimal(reader.GetOrdinal("Price")),
-                    DiscountedPrice = reader.IsDBNull(reader.GetOrdinal("DiscountedPrice"))
-                        ? 0
-                        : reader.GetDecimal(reader.GetOrdinal("DiscountedPrice")),
-                    DiscountPercentage = reader.IsDBNull(reader.GetOrdinal("DiscountPercentage"))
-                        ? 0
-                        : reader.GetInt32(reader.GetOrdinal("DiscountPercentage")),
-                    Rating = reader.IsDBNull(reader.GetOrdinal("Rating"))
-                        ? 0
-                        : reader.GetDecimal(reader.GetOrdinal("Rating")),
-                    DaysCount = reader.GetInt32(reader.GetOrdinal("DaysCount")),
-                    NightsCount = reader.GetInt32(reader.GetOrdinal("NightsCount")),
+                    Price = GetDecimalOrDefault("Price"),
+                    DiscountedPrice = GetDecimalOrDefault("DiscountedPrice"),
+                    DiscountPercentage = GetIntOrDefault("DiscountPercentage"),
+                    Rating = GetDecimalOrDefault("Rating"),
+                    DaysCount = GetIntOrDefault("DaysCount"),
+                    NightsCount = GetIntOrDefault("NightsCount"),
                     Description = GetStringOrEmpty("Description"),
                     Photos = SafeJsonDeserialize<List<string>>("Photos"),
-                    ElderlyFriendly = reader.GetBoolean(reader.GetOrdinal("ElderlyFriendly")),
-                    InternetIncluded = reader.GetBoolean(reader.GetOrdinal("InternetIncluded")),
-                    TravelIncluded = reader.GetBoolean(reader.GetOrdinal("TravelIncluded")),
-                    MealsIncluded = reader.GetBoolean(reader.GetOrdinal("MealsIncluded")),
-                    SightseeingIncluded = reader.GetBoolean(
-                        reader.GetOrdinal("SightseeingIncluded")
-                    ),
-                    StayIncluded = reader.GetBoolean(reader.GetOrdinal("StayIncluded")),
-                    AirTransfer = reader.GetBoolean(reader.GetOrdinal("AirTransfer")),
-                    RoadTransfer = reader.GetBoolean(reader.GetOrdinal("RoadTransfer")),
-                    TrainTransfer = reader.GetBoolean(reader.GetOrdinal("TrainTransfer")),
-                    TravelCostIncluded = reader.GetBoolean(reader.GetOrdinal("TravelCostIncluded")),
-                    GuideIncluded = reader.GetBoolean(reader.GetOrdinal("GuideIncluded")),
-                    PhotographyIncluded = reader.GetBoolean(
-                        reader.GetOrdinal("PhotographyIncluded")
-                    ),
-                    InsuranceIncluded = reader.GetBoolean(reader.GetOrdinal("InsuranceIncluded")),
-                    VisaIncluded = reader.GetBoolean(reader.GetOrdinal("VisaIncluded")),
+                    ElderlyFriendly = GetBoolOrDefault("ElderlyFriendly"),
+                    InternetIncluded = GetBoolOrDefault("InternetIncluded"),
+                    TravelIncluded = GetBoolOrDefault("TravelIncluded"),
+                    MealsIncluded = GetBoolOrDefault("MealsIncluded"),
+                    SightseeingIncluded = GetBoolOrDefault("SightseeingIncluded"),
+                    StayIncluded = GetBoolOrDefault("StayIncluded"),
+                    AirTransfer = GetBoolOrDefault("AirTransfer"),
+                    RoadTransfer = GetBoolOrDefault("RoadTransfer"),
+                    TrainTransfer = GetBoolOrDefault("TrainTransfer"),
+                    TravelCostIncluded = GetBoolOrDefault("TravelCostIncluded"),
+                    GuideIncluded = GetBoolOrDefault("GuideIncluded"),
+                    PhotographyIncluded = GetBoolOrDefault("PhotographyIncluded"),
+                    InsuranceIncluded = GetBoolOrDefault("InsuranceIncluded"),
+                    VisaIncluded = GetBoolOrDefault("VisaIncluded"),
                     Itinerary = SafeJsonDeserialize<List<ItineraryDay>>("Itinerary"),
                     PackageOptions = SafeJsonDeserialize<List<PackageOption>>("PackageOptions"),
                     MapUrl = GetStringOrEmpty("MapUrl"),
                     Policies = SafeJsonDeserialize<List<Policy>>("Policies"),
                     PackageType = GetStringOrEmpty("PackageType"),
-                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    IsActive = GetBoolOrDefault("IsActive"),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                    ClickCount = reader.GetInt32(reader.GetOrdinal("ClickCount")),
-                    ViewCount = reader.GetInt32(reader.GetOrdinal("ViewCount")),
-                    BookingCount = reader.GetInt32(reader.GetOrdinal("BookingCount")),
+                    ClickCount = GetIntOrDefault("ClickCount"),
+                    ViewCount = GetIntOrDefault("ViewCount"),
+                    BookingCount = GetIntOrDefault("BookingCount"),
                     LastClicked = reader.IsDBNull(reader.GetOrdinal("LastClicked"))
                         ? DateTime.MinValue
                         : reader.GetDateTime(reader.GetOrdinal("LastClicked")),
@@ -1481,53 +1501,33 @@ namespace Backend.Helper
                     LastBooked = reader.IsDBNull(reader.GetOrdinal("LastBooked"))
                         ? DateTime.MinValue
                         : reader.GetDateTime(reader.GetOrdinal("LastBooked")),
-                    RelevanceScore = reader.IsDBNull(reader.GetOrdinal("RelevanceScore"))
-                        ? 0
-                        : reader.GetDecimal(reader.GetOrdinal("RelevanceScore")),
+                    RelevanceScore = GetDecimalOrDefault("RelevanceScore"),
                     SearchKeywords = reader.IsDBNull(reader.GetOrdinal("SearchKeywords"))
                         ? null
                         : reader.GetString(reader.GetOrdinal("SearchKeywords")),
                     Tags = SafeJsonDeserialize<List<string>>("Tags"),
                     Headlines = SafeJsonDeserialize<List<string>>("Headlines"),
-                    IsFeatured = reader.IsDBNull(reader.GetOrdinal("IsFeatured"))
-                        ? false
-                        : reader.GetBoolean(reader.GetOrdinal("IsFeatured")),
+                    IsFeatured = GetBoolOrDefault("IsFeatured"),
                     FeaturedUntil = reader.IsDBNull(reader.GetOrdinal("FeaturedUntil"))
                         ? DateTime.MinValue
                         : reader.GetDateTime(reader.GetOrdinal("FeaturedUntil")),
-                    Priority = reader.IsDBNull(reader.GetOrdinal("Priority"))
-                        ? 0
-                        : reader.GetInt32(reader.GetOrdinal("Priority")),
-                    DifficultyLevel = reader.IsDBNull(reader.GetOrdinal("DifficultyLevel"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("DifficultyLevel")),
-                    MaxGroupSize = reader.IsDBNull(reader.GetOrdinal("MaxGroupSize"))
-                        ? null
-                        : reader.GetInt32(reader.GetOrdinal("MaxGroupSize")),
-                    MinGroupSize = reader.IsDBNull(reader.GetOrdinal("MinGroupSize"))
-                        ? null
-                        : reader.GetInt32(reader.GetOrdinal("MinGroupSize")),
-                    IsInstantBooking = reader.IsDBNull(reader.GetOrdinal("IsInstantBooking"))
-                        ? false
-                        : reader.GetBoolean(reader.GetOrdinal("IsInstantBooking")),
-                    IsLastMinuteDeal = reader.IsDBNull(reader.GetOrdinal("IsLastMinuteDeal"))
-                        ? false
-                        : reader.GetBoolean(reader.GetOrdinal("IsLastMinuteDeal")),
+                    Priority = GetIntOrDefault("Priority"),
+                    DifficultyLevel = GetStringOrEmpty("DifficultyLevel"),
+                    MaxGroupSize = GetIntOrDefault("MaxGroupSize"),
+                    MinGroupSize = GetIntOrDefault("MinGroupSize"),
+                    IsInstantBooking = GetBoolOrDefault("IsInstantBooking"),
+                    IsLastMinuteDeal = GetBoolOrDefault("IsLastMinuteDeal"),
                     ValidFrom = reader.IsDBNull(reader.GetOrdinal("ValidFrom"))
                         ? null
                         : reader.GetDateTime(reader.GetOrdinal("ValidFrom")),
                     ValidUntil = reader.IsDBNull(reader.GetOrdinal("ValidUntil"))
                         ? null
                         : reader.GetDateTime(reader.GetOrdinal("ValidUntil")),
-                    CancellationPolicy = reader.IsDBNull(reader.GetOrdinal("CancellationPolicy"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("CancellationPolicy")),
-                    RefundPolicy = reader.IsDBNull(reader.GetOrdinal("RefundPolicy"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("RefundPolicy")),
+                    CancellationPolicy = GetStringOrEmpty("CancellationPolicy"),
+                    RefundPolicy = GetStringOrEmpty("RefundPolicy"),
                     Languages = SafeJsonDeserialize<List<string>>("Languages"),
                     Requirements = SafeJsonDeserialize<List<string>>("Requirements"),
-                    Restrictions = SafeJsonDeserialize<List<string>>("Restrictions")
+                    Restrictions = SafeJsonDeserialize<List<string>>("Restrictions"),
                 };
             }
             catch (Exception ex)
@@ -1546,58 +1546,93 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@Title", deal.Title);
             command.Parameters.AddWithValue("@LocationId", deal.LocationId);
             command.Parameters.AddWithValue("@Price", deal.Price);
-            command.Parameters.AddWithValue("@DiscountedPrice", deal.DiscountedPrice);
-            command.Parameters.AddWithValue("@DiscountPercentage", deal.DiscountPercentage);
-            command.Parameters.AddWithValue("@Rating", deal.Rating);
+            command.Parameters.AddWithValue("@DiscountedPrice", deal.DiscountedPrice ?? 0);
+            command.Parameters.AddWithValue("@DiscountPercentage", deal.DiscountPercentage ?? 0);
+            command.Parameters.AddWithValue("@Rating", deal.Rating ?? 0);
             command.Parameters.AddWithValue("@DaysCount", deal.DaysCount);
             command.Parameters.AddWithValue("@NightsCount", deal.NightsCount);
             command.Parameters.AddWithValue("@Description", deal.Description);
-            command.Parameters.AddWithValue("@Photos", JsonSerializer.Serialize(deal.Photos));
-            command.Parameters.AddWithValue("@ElderlyFriendly", deal.ElderlyFriendly);
-            command.Parameters.AddWithValue("@InternetIncluded", deal.InternetIncluded);
-            command.Parameters.AddWithValue("@TravelIncluded", deal.TravelIncluded);
-            command.Parameters.AddWithValue("@MealsIncluded", deal.MealsIncluded);
-            command.Parameters.AddWithValue("@SightseeingIncluded", deal.SightseeingIncluded);
-            command.Parameters.AddWithValue("@StayIncluded", deal.StayIncluded);
-            command.Parameters.AddWithValue("@AirTransfer", deal.AirTransfer);
-            command.Parameters.AddWithValue("@RoadTransfer", deal.RoadTransfer);
-            command.Parameters.AddWithValue("@TrainTransfer", deal.TrainTransfer);
-            command.Parameters.AddWithValue("@TravelCostIncluded", deal.TravelCostIncluded);
-            command.Parameters.AddWithValue("@GuideIncluded", deal.GuideIncluded);
-            command.Parameters.AddWithValue("@PhotographyIncluded", deal.PhotographyIncluded);
-            command.Parameters.AddWithValue("@InsuranceIncluded", deal.InsuranceIncluded);
-            command.Parameters.AddWithValue("@VisaIncluded", deal.VisaIncluded);
-            command.Parameters.AddWithValue("@Itinerary", JsonSerializer.Serialize(deal.Itinerary));
+            command.Parameters.AddWithValue(
+                "@Photos",
+                JsonSerializer.Serialize(deal.Photos ?? new List<string>())
+            );
+            command.Parameters.AddWithValue("@ElderlyFriendly", deal.ElderlyFriendly ?? false);
+            command.Parameters.AddWithValue("@InternetIncluded", deal.InternetIncluded ?? false);
+            command.Parameters.AddWithValue("@TravelIncluded", deal.TravelIncluded ?? false);
+            command.Parameters.AddWithValue("@MealsIncluded", deal.MealsIncluded ?? false);
+            command.Parameters.AddWithValue(
+                "@SightseeingIncluded",
+                deal.SightseeingIncluded ?? false
+            );
+            command.Parameters.AddWithValue("@StayIncluded", deal.StayIncluded ?? false);
+            command.Parameters.AddWithValue("@AirTransfer", deal.AirTransfer ?? false);
+            command.Parameters.AddWithValue("@RoadTransfer", deal.RoadTransfer ?? false);
+            command.Parameters.AddWithValue("@TrainTransfer", deal.TrainTransfer ?? false);
+            command.Parameters.AddWithValue(
+                "@TravelCostIncluded",
+                deal.TravelCostIncluded ?? false
+            );
+            command.Parameters.AddWithValue("@GuideIncluded", deal.GuideIncluded ?? false);
+            command.Parameters.AddWithValue(
+                "@PhotographyIncluded",
+                deal.PhotographyIncluded ?? false
+            );
+            command.Parameters.AddWithValue("@InsuranceIncluded", deal.InsuranceIncluded ?? false);
+            command.Parameters.AddWithValue("@VisaIncluded", deal.VisaIncluded ?? false);
+            command.Parameters.AddWithValue(
+                "@Itinerary",
+                JsonSerializer.Serialize(deal.Itinerary ?? new List<ItineraryDay>())
+            );
             command.Parameters.AddWithValue(
                 "@PackageOptions",
-                JsonSerializer.Serialize(deal.PackageOptions)
+                JsonSerializer.Serialize(deal.PackageOptions ?? new List<PackageOption>())
             );
-            command.Parameters.AddWithValue("@MapUrl", deal.MapUrl);
-            command.Parameters.AddWithValue("@Policies", JsonSerializer.Serialize(deal.Policies));
+            command.Parameters.AddWithValue("@MapUrl", deal.MapUrl ?? string.Empty);
+            command.Parameters.AddWithValue(
+                "@Policies",
+                JsonSerializer.Serialize(deal.Policies ?? new List<Policy>())
+            );
             command.Parameters.AddWithValue("@PackageType", deal.PackageType);
             command.Parameters.AddWithValue("@IsActive", deal.IsActive);
-            command.Parameters.AddWithValue("@Headlines", JsonSerializer.Serialize(deal.Headlines));
-            command.Parameters.AddWithValue("@Tags", JsonSerializer.Serialize(deal.Tags));
-            command.Parameters.AddWithValue("@Seasons", JsonSerializer.Serialize(deal.Seasons));
-            command.Parameters.AddWithValue("@DifficultyLevel", deal.DifficultyLevel);
-            command.Parameters.AddWithValue("@MaxGroupSize", deal.MaxGroupSize);
-            command.Parameters.AddWithValue("@MinGroupSize", deal.MinGroupSize);
-            command.Parameters.AddWithValue("@IsInstantBooking", deal.IsInstantBooking);
-            command.Parameters.AddWithValue("@IsLastMinuteDeal", deal.IsLastMinuteDeal);
+            command.Parameters.AddWithValue(
+                "@Headlines",
+                JsonSerializer.Serialize(deal.Headlines ?? new List<string>())
+            );
+            command.Parameters.AddWithValue(
+                "@Tags",
+                JsonSerializer.Serialize(deal.Tags ?? new List<string>())
+            );
+            command.Parameters.AddWithValue(
+                "@Seasons",
+                JsonSerializer.Serialize(deal.Seasons ?? new List<string>())
+            );
+            command.Parameters.AddWithValue("@DifficultyLevel", deal.DifficultyLevel ?? "Easy");
+            command.Parameters.AddWithValue("@MaxGroupSize", deal.MaxGroupSize ?? 0);
+            command.Parameters.AddWithValue("@MinGroupSize", deal.MinGroupSize ?? 0);
+            command.Parameters.AddWithValue("@IsInstantBooking", deal.IsInstantBooking ?? false);
+            command.Parameters.AddWithValue("@IsLastMinuteDeal", deal.IsLastMinuteDeal ?? false);
             command.Parameters.AddWithValue("@ValidFrom", deal.ValidFrom);
             command.Parameters.AddWithValue("@ValidUntil", deal.ValidUntil);
-            command.Parameters.AddWithValue("@CancellationPolicy", deal.CancellationPolicy);
-            command.Parameters.AddWithValue("@RefundPolicy", deal.RefundPolicy);
-            command.Parameters.AddWithValue("@Languages", JsonSerializer.Serialize(deal.Languages));
+            command.Parameters.AddWithValue(
+                "@CancellationPolicy",
+                deal.CancellationPolicy ?? string.Empty
+            );
+            command.Parameters.AddWithValue("@RefundPolicy", deal.RefundPolicy ?? string.Empty);
+            command.Parameters.AddWithValue(
+                "@Languages",
+                JsonSerializer.Serialize(deal.Languages ?? new List<string>())
+            );
             command.Parameters.AddWithValue(
                 "@Requirements",
-                JsonSerializer.Serialize(deal.Requirements)
+                JsonSerializer.Serialize(deal.Requirements ?? new List<string>())
             );
             command.Parameters.AddWithValue(
                 "@Restrictions",
-                JsonSerializer.Serialize(deal.Restrictions)
+                JsonSerializer.Serialize(deal.Restrictions ?? new List<string>())
             );
             command.Parameters.AddWithValue("@UserId", deal.UserId);
+            command.Parameters.AddWithValue("@CreatedAt", deal.CreatedAt);
+            command.Parameters.AddWithValue("@UpdatedAt", deal.UpdatedAt);
         }
 
         #endregion

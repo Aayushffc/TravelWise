@@ -6,7 +6,7 @@
       <div class="flex items-center">
         <button
           (click)="goBack()"
-          class="flex items-center mr-4 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+          class="flex items-center mr-4 text-gray-600 hover:text-gray-900 transition-colors duration-200 hover:cursor-pointer"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -195,7 +195,7 @@
         <h3 class="text-lg font-medium text-gray-900">No deals found</h3>
         <p class="mt-1 text-sm text-gray-500 max-w-md">You haven't created any deals yet. Get started by creating your first deal.</p>
         <div class="mt-6">
-          <button (click)="createDeal()" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors duration-200">
+          <button (click)="createDeal()" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors duration-200 hover:cursor-pointer">
             <svg class="-ml-0.5 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
             </svg>
@@ -220,7 +220,7 @@
   <button
     *ngIf="deals.length > 0"
     (click)="createDeal()"
-    class="fixed bottom-6 right-6 inline-flex items-center justify-center rounded-full bg-indigo-600 p-4 text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 z-50">
+    class="fixed bottom-6 right-6 inline-flex items-center justify-center rounded-full bg-indigo-600 p-4 text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 z-50 hover:cursor-pointer">
     <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
     </svg>

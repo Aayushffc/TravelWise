@@ -365,10 +365,7 @@ export class ManageDealsComponent implements OnInit {
           title: this.dealForm.get('title')?.value
         };
 
-        // Wrap the data in dealDto
-        const requestData = {
-          dealDto: dealData
-        };
+        const requestData = dealData;
 
         const apiUrl = `${environment.apiUrl}/api/Deal`;
         const request$ = this.isEditMode

@@ -137,7 +137,6 @@ namespace Backend.Controllers
 
                 // Set default values
                 dealDto.UserId = userId;
-                dealDto.IsActive = true;
                 dealDto.CreatedAt = DateTime.UtcNow;
                 dealDto.UpdatedAt = DateTime.UtcNow;
 
