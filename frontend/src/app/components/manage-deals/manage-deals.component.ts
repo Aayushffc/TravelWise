@@ -12,6 +12,7 @@ import { DealService } from '../../services/deal.service';
 import { tap } from 'rxjs/operators';
 import { ManageDealCardComponent } from '../manage-deal-card/manage-deal-card.component';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { FileUploadService } from '../../services/file-upload.service';
 
 @Component({
   selector: 'app-manage-deals',
@@ -23,7 +24,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
     ManageDealCardComponent
   ],
   templateUrl: './manage-deals.component.html',
-  styleUrls: ['./manage-deals.component.css'],
+  styleUrls: ['./manage-deals.component.css', './manage-deals-css.component.css'],
   animations: [
     trigger('fadeInOut', [
       transition(':enter', [
@@ -55,6 +56,7 @@ export class ManageDealsComponent implements OnInit {
   showModal = false; // Renamed from isFormVisible
   selectedDeal: DealResponseDto | null = null;
   isEditMode = false; // Renamed from isEditing
+  editingDealId: number | null = null;
   showFilters = false;
   stats = {
     total: 0,
@@ -66,16 +68,22 @@ export class ManageDealsComponent implements OnInit {
   isDraggingOver = false;
   isSubmitting = false;
   activeTab = 'basic'; // For tabbed form navigation
+  private fileUploadService: FileUploadService;
 
   // Categories for the form
   categories: string[] = [
-    'Food & Dining',
-    'Entertainment',
-    'Shopping',
-    'Travel',
-    'Health & Wellness',
-    'Services',
-    'Other'
+    'Adventure',
+    'Luxury',
+    'Jungle Safari',
+    'Standard',
+    'Family Friendly',
+    'Cultural',
+    'Beach',
+    'Mountain',
+    'City Tour',
+    'Wildlife',
+    'Pilgrimage',
+    'Honeymoon'
   ];
 
   constructor(
@@ -84,21 +92,44 @@ export class ManageDealsComponent implements OnInit {
     private authService: AuthService,
     private fb: FormBuilder,
     private dealService: DealService,
-    private location: AngularLocation
+    private location: AngularLocation,
+    fileUploadService: FileUploadService
   ) {
     this.dealForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
-      locationId: [null],
+      locationId: [null, Validators.required],
       price: [0, [Validators.required, Validators.min(0)]],
       discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       description: ['', Validators.required],
       photos: [[]],
-      category: ['', Validators.required],
+      packageType: ['', Validators.required],
       isActive: [true],
       tags: [[]],
       isInstantBooking: [false],
-      isLastMinuteDeal: [false]
+      isLastMinuteDeal: [false],
+      daysCount: [1, [Validators.required, Validators.min(1)]],
+      nightsCount: [0, [Validators.required, Validators.min(0)]],
+      elderlyFriendly: [false],
+      internetIncluded: [false],
+      travelIncluded: [false],
+      mealsIncluded: [false],
+      sightseeingIncluded: [false],
+      stayIncluded: [false],
+      airTransfer: [false],
+      roadTransfer: [false],
+      trainTransfer: [false],
+      travelCostIncluded: [false],
+      guideIncluded: [false],
+      photographyIncluded: [false],
+      insuranceIncluded: [false],
+      visaIncluded: [false],
+      difficultyLevel: ['Easy'],
+      maxGroupSize: [10, [Validators.min(1)]],
+      minGroupSize: [1, [Validators.min(1)]],
+      validFrom: [new Date().toISOString().split('T')[0], Validators.required],
+      validUntil: [new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], Validators.required]
     });
+    this.fileUploadService = fileUploadService;
   }
 
   ngOnInit(): void {
@@ -270,104 +301,101 @@ export class ManageDealsComponent implements OnInit {
     });
   }
 
-  submitDeal(): void {
-    if (this.dealForm.invalid) {
-      // Mark all fields as touched to trigger validation messages
-      Object.keys(this.dealForm.controls).forEach(key => {
-        this.dealForm.get(key)?.markAsTouched();
-      });
+  async submitDeal() {
+    if (this.dealForm.valid) {
+      this.isSubmitting = true;
+      this.formError = null;
 
-      this.formError = 'Please fill in all required fields.';
-      return;
-    }
-
-    this.isSubmitting = true;
-    this.formError = null;
-
-    const formData = this.dealForm.value;
-    const currentUser = this.authService.getCurrentUser();
-
-    if (!currentUser?.id) {
-      this.formError = 'User authentication error. Please log in again.';
-      this.isSubmitting = false;
-      return;
-    }
-
-    // Setup minimum required fields based on API
-    const dealData: any = {
-      title: formData.title,
-      description: formData.description,
-      price: formData.price,
-      discountPercentage: formData.discountPercentage || 0,
-      packageType: formData.category, // Map category to packageType
-      isActive: formData.isActive,
-      photos: this.photos.map(p => p.url || p), // Extract URLs from photo objects
-      locationId: formData.locationId || 1, // Default to 1 if not set
-      daysCount: 1, // Default values to satisfy API requirements
-      nightsCount: 1,
-      userId: currentUser.id,
-      itinerary: [{
-        dayNumber: 1,
-        title: 'Day 1',
-        description: 'Itinerary details will be added later.',
-        activities: ['Activity details will be added later.']
-      }]
-    };
-
-    // Add optional fields only if they have values
-    if (formData.tags && formData.tags.length > 0) {
-      dealData.tags = formData.tags;
-    }
-
-    if (formData.isInstantBooking) {
-      dealData.isInstantBooking = true;
-    }
-
-    if (formData.isLastMinuteDeal) {
-      dealData.isLastMinuteDeal = true;
-    }
-
-    // For updates, ensure we have an ID
-    if (this.isEditMode && this.selectedDeal) {
-      dealData.id = this.selectedDeal.id;
-    }
-
-    const request = this.isEditMode && this.selectedDeal
-      ? this.dealService.updateDeal(this.selectedDeal.id, dealData)
-      : this.dealService.createDeal(dealData);
-
-    request.subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.showModal = false;
-        this.loadData();
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        console.error('Failed to save deal:', err);
-
-        // Display a user-friendly error message
-        if (err.status === 400) {
-          // For validation errors
-          if (err.error && err.error.errors) {
-            const errorMessages = [];
-            for (const key in err.error.errors) {
-              const messages = Array.isArray(err.error.errors[key])
-                ? err.error.errors[key]
-                : [err.error.errors[key]];
-              errorMessages.push(...messages);
+      try {
+        // Upload photos first
+        const uploadedPhotoUrls: string[] = [];
+        for (const photo of this.photos) {
+          if (photo.file) {
+            const response = await this.fileUploadService.uploadFile(photo.file, 'deals').toPromise();
+            if (response?.url) {
+              uploadedPhotoUrls.push(response.url);
             }
-            this.formError = errorMessages.join(' ');
-          } else {
-            this.formError = 'Please check your input and try again.';
+          } else if (photo.url) {
+            uploadedPhotoUrls.push(photo.url);
           }
-        } else if (err.status === 401 || err.status === 403) {
-          this.formError = 'You are not authorized to perform this action.';
-        } else {
-          this.formError = 'An error occurred while saving the deal. Please try again later.';
         }
+
+        const price = Number(this.dealForm.get('price')?.value);
+        const discountPercentage = Number(this.dealForm.get('discountPercentage')?.value) || 0;
+        const discountedPrice = price - (price * discountPercentage / 100);
+
+        const dealData = {
+          ...this.dealForm.value,
+          photos: uploadedPhotoUrls,
+          discountedPrice: discountedPrice,
+          // Add default itinerary
+          itinerary: [
+            {
+              dayNumber: 1,
+              title: "Day 1",
+              description: "First day of the trip",
+              activities: ["Arrival", "Check-in", "Orientation"]
+            }
+          ],
+          // Ensure boolean fields are properly set
+          elderlyFriendly: this.dealForm.get('elderlyFriendly')?.value ?? false,
+          internetIncluded: this.dealForm.get('internetIncluded')?.value ?? false,
+          travelIncluded: this.dealForm.get('travelIncluded')?.value ?? false,
+          mealsIncluded: this.dealForm.get('mealsIncluded')?.value ?? false,
+          sightseeingIncluded: this.dealForm.get('sightseeingIncluded')?.value ?? false,
+          stayIncluded: this.dealForm.get('stayIncluded')?.value ?? false,
+          airTransfer: this.dealForm.get('airTransfer')?.value ?? false,
+          roadTransfer: this.dealForm.get('roadTransfer')?.value ?? false,
+          trainTransfer: this.dealForm.get('trainTransfer')?.value ?? false,
+          travelCostIncluded: this.dealForm.get('travelCostIncluded')?.value ?? false,
+          guideIncluded: this.dealForm.get('guideIncluded')?.value ?? false,
+          photographyIncluded: this.dealForm.get('photographyIncluded')?.value ?? false,
+          insuranceIncluded: this.dealForm.get('insuranceIncluded')?.value ?? false,
+          visaIncluded: this.dealForm.get('visaIncluded')?.value ?? false,
+          // Set timestamps
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          // Ensure required fields are properly set
+          locationId: Number(this.dealForm.get('locationId')?.value),
+          daysCount: Number(this.dealForm.get('daysCount')?.value),
+          nightsCount: Number(this.dealForm.get('nightsCount')?.value),
+          price: price,
+          description: this.dealForm.get('description')?.value,
+          packageType: this.dealForm.get('packageType')?.value,
+          title: this.dealForm.get('title')?.value
+        };
+
+        // Wrap the data in dealDto
+        const requestData = {
+          dealDto: dealData
+        };
+
+        const apiUrl = `${environment.apiUrl}/api/Deal`;
+        const request$ = this.isEditMode
+          ? this.http.put(`${apiUrl}/${this.editingDealId}`, requestData)
+          : this.http.post(apiUrl, requestData);
+
+        request$.subscribe({
+          next: () => {
+            this.closeModal();
+            this.loadData();
+            this.isSubmitting = false;
+          },
+          error: (error) => {
+            console.error('Error submitting deal:', error);
+            this.formError = error.error?.message || 'Failed to submit deal. Please try again.';
+            this.isSubmitting = false;
+          }
+        });
+      } catch (error) {
+        console.error('Error uploading photos:', error);
+        this.formError = 'Failed to upload photos. Please try again.';
+        this.isSubmitting = false;
       }
-    });
+    } else {
+      this.formError = 'Please fill in all required fields correctly.';
+      this.dealForm.markAllAsTouched();
+    }
   }
 
   deleteDeal(dealId: number): void {
@@ -521,5 +549,39 @@ export class ManageDealsComponent implements OnInit {
   closeModal(): void {
     this.showModal = false;
     this.formError = null;
+  }
+
+  clearFormError(): void {
+    this.formError = null;
+  }
+
+  // Add new method for creating location
+  createLocation(locationName: string): void {
+    if (!locationName.trim()) return;
+
+    const newLocation = {
+      name: locationName.trim(),
+      description: '',
+      address: '',
+      city: '',
+      state: '',
+      country: '',
+      postalCode: '',
+      latitude: 0,
+      longitude: 0,
+      isActive: true
+    };
+
+    this.http.post<Location>(`${environment.apiUrl}/api/Location`, newLocation)
+      .subscribe({
+        next: (location) => {
+          this.locations.push(location);
+          this.dealForm.patchValue({ locationId: location.id });
+        },
+        error: (err) => {
+          console.error('Failed to create location:', err);
+          this.formError = 'Failed to create location. Please try again.';
+        }
+      });
   }
 }

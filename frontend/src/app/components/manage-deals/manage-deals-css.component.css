@@ -1,0 +1,381 @@
+
+.empty-state-icon svg {
+  width: 3rem;
+  height: 3rem;
+  color: #4f46e5;
+}
+
+/* Loading state */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4f46e5;
+  animation: spinner 1s linear infinite;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* Modal backdrop */
+.fixed {
+  position: fixed;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.bg-black {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.bg-opacity-70 {
+  --tw-bg-opacity: 0.5;
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.z-50 {
+  z-index: 50;
+}
+
+/* Modal content animation */
+.animate__animated {
+  animation-duration: 0.3s;
+}
+
+.animate__fadeIn {
+  animation-name: fadeIn;
+}
+
+.animate__fadeInUp {
+  animation-name: fadeInUp;
+}
+
+.animate__faster {
+  animation-duration: 0.3s;
+}
+
+/* Modal styling improvements */
+.modal-content {
+  animation: fadeInUp 0.3s ease-out;
+  max-width: 800px;
+  width: 100%;
+  background-color: white;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 0.75rem;
+  padding: 2rem;
+}
+
+/* Tab navigation */
+.tab-container {
+  position: relative;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.tab-button {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tab-button.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+}
+
+.tab-content {
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-panel {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  padding: 1.5rem 0;
+}
+
+.tab-panel.active {
+  position: relative;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* Tab navigation */
+.border-b-2 {
+  border-bottom-width: 2px;
+}
+
+.border-transparent {
+  border-color: transparent;
+}
+
+.border-indigo-500 {
+  border-color: #6366F1;
+}
+
+/* Form elements */
+.form-input {
+  padding: 0.75rem 1rem;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+textarea.form-input {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Tags input */
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  background-color: white;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background-color: #e0e7ff;
+  color: #4f46e5;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.tag-pill:hover {
+  background-color: #c7d2fe;
+}
+
+.tag-remove {
+  margin-left: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  color: #4f46e5;
+  transition: all 0.15s ease;
+}
+
+.tag-remove:hover {
+  background-color: #a5b4fc;
+  color: white;
+}
+
+/* Image upload improvements */
+.image-upload-container {
+  border: 2px dashed #d1d5db;
+  padding: 3rem;
+  text-align: center;
+  border-radius: 0.75rem;
+  background-color: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-upload-container:hover {
+  border-color: #818cf8;
+  background-color: #f5f7ff;
+}
+
+.image-upload-container.dragging {
+  border-color: #6366f1;
+  background-color: #eef2ff;
+}
+
+.image-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.image-preview-item {
+  position: relative;
+  height: 150px;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-button {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  background-color: rgba(239, 68, 68, 0.9);
+  color: white;
+  border-radius: 9999px;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.image-preview-item:hover .remove-button {
+  opacity: 1;
+}
+
+/* Error message styling */
+.error-message {
+  border-radius: 0.5rem;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  animation: slideInDown 0.3s ease-out;
+  transform-origin: top;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  color: #ef4444;
+}
+
+/* Checkbox styling */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+}
+
+.form-checkbox {
+  height: 1rem;
+  width: 1rem;
+  border-radius: 0.25rem;
+  border-color: #d1d5db;
+  color: #6366f1;
+}
+
+.form-checkbox:checked {
+  background-color: #6366f1;
+  border-color: #6366f1;
+}
+
+.checkbox-label {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+/* Compact stats cards */
+.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Form labels - increased size */
+label {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Grid gaps - increased spacing */
+.grid {
+  gap: 1.5rem;
+}
+
+/* Button sizes - increased */
+button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Image upload container - increased size */
+.image-upload-container svg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.image-upload-container p {
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+/* Image preview grid - increased size */
+.image-preview {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.image-preview-item {
+  height: 150px;
+}

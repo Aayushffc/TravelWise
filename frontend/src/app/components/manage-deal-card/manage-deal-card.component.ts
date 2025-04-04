@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DealResponseDto } from '../../models/deal.model';
 import { Router } from '@angular/router';
 import { DealService } from '../../services/deal.service';
+import { LocationService } from '../../services/location.service';
 
 @Component({
   selector: 'app-manage-deal-card',
@@ -11,13 +12,41 @@ import { DealService } from '../../services/deal.service';
   templateUrl: './manage-deal-card.component.html',
   styleUrls: ['./manage-deal-card.component.css']
 })
-export class ManageDealCardComponent {
+export class ManageDealCardComponent implements OnInit {
   @Input() deal!: DealResponseDto;
   @Output() delete = new EventEmitter<number>();
   @Output() toggleStatus = new EventEmitter<{ id: number, isActive: boolean }>();
   @Output() error = new EventEmitter<string>();
 
-  constructor(private router: Router, private dealService: DealService) {}
+  locationName: string = 'Loading...';
+
+  constructor(
+    private router: Router,
+    private dealService: DealService,
+    private locationService: LocationService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadLocationName();
+  }
+
+  private loadLocationName(): void {
+    if (this.deal.locationId) {
+      this.locationService.getLocationById(this.deal.locationId).subscribe({
+        next: (location) => {
+          this.locationName = location.name || 'Location not specified';
+        },
+        error: (error) => {
+          console.error('Error loading location:', error);
+          this.locationName = 'Location not specified';
+        }
+      });
+    }
+  }
+
+  getLocationName(): string {
+    return this.locationName;
+  }
 
   onCardClick(): void {
     // Navigate to agency deal details (correct route based on app.routes.ts)
@@ -67,14 +96,5 @@ export class ManageDealCardComponent {
   formatDate(date: Date | undefined): string {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString();
-  }
-
-  getLocationName(): string {
-    // Get the location name from the proper nested object
-    if (this.deal.location && this.deal.location.name) {
-      return this.deal.location.name;
-    }
-
-    return 'Unknown Location';
   }
 }
