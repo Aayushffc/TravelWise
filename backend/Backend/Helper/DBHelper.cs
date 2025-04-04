@@ -1348,6 +1348,833 @@ namespace Backend.Helper
 
         #endregion
 
+        #region Booking Operations
+
+        public async Task<BookingResponseDTO> CreateBooking(CreateBookingDTO model, string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    INSERT INTO Bookings (
+                        UserId, AgencyId, DealId, Status, CreatedAt, UpdatedAt,
+                        NumberOfPeople, TravelDate, SpecialRequirements, Notes
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @UserId, @AgencyId, @DealId, 'Pending', GETUTCDATE(), GETUTCDATE(),
+                        @NumberOfPeople, @TravelDate, @SpecialRequirements, @Notes
+                    )";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@AgencyId", model.AgencyId);
+                command.Parameters.AddWithValue("@DealId", model.DealId);
+                command.Parameters.AddWithValue("@NumberOfPeople", model.NumberOfPeople);
+                command.Parameters.AddWithValue(
+                    "@TravelDate",
+                    model.TravelDate ?? (object)DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@SpecialRequirements",
+                    (object)model.SpecialRequirements ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue("@Notes", (object)model.Notes ?? DBNull.Value);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToBookingResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating booking");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<BookingResponseDTO>> GetBookings(string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT b.*, u.FullName as UserName, a.FullName as AgencyName
+                    FROM Bookings b
+                    INNER JOIN AspNetUsers u ON b.UserId = u.Id
+                    INNER JOIN AspNetUsers a ON b.AgencyId = a.Id
+                    WHERE b.UserId = @UserId OR b.AgencyId = @UserId
+                    ORDER BY b.CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                var bookings = new List<BookingResponseDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    bookings.Add(MapToBookingResponseDto(reader));
+                }
+
+                return bookings;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting bookings");
+                throw;
+            }
+        }
+
+        public async Task<BookingResponseDTO> GetBookingById(int id, string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT b.*, u.FullName as UserName, a.FullName as AgencyName
+                    FROM Bookings b
+                    INNER JOIN AspNetUsers u ON b.UserId = u.Id
+                    INNER JOIN AspNetUsers a ON b.AgencyId = a.Id
+                    WHERE b.Id = @Id AND (b.UserId = @UserId OR b.AgencyId = @UserId)";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToBookingResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting booking");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateBookingStatus(
+            int id,
+            string status,
+            string reason,
+            string userId
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    UPDATE Bookings
+                    SET Status = @Status,
+                        UpdatedAt = GETUTCDATE(),";
+
+                switch (status.ToLower())
+                {
+                    case "accepted":
+                        sql += " AcceptedAt = GETUTCDATE()";
+                        break;
+                    case "rejected":
+                        sql += " RejectedAt = GETUTCDATE(), RejectionReason = @Reason";
+                        break;
+                    case "cancelled":
+                        sql += " CancelledAt = GETUTCDATE(), CancellationReason = @Reason";
+                        break;
+                    case "completed":
+                        sql += " CompletedAt = GETUTCDATE()";
+                        break;
+                }
+
+                sql += " WHERE Id = @Id AND (UserId = @UserId OR AgencyId = @UserId)";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@Status", status);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@Reason", (object)reason ?? DBNull.Value);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating booking status");
+                throw;
+            }
+        }
+
+        public async Task<bool> IncrementBookingCount(int dealId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE Deals
+                    SET BookingCount = BookingCount + 1,
+                        LastBooked = GETUTCDATE(),
+                        UpdatedAt = GETUTCDATE()
+                    WHERE Id = @DealId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@DealId", dealId);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error incrementing booking count");
+                throw;
+            }
+        }
+
+        private BookingResponseDTO MapToBookingResponseDto(SqlDataReader reader)
+        {
+            return new BookingResponseDTO
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetString(reader.GetOrdinal("UserId")),
+                UserName = reader.GetString(reader.GetOrdinal("UserName")),
+                AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
+                AgencyName = reader.GetString(reader.GetOrdinal("AgencyName")),
+                DealId = reader.GetInt32(reader.GetOrdinal("DealId")),
+                Status = reader.GetString(reader.GetOrdinal("Status")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                NumberOfPeople = reader.GetInt32(reader.GetOrdinal("NumberOfPeople")),
+                TravelDate = reader.IsDBNull(reader.GetOrdinal("TravelDate"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("TravelDate")),
+                SpecialRequirements = reader.IsDBNull(reader.GetOrdinal("SpecialRequirements"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("SpecialRequirements")),
+                Notes = reader.IsDBNull(reader.GetOrdinal("Notes"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Notes")),
+                LastMessage = reader.IsDBNull(reader.GetOrdinal("LastMessage"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("LastMessage")),
+                LastMessageAt = reader.IsDBNull(reader.GetOrdinal("LastMessageAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("LastMessageAt")),
+                HasUnreadMessages = reader.GetBoolean(reader.GetOrdinal("HasUnreadMessages")),
+                TotalAmount = reader.IsDBNull(reader.GetOrdinal("TotalAmount"))
+                    ? null
+                    : reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                PaymentStatus = reader.IsDBNull(reader.GetOrdinal("PaymentStatus"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("PaymentStatus")),
+            };
+        }
+
+        #endregion
+
+        #region Chat Message Operations
+
+        public async Task<ChatMessageResponseDTO> SendMessage(
+            int bookingId,
+            SendMessageDTO model,
+            string senderId
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    INSERT INTO ChatMessages (
+                        BookingId, SenderId, ReceiverId, Message, SentAt,
+                        MessageType, FileUrl, FileName, FileSize
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @BookingId, @SenderId, @ReceiverId, @Message, GETUTCDATE(),
+                        @MessageType, @FileUrl, @FileName, @FileSize
+                    );
+
+                    UPDATE Bookings
+                    SET LastMessage = @Message,
+                        LastMessageAt = GETUTCDATE(),
+                        HasUnreadMessages = 1,
+                        LastMessageBy = @SenderId,
+                        UpdatedAt = GETUTCDATE()
+                    WHERE Id = @BookingId;";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@BookingId", bookingId);
+                command.Parameters.AddWithValue("@SenderId", senderId);
+                command.Parameters.AddWithValue("@ReceiverId", model.ReceiverId);
+                command.Parameters.AddWithValue("@Message", model.Message);
+                command.Parameters.AddWithValue(
+                    "@MessageType",
+                    (object)model.MessageType ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue("@FileUrl", (object)model.FileUrl ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@FileName",
+                    (object)model.FileName ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@FileSize",
+                    (object)model.FileSize ?? DBNull.Value
+                );
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToChatMessageResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending message");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<ChatMessageResponseDTO>> GetChatMessages(
+            int bookingId,
+            string userId
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT m.*, u.FullName as SenderName
+                    FROM ChatMessages m
+                    INNER JOIN AspNetUsers u ON m.SenderId = u.Id
+                    WHERE m.BookingId = @BookingId
+                    ORDER BY m.SentAt ASC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@BookingId", bookingId);
+
+                var messages = new List<ChatMessageResponseDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    messages.Add(MapToChatMessageResponseDto(reader));
+                }
+
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting chat messages");
+                throw;
+            }
+        }
+
+        public async Task<bool> MarkMessageAsRead(int messageId, string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE ChatMessages
+                    SET IsRead = 1,
+                        ReadAt = GETUTCDATE()
+                    WHERE Id = @MessageId AND ReceiverId = @UserId;
+
+                    UPDATE b
+                    SET b.HasUnreadMessages = 
+                        CASE 
+                            WHEN EXISTS (
+                                SELECT 1 FROM ChatMessages m 
+                                WHERE m.BookingId = b.Id 
+                                AND m.ReceiverId = @UserId 
+                                AND m.IsRead = 0
+                            ) THEN 1
+                            ELSE 0
+                        END
+                    FROM Bookings b
+                    INNER JOIN ChatMessages m ON b.Id = m.BookingId
+                    WHERE m.Id = @MessageId;";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@MessageId", messageId);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking message as read");
+                throw;
+            }
+        }
+
+        private ChatMessageResponseDTO MapToChatMessageResponseDto(SqlDataReader reader)
+        {
+            return new ChatMessageResponseDTO
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                BookingId = reader.GetInt32(reader.GetOrdinal("BookingId")),
+                SenderId = reader.GetString(reader.GetOrdinal("SenderId")),
+                SenderName = reader.GetString(reader.GetOrdinal("SenderName")),
+                ReceiverId = reader.GetString(reader.GetOrdinal("ReceiverId")),
+                Message = reader.GetString(reader.GetOrdinal("Message")),
+                SentAt = reader.GetDateTime(reader.GetOrdinal("SentAt")),
+                ReadAt = reader.IsDBNull(reader.GetOrdinal("ReadAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("ReadAt")),
+                IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
+                MessageType = reader.IsDBNull(reader.GetOrdinal("MessageType"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("MessageType")),
+                FileUrl = reader.IsDBNull(reader.GetOrdinal("FileUrl"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("FileUrl")),
+                FileName = reader.IsDBNull(reader.GetOrdinal("FileName"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("FileName")),
+                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize"))
+                    ? null
+                    : reader.GetInt64(reader.GetOrdinal("FileSize")),
+            };
+        }
+
+        #endregion
+
+        #region Agency Profile Operations
+
+        public async Task<AgencyProfileResponseDTO> CreateAgencyProfile(
+            CreateAgencyProfileDTO model,
+            string userId
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    INSERT INTO AgencyProfiles (
+                        UserId, AgencyApplicationId, Website, Email, LogoUrl,
+                        CoverImageUrl, OfficeHours, Languages, Specializations,
+                        SocialMediaLinks, TeamMembers, Certifications, Awards,
+                        Testimonials, TermsAndConditions, PrivacyPolicy,
+                        Rating, TotalReviews, TotalBookings, TotalDeals,
+                        LastActive, IsOnline, CreatedAt, UpdatedAt
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @UserId, @AgencyApplicationId, @Website, @Email, @LogoUrl,
+                        @CoverImageUrl, @OfficeHours, @Languages, @Specializations,
+                        @SocialMediaLinks, @TeamMembers, @Certifications, @Awards,
+                        @Testimonials, @TermsAndConditions, @PrivacyPolicy,
+                        0, 0, 0, 0, GETUTCDATE(), 0, GETUTCDATE(), GETUTCDATE()
+                    )";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@AgencyApplicationId", model.AgencyApplicationId);
+                command.Parameters.AddWithValue("@Website", (object)model.Website ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Email", (object)model.Email ?? DBNull.Value);
+                command.Parameters.AddWithValue("@LogoUrl", (object)model.LogoUrl ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@CoverImageUrl",
+                    (object)model.CoverImageUrl ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@OfficeHours",
+                    (object)model.OfficeHours ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Languages",
+                    (object)model.Languages ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Specializations",
+                    (object)model.Specializations ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@SocialMediaLinks",
+                    (object)model.SocialMediaLinks ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@TeamMembers",
+                    (object)model.TeamMembers ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Certifications",
+                    (object)model.Certifications ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue("@Awards", (object)model.Awards ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@Testimonials",
+                    (object)model.Testimonials ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@TermsAndConditions",
+                    (object)model.TermsAndConditions ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@PrivacyPolicy",
+                    (object)model.PrivacyPolicy ?? DBNull.Value
+                );
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToAgencyProfileResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating agency profile");
+                throw;
+            }
+        }
+
+        public async Task<AgencyProfileResponseDTO> GetAgencyProfileById(int id)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT p.*, a.AgencyName
+                    FROM AgencyProfiles p
+                    INNER JOIN AgencyApplications a ON p.AgencyApplicationId = a.Id
+                    WHERE p.Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToAgencyProfileResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting agency profile");
+                throw;
+            }
+        }
+
+        public async Task<AgencyProfileResponseDTO> GetAgencyProfileByUserId(string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT p.*, a.AgencyName
+                    FROM AgencyProfiles p
+                    INNER JOIN AgencyApplications a ON p.AgencyApplicationId = a.Id
+                    WHERE p.UserId = @UserId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToAgencyProfileResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting agency profile");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateAgencyProfile(
+            int id,
+            UpdateAgencyProfileDTO model,
+            string userId
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE AgencyProfiles
+                    SET Website = ISNULL(@Website, Website),
+                        Email = ISNULL(@Email, Email),
+                        LogoUrl = ISNULL(@LogoUrl, LogoUrl),
+                        CoverImageUrl = ISNULL(@CoverImageUrl, CoverImageUrl),
+                        OfficeHours = ISNULL(@OfficeHours, OfficeHours),
+                        Languages = ISNULL(@Languages, Languages),
+                        Specializations = ISNULL(@Specializations, Specializations),
+                        SocialMediaLinks = ISNULL(@SocialMediaLinks, SocialMediaLinks),
+                        TeamMembers = ISNULL(@TeamMembers, TeamMembers),
+                        Certifications = ISNULL(@Certifications, Certifications),
+                        Awards = ISNULL(@Awards, Awards),
+                        Testimonials = ISNULL(@Testimonials, Testimonials),
+                        TermsAndConditions = ISNULL(@TermsAndConditions, TermsAndConditions),
+                        PrivacyPolicy = ISNULL(@PrivacyPolicy, PrivacyPolicy),
+                        UpdatedAt = GETUTCDATE()
+                    WHERE Id = @Id AND UserId = @UserId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@Website", (object)model.Website ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Email", (object)model.Email ?? DBNull.Value);
+                command.Parameters.AddWithValue("@LogoUrl", (object)model.LogoUrl ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@CoverImageUrl",
+                    (object)model.CoverImageUrl ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@OfficeHours",
+                    (object)model.OfficeHours ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Languages",
+                    (object)model.Languages ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Specializations",
+                    (object)model.Specializations ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@SocialMediaLinks",
+                    (object)model.SocialMediaLinks ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@TeamMembers",
+                    (object)model.TeamMembers ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Certifications",
+                    (object)model.Certifications ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue("@Awards", (object)model.Awards ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@Testimonials",
+                    (object)model.Testimonials ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@TermsAndConditions",
+                    (object)model.TermsAndConditions ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@PrivacyPolicy",
+                    (object)model.PrivacyPolicy ?? DBNull.Value
+                );
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating agency profile");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateAgencyOnlineStatus(string userId, bool isOnline)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE AgencyProfiles
+                    SET IsOnline = @IsOnline,
+                        LastActive = CASE WHEN @IsOnline = 0 THEN GETUTCDATE() ELSE LastActive END,
+                        UpdatedAt = GETUTCDATE()
+                    WHERE UserId = @UserId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@IsOnline", isOnline);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating agency online status");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateAgencyLastActive(string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE AgencyProfiles
+                    SET LastActive = GETUTCDATE(),
+                        UpdatedAt = GETUTCDATE()
+                    WHERE UserId = @UserId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating agency last active");
+                throw;
+            }
+        }
+
+        public async Task<bool> IncrementAgencyStats(string userId, string statType)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    UPDATE AgencyProfiles
+                    SET ";
+
+                switch (statType.ToLower())
+                {
+                    case "reviews":
+                        sql += "TotalReviews = TotalReviews + 1";
+                        break;
+                    case "bookings":
+                        sql += "TotalBookings = TotalBookings + 1";
+                        break;
+                    case "deals":
+                        sql += "TotalDeals = TotalDeals + 1";
+                        break;
+                    default:
+                        throw new ArgumentException("Invalid stat type");
+                }
+
+                sql +=
+                    @",
+                    UpdatedAt = GETUTCDATE()
+                    WHERE UserId = @UserId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error incrementing agency stats");
+                throw;
+            }
+        }
+
+        private AgencyProfileResponseDTO MapToAgencyProfileResponseDto(SqlDataReader reader)
+        {
+            return new AgencyProfileResponseDTO
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetString(reader.GetOrdinal("UserId")),
+                AgencyApplicationId = reader.GetInt32(reader.GetOrdinal("AgencyApplicationId")),
+                Website = reader.IsDBNull(reader.GetOrdinal("Website"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Website")),
+                Email = reader.IsDBNull(reader.GetOrdinal("Email"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Email")),
+                LogoUrl = reader.IsDBNull(reader.GetOrdinal("LogoUrl"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("LogoUrl")),
+                CoverImageUrl = reader.IsDBNull(reader.GetOrdinal("CoverImageUrl"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("CoverImageUrl")),
+                OfficeHours = reader.IsDBNull(reader.GetOrdinal("OfficeHours"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("OfficeHours")),
+                Languages = reader.IsDBNull(reader.GetOrdinal("Languages"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Languages")),
+                Specializations = reader.IsDBNull(reader.GetOrdinal("Specializations"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Specializations")),
+                SocialMediaLinks = reader.IsDBNull(reader.GetOrdinal("SocialMediaLinks"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("SocialMediaLinks")),
+                TeamMembers = reader.IsDBNull(reader.GetOrdinal("TeamMembers"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("TeamMembers")),
+                Certifications = reader.IsDBNull(reader.GetOrdinal("Certifications"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Certifications")),
+                Awards = reader.IsDBNull(reader.GetOrdinal("Awards"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Awards")),
+                Testimonials = reader.IsDBNull(reader.GetOrdinal("Testimonials"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Testimonials")),
+                TermsAndConditions = reader.IsDBNull(reader.GetOrdinal("TermsAndConditions"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("TermsAndConditions")),
+                PrivacyPolicy = reader.IsDBNull(reader.GetOrdinal("PrivacyPolicy"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("PrivacyPolicy")),
+                Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                TotalReviews = reader.GetInt32(reader.GetOrdinal("TotalReviews")),
+                TotalBookings = reader.GetInt32(reader.GetOrdinal("TotalBookings")),
+                TotalDeals = reader.GetInt32(reader.GetOrdinal("TotalDeals")),
+                LastActive = reader.IsDBNull(reader.GetOrdinal("LastActive"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("LastActive")),
+                IsOnline = reader.GetBoolean(reader.GetOrdinal("IsOnline")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+            };
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private LocationResponseDto MapToLocationResponseDto(SqlDataReader reader)

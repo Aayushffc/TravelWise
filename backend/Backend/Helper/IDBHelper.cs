@@ -64,5 +64,33 @@ namespace Backend.Helper
 
         Task<bool> IncrementDealClickCount(int id);
         Task<bool> ToggleDealStatus(int id, bool isActive);
+
+        // Booking Operations
+        Task<BookingResponseDTO> CreateBooking(CreateBookingDTO model, string userId);
+        Task<IEnumerable<BookingResponseDTO>> GetBookings(string userId);
+        Task<BookingResponseDTO> GetBookingById(int id, string userId);
+        Task<bool> UpdateBookingStatus(int id, string status, string reason, string userId);
+        Task<bool> IncrementBookingCount(int dealId);
+
+        // Chat Message Operations
+        Task<ChatMessageResponseDTO> SendMessage(
+            int bookingId,
+            SendMessageDTO model,
+            string senderId
+        );
+        Task<IEnumerable<ChatMessageResponseDTO>> GetChatMessages(int bookingId, string userId);
+        Task<bool> MarkMessageAsRead(int messageId, string userId);
+
+        // Agency Profile Operations
+        Task<AgencyProfileResponseDTO> CreateAgencyProfile(
+            CreateAgencyProfileDTO model,
+            string userId
+        );
+        Task<AgencyProfileResponseDTO> GetAgencyProfileById(int id);
+        Task<AgencyProfileResponseDTO> GetAgencyProfileByUserId(string userId);
+        Task<bool> UpdateAgencyProfile(int id, UpdateAgencyProfileDTO model, string userId);
+        Task<bool> UpdateAgencyOnlineStatus(string userId, bool isOnline);
+        Task<bool> UpdateAgencyLastActive(string userId);
+        Task<bool> IncrementAgencyStats(string userId, string statType);
     }
 }
