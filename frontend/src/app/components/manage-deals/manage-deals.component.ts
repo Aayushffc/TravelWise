@@ -61,7 +61,6 @@ export class ManageDealsComponent implements OnInit {
   stats = {
     total: 0,
     active: 0,
-    pending: 0,
     inactive: 0
   };
   photos: any[] = [];
@@ -191,17 +190,12 @@ export class ManageDealsComponent implements OnInit {
     this.stats = {
       total: deals.length,
       active: deals.filter(d => d.isActive).length,
-      pending: deals.filter(d => d.status === 'Pending').length,
       inactive: deals.filter(d => !d.isActive).length
     };
   }
 
   applyFilter(): void {
     let filteredData = [...this.deals];
-
-    if (this.selectedStatus) {
-      filteredData = filteredData.filter(deal => deal.status === this.selectedStatus);
-    }
 
     if (this.selectedLocation) {
       filteredData = filteredData.filter(deal => deal.locationId === this.selectedLocation);
@@ -211,7 +205,7 @@ export class ManageDealsComponent implements OnInit {
       const searchLower = this.searchTerm.toLowerCase();
       filteredData = filteredData.filter(deal =>
         deal.title.toLowerCase().includes(searchLower) ||
-        deal.description.toLowerCase().includes(searchLower)
+        (deal.description?.toLowerCase() || '').includes(searchLower)
       );
     }
 

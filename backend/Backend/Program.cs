@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using Backend.DBContext;
 using Backend.Helper;
+using Backend.Hubs;
 using Backend.Models.Auth;
 using Backend.Models.AWS;
 using Backend.Services;
@@ -40,6 +41,14 @@ builder
 // Dependency Injection
 builder.Services.AddScoped<IDBHelper, DBHelper>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+
+// SignalR Configuration
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.MaximumReceiveMessageSize = 102400; // 100 KB
+    options.StreamBufferCapacity = 10;
+});
 
 // CORS Configuration with fallback
 var allowedOriginsRaw =
@@ -220,6 +229,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
+
+// Configure SignalR endpoints
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.MapControllers();
 

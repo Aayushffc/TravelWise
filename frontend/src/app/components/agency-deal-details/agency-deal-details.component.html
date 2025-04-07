@@ -14,9 +14,16 @@
         <div class="flex items-center">
           <button
             (click)="toggleEdit()"
-            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white"
+            class="edit-toggle inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white"
+            [class.active]="isEditing"
             [ngClass]="isEditing ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'"
           >
+            <svg *ngIf="!isEditing" class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            <svg *ngIf="isEditing" class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
             {{ isEditing ? 'Cancel Edit' : 'Edit Deal' }}
           </button>
         </div>
@@ -26,312 +33,403 @@
 
   <!-- Loading State -->
   <div *ngIf="isLoading" class="flex justify-center items-center py-12">
-    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+    <div class="loading-spinner rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
   </div>
 
   <!-- Error Message -->
   <div *ngIf="error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+    <div class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
       <span class="block sm:inline">{{ error }}</span>
     </div>
   </div>
 
   <!-- Success Message -->
   <div *ngIf="successMessage" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+    <div class="success-message bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
       <span class="block sm:inline">{{ successMessage }}</span>
     </div>
   </div>
 
   <!-- Deal Content -->
   <div *ngIf="!isLoading && deal" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Title and Basic Info -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div class="relative">
+        <h1 *ngIf="!isEditing" class="text-3xl font-bold text-gray-900">{{ deal.title }}</h1>
+        <div *ngIf="isEditing" class="form-group">
+          <input
+            type="text"
+            [(ngModel)]="deal.title"
+            class="form-control w-full text-3xl font-bold border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+            placeholder="Deal Title"
+          >
+        </div>
+
+        <!-- Location and Price Section -->
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Location -->
+          <div class="location-display">
+            <svg class="h-5 w-5 location-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span *ngIf="!isEditing" class="text-lg">{{ deal.location?.name || 'No location set' }}</span>
+            <select *ngIf="isEditing"
+                    [(ngModel)]="deal.locationId"
+                    class="form-control">
+              <option [ngValue]="null">Select a location</option>
+              <option *ngFor="let loc of locations" [value]="loc.id">{{ loc.name }}</option>
+            </select>
+          </div>
+
+          <!-- Price -->
+          <div class="flex flex-col items-end">
+            <div *ngIf="!isEditing" class="text-right">
+              <div class="price-display" *ngIf="deal.discountedPrice && deal.discountedPrice < deal.price">
+                <span class="discounted-price">{{ deal.discountedPrice | currency }}</span>
+                <span class="original-price ml-2">{{ deal.price | currency }}</span>
+              </div>
+              <div class="price-display" *ngIf="!deal.discountedPrice || deal.discountedPrice >= deal.price">
+                {{ deal.price | currency }}
+              </div>
+              <div class="text-sm text-green-600" *ngIf="deal.discountPercentage > 0">
+                Save {{ deal.discountPercentage }}%
+              </div>
+            </div>
+            <div *ngIf="isEditing" class="w-full space-y-4">
+              <div class="flex items-center space-x-4">
+                <div class="flex-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                  <input type="number"
+                         [(ngModel)]="deal.price"
+                         (ngModelChange)="updateDiscountedPrice()"
+                         class="form-control"
+                         min="0"
+                         step="0.01">
+                </div>
+                <div class="flex-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Discount %</label>
+                  <input type="number"
+                         [(ngModel)]="deal.discountPercentage"
+                         (ngModelChange)="updateDiscountedPrice()"
+                         class="form-control"
+                         min="0"
+                         max="100">
+                </div>
+              </div>
+              <div class="text-right text-sm text-gray-600">
+                Discounted Price: {{ deal.discountedPrice | currency }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Photo Gallery -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
-      <div class="relative h-[500px]">
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8 card">
+      <div class="relative h-[500px] gallery-container">
+        <!-- Main Image -->
         <img
           *ngIf="deal.photos && deal.photos.length > 0"
           [src]="deal.photos[currentImageIndex]"
-          class="w-full h-full object-cover"
+          [class.sliding]="isImageSliding"
+          class="w-full h-full object-cover gallery-image"
           alt="Deal photo"
           (error)="handleImageError($event)"
         >
+        <div *ngIf="!deal.photos || deal.photos.length === 0" class="w-full h-full flex items-center justify-center bg-gray-100">
+          <div class="text-center text-gray-500">
+            <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p>No photos added yet</p>
+          </div>
+        </div>
+
         <!-- Navigation Arrows -->
         <button
-          *ngIf="currentImageIndex > 0"
+          *ngIf="deal.photos && deal.photos.length > 1 && currentImageIndex > 0"
           (click)="previousImage()"
-          class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+          class="nav-arrow absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
         >
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <button
-          *ngIf="deal.photos && currentImageIndex < deal.photos.length - 1"
+          *ngIf="deal.photos && deal.photos.length > 1 && currentImageIndex < deal.photos.length - 1"
           (click)="nextImage()"
-          class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+          class="nav-arrow absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
         >
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
+
       <!-- Thumbnail Strip -->
-      <div class="p-4 overflow-x-auto">
-        <div class="flex space-x-4">
+      <div class="p-4 bg-gray-50">
+        <div class="flex items-center space-x-4 overflow-x-auto pb-2"
+             cdkDropList
+             [cdkDropListData]="deal.photos || []"
+             (cdkDropListDropped)="onPhotoReorder($event)">
           <div
             *ngFor="let photo of deal.photos; let i = index"
-            class="flex-shrink-0 w-24 h-24 cursor-pointer"
-            [class.border-2]="i === currentImageIndex"
-            [class.border-indigo-600]="i === currentImageIndex"
-            (click)="selectImage(i)"
+            class="thumbnail relative flex-shrink-0 w-24 h-24 group"
+            [class.active]="i === currentImageIndex"
+            cdkDrag
+            [cdkDragDisabled]="!isEditing"
           >
             <img
               [src]="photo"
-              class="w-full h-full object-cover rounded"
+              class="w-full h-full object-cover rounded-lg cursor-move"
               alt="Thumbnail"
               (error)="handleImageError($event)"
+              (click)="selectImage(i)"
             >
+            <!-- Delete Photo Button -->
+            <button
+              *ngIf="isEditing"
+              (click)="removePhoto(i); $event.stopPropagation()"
+              class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <!-- Drag Handle -->
+            <div *ngIf="isEditing" class="cdkDragHandle absolute bottom-0 left-0 right-0 h-6 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9h8M8 15h8" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Add Photo Button -->
+          <div *ngIf="isEditing" class="relative flex-shrink-0 w-24 h-24">
+            <label class="cursor-pointer w-full h-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-500 transition-colors">
+              <div class="text-center">
+                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <input type="file" class="hidden" multiple accept="image/*" (change)="handleFileInput($event)">
+            </label>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Deal Information -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden card">
       <div class="p-6">
-        <!-- Title and Basic Info -->
+        <!-- Package Type and Save Button -->
         <div class="mb-6">
-          <h1 class="text-3xl font-bold text-gray-900" *ngIf="!isEditing">{{ deal.title }}</h1>
-          <input
-            *ngIf="isEditing"
-            type="text"
-            [(ngModel)]="deal.title"
-            class="w-full text-3xl font-bold border-gray-300 rounded-md"
-            placeholder="Deal Title"
-          >
-          <div class="mt-4 flex flex-wrap gap-4">
-            <div class="flex items-center">
-              <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="text-gray-600">{{ getLocationName() }}</span>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div *ngIf="!isEditing"
+                   class="status-badge inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                   [ngClass]="{
+                     'bg-green-100 text-green-800': deal.packageType === 'STANDARD',
+                     'bg-blue-100 text-blue-800': deal.packageType === 'PREMIUM',
+                     'bg-purple-100 text-purple-800': deal.packageType === 'LUXURY'
+                   }">
+                {{ deal.packageType }}
+              </div>
+              <select *ngIf="isEditing"
+                      [(ngModel)]="deal.packageType"
+                      class="form-control rounded-md border-gray-300 w-64">
+                <option *ngFor="let type of packageTypes" [value]="type">{{ type }}</option>
+              </select>
             </div>
-            <div class="flex items-center">
-              <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <button *ngIf="isEditing"
+                    (click)="saveDeal()"
+                    class="save-button inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
               </svg>
-              <span class="text-gray-600">{{ deal.daysCount }} Days / {{ deal.nightsCount }} Nights</span>
-            </div>
-            <div class="flex items-center">
-              <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span class="text-gray-600">
-                <span class="text-2xl font-bold text-indigo-600">${{ deal.discountedPrice }}</span>
-                <span class="ml-2 text-sm line-through text-gray-500">${{ deal.price }}</span>
-                <span class="ml-2 text-sm text-green-600">({{ deal.discountPercentage }}% off)</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Package Type and Rating -->
-        <div class="mb-6 flex items-center justify-between">
-          <div *ngIf="!isEditing" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                [ngClass]="{
-                  'bg-green-100 text-green-800': deal.packageType === 'STANDARD',
-                  'bg-blue-100 text-blue-800': deal.packageType === 'PREMIUM',
-                  'bg-purple-100 text-purple-800': deal.packageType === 'LUXURY'
-                }">
-            {{ deal.packageType }}
-          </div>
-          <select *ngIf="isEditing" [(ngModel)]="deal.packageType" class="rounded-md border-gray-300">
-            <option *ngFor="let type of packageTypes" [value]="type">{{ type }}</option>
-          </select>
-          <div class="flex items-center">
-            <span class="text-yellow-400">★</span>
-            <span class="ml-1 text-gray-600">{{ deal.rating || 0 }} / 5</span>
+              Save Changes
+            </button>
           </div>
         </div>
 
         <!-- Description -->
         <div class="mb-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-3">Description</h2>
-          <div *ngIf="!isEditing" class="text-gray-600">{{ deal.description }}</div>
+          <div *ngIf="!isEditing" class="text-gray-600 prose max-w-none">{{ deal.description }}</div>
           <textarea
             *ngIf="isEditing"
             [(ngModel)]="deal.description"
             rows="4"
-            class="w-full border-gray-300 rounded-md"
-            placeholder="Deal description"
+            class="form-control w-full border-gray-300 rounded-md"
+            placeholder="Write a detailed description of the deal..."
           ></textarea>
         </div>
 
-        <!-- Pricing -->
-        <div class="mb-6" *ngIf="isEditing">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">Pricing</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Original Price</label>
-              <input type="number" [(ngModel)]="deal.price" class="mt-1 block w-full rounded-md border-gray-300">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Discounted Price</label>
-              <input type="number" [(ngModel)]="deal.discountedPrice" class="mt-1 block w-full rounded-md border-gray-300">
-            </div>
-          </div>
-        </div>
-
-        <!-- Duration -->
-        <div class="mb-6" *ngIf="isEditing">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">Duration</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Days Count</label>
-              <input type="number" [(ngModel)]="deal.daysCount" class="mt-1 block w-full rounded-md border-gray-300">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Nights Count</label>
-              <input type="number" [(ngModel)]="deal.nightsCount" class="mt-1 block w-full rounded-md border-gray-300">
-            </div>
-          </div>
-        </div>
-
-        <!-- Features Section -->
+        <!-- Location and Duration -->
         <div class="mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">Included Features</h2>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <!-- Dynamically show features that are included -->
-            <div *ngIf="deal.elderlyFriendly" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
+          <div class="flex flex-wrap gap-4">
+            <div class="feature-card flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
               <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span class="text-sm font-medium">Elderly Friendly</span>
-            </div>
-            <div *ngIf="deal.internetIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-              </svg>
-              <span class="text-sm font-medium">Wi-Fi Included</span>
-            </div>
-            <div *ngIf="deal.travelIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              <span class="text-sm font-medium">Travel Included</span>
-            </div>
-            <div *ngIf="deal.mealsIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span class="text-sm font-medium">Meals Included</span>
-            </div>
-            <div *ngIf="deal.sightseeingIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="text-sm font-medium">Sightseeing</span>
-            </div>
-            <div *ngIf="deal.stayIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <span class="text-sm font-medium">Stay Included</span>
-            </div>
-            <div *ngIf="deal.airTransfer" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              <span class="text-sm font-medium">Air Transfer</span>
-            </div>
-            <div *ngIf="deal.roadTransfer" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-              <span class="text-sm font-medium">Road Transfer</span>
-            </div>
-            <div *ngIf="deal.trainTransfer" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-              <span class="text-sm font-medium">Train Transfer</span>
-            </div>
-            <div *ngIf="deal.guideIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <span class="text-sm font-medium">Guide Included</span>
-            </div>
-            <div *ngIf="deal.photographyIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="text-sm font-medium">Photography</span>
-            </div>
-            <div *ngIf="deal.insuranceIncluded" class="flex items-center p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <span class="text-sm font-medium">Insurance</span>
+              <div class="flex items-center">
+                <span *ngIf="!isEditing" class="text-gray-600">{{ deal.daysCount }} Days / {{ deal.nightsCount }} Nights</span>
+                <div *ngIf="isEditing" class="flex items-center space-x-2">
+                  <input
+                    type="number"
+                    [(ngModel)]="deal.daysCount"
+                    class="form-control w-16 text-center border-gray-300 rounded-md"
+                    min="1"
+                  >
+                  <span class="text-gray-600">Days /</span>
+                  <input
+                    type="number"
+                    [(ngModel)]="deal.nightsCount"
+                    class="form-control w-16 text-center border-gray-300 rounded-md"
+                    min="0"
+                  >
+                  <span class="text-gray-600">Nights</span>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        <!-- Package Options Section -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Package Options</h2>
+          <div class="space-y-4">
+            <div *ngFor="let option of deal.packageOptions || []; let i = index"
+                 class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+              <div class="flex justify-between items-start mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Option {{i + 1}}</h3>
+                <button *ngIf="isEditing" (click)="removePackageOption(i)"
+                        class="text-red-600 hover:text-red-800 transition-colors">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <input *ngIf="isEditing" type="text" [(ngModel)]="option.name"
+                         class="form-control w-full" placeholder="Option name">
+                  <span *ngIf="!isEditing" class="text-gray-600">{{option.name || 'No name set'}}</span>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                  <input *ngIf="isEditing" type="number" [(ngModel)]="option.price"
+                         class="form-control w-full" min="0" step="0.01">
+                  <span *ngIf="!isEditing" class="text-gray-600">{{option.price | currency}}</span>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea *ngIf="isEditing" [(ngModel)]="option.description" rows="2"
+                          class="form-control w-full" placeholder="Option description"></textarea>
+                <p *ngIf="!isEditing" class="text-gray-600">{{option.description || 'No description set'}}</p>
+              </div>
+
+              <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Inclusions</label>
+                <div class="flex flex-wrap gap-2 mt-2">
+                  <div *ngFor="let inclusion of option.inclusions || []; let j = index"
+                       class="inline-flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                    <span *ngIf="!isEditing">{{inclusion}}</span>
+                    <div *ngIf="isEditing" class="flex items-center">
+                      <input
+                        type="text"
+                        [value]="inclusion"
+                        (input)="handleInclusionInput($event, option, j)"
+                        (keydown)="$event.stopPropagation()"
+                        class="bg-transparent border-0 focus:ring-0 p-0 text-sm w-full"
+                      >
+                      <button
+                        (click)="removeInclusion(option, j)"
+                        class="ml-1 text-purple-600 hover:text-purple-800"
+                      >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    *ngIf="isEditing"
+                    (click)="addInclusion(option)"
+                    class="inline-flex items-center px-3 py-1 border border-purple-300 rounded-full text-sm text-purple-600 bg-white hover:bg-purple-50 transition-colors"
+                  >
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Inclusion
+                  </button>
+                </div>
+              </div>
             </div>
 
-        <!-- Facility Checkboxes for Edit Mode -->
-        <div class="mb-6" *ngIf="isEditing">
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">Update Included Features</h2>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <div class="flex items-center">
-              <input type="checkbox" id="elderlyFriendly" [(ngModel)]="deal.elderlyFriendly" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="elderlyFriendly" class="ml-2 text-sm text-gray-700">Elderly Friendly</label>
+            <button
+              *ngIf="isEditing"
+              (click)="addPackageOption()"
+              class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Add Package Option
+            </button>
+          </div>
+        </div>
+
+        <!-- Policies Section -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Policies</h2>
+          <div class="space-y-4">
+            <div *ngFor="let policy of deal.policies || []; let i = index"
+                 class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+              <div class="flex justify-between items-start mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Policy {{i + 1}}</h3>
+                <button *ngIf="isEditing" (click)="removePolicy(i)"
+                        class="text-red-600 hover:text-red-800 transition-colors">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input *ngIf="isEditing" type="text" [(ngModel)]="policy.title"
+                         class="form-control w-full" placeholder="Policy title">
+                  <span *ngIf="!isEditing" class="text-gray-600">{{policy.title || 'No title set'}}</span>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea *ngIf="isEditing" [(ngModel)]="policy.description" rows="3"
+                            class="form-control w-full" placeholder="Policy description"></textarea>
+                  <p *ngIf="!isEditing" class="text-gray-600">{{policy.description || 'No description set'}}</p>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="internetIncluded" [(ngModel)]="deal.internetIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="internetIncluded" class="ml-2 text-sm text-gray-700">Internet</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="travelIncluded" [(ngModel)]="deal.travelIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="travelIncluded" class="ml-2 text-sm text-gray-700">Travel</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="mealsIncluded" [(ngModel)]="deal.mealsIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="mealsIncluded" class="ml-2 text-sm text-gray-700">Meals</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="sightseeingIncluded" [(ngModel)]="deal.sightseeingIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="sightseeingIncluded" class="ml-2 text-sm text-gray-700">Sightseeing</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="stayIncluded" [(ngModel)]="deal.stayIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="stayIncluded" class="ml-2 text-sm text-gray-700">Stay</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="airTransfer" [(ngModel)]="deal.airTransfer" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="airTransfer" class="ml-2 text-sm text-gray-700">Air Transfer</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="roadTransfer" [(ngModel)]="deal.roadTransfer" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="roadTransfer" class="ml-2 text-sm text-gray-700">Road Transfer</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="trainTransfer" [(ngModel)]="deal.trainTransfer" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="trainTransfer" class="ml-2 text-sm text-gray-700">Train Transfer</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="guideIncluded" [(ngModel)]="deal.guideIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="guideIncluded" class="ml-2 text-sm text-gray-700">Guide</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="photographyIncluded" [(ngModel)]="deal.photographyIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="photographyIncluded" class="ml-2 text-sm text-gray-700">Photography</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="insuranceIncluded" [(ngModel)]="deal.insuranceIncluded" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label for="insuranceIncluded" class="ml-2 text-sm text-gray-700">Insurance</label>
-            </div>
+
+            <button
+              *ngIf="isEditing"
+              (click)="addPolicy()"
+              class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Add Policy
+            </button>
           </div>
         </div>
 
@@ -360,16 +458,337 @@
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="mt-8 flex justify-end space-x-4" *ngIf="isEditing">
-          <button (click)="toggleEdit()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Cancel
-          </button>
-          <button (click)="saveDeal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Save Changes
-          </button>
+        <!-- Additional Details Section -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Additional Details</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Group Size -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Group Size</label>
+              <div class="flex items-center space-x-4">
+                <div class="flex-1">
+                  <label class="text-xs text-gray-500">Minimum</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="deal.minGroupSize"
+                    [readonly]="!isEditing"
+                    class="form-control w-full border-gray-300 rounded-md"
+                    min="1"
+                  >
+                </div>
+                <div class="flex-1">
+                  <label class="text-xs text-gray-500">Maximum</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="deal.maxGroupSize"
+                    [readonly]="!isEditing"
+                    class="form-control w-full border-gray-300 rounded-md"
+                    min="1"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Difficulty Level -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Difficulty Level</label>
+              <select
+                [(ngModel)]="deal.difficultyLevel"
+                [disabled]="!isEditing"
+                class="form-control w-full border-gray-300 rounded-md"
+              >
+                <option value="EASY">Easy</option>
+                <option value="MODERATE">Moderate</option>
+                <option value="CHALLENGING">Challenging</option>
+                <option value="DIFFICULT">Difficult</option>
+              </select>
+            </div>
+
+            <!-- Validity Period -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Valid From</label>
+              <input
+                type="date"
+                [(ngModel)]="deal.validFrom"
+                [readonly]="!isEditing"
+                class="form-control w-full border-gray-300 rounded-md"
+              >
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Valid Until</label>
+              <input
+                type="date"
+                [(ngModel)]="deal.validUntil"
+                [readonly]="!isEditing"
+                class="form-control w-full border-gray-300 rounded-md"
+              >
+            </div>
+
+            <!-- Deal Options -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Deal Options</label>
+              <div class="flex flex-col space-y-2">
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="deal.isInstantBooking"
+                    [disabled]="!isEditing"
+                    class="form-checkbox h-4 w-4 text-indigo-600"
+                  >
+                  <span class="ml-2 text-sm text-gray-700">Instant Booking</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="deal.isLastMinuteDeal"
+                    [disabled]="!isEditing"
+                    class="form-checkbox h-4 w-4 text-indigo-600"
+                  >
+                  <span class="ml-2 text-sm text-gray-700">Last Minute Deal</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags and Categories -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Tags and Categories</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Headline -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Headline</label>
+              <div *ngIf="!isEditing" class="text-gray-600">{{ deal.headline || 'No headline set' }}</div>
+              <input *ngIf="isEditing"
+                     type="text"
+                     [(ngModel)]="deal.headline"
+                     class="form-control w-full"
+                     placeholder="Enter a catchy headline">
+            </div>
+
+            <!-- Rating Display (Read-only) -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Rating</label>
+              <div class="flex items-center space-x-2">
+                <div class="flex items-center">
+                  <span class="text-yellow-400 mr-1">★</span>
+                  <span class="text-gray-600">{{ deal.rating || 0 }} / 5</span>
+                </div>
+                <span class="text-sm text-gray-500">(Rating is calculated automatically)</span>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Tags</label>
+              <div class="flex flex-wrap gap-2">
+                <div *ngFor="let tag of deal.tags || []; let i = index"
+                     class="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">
+                  <span *ngIf="!isEditing">{{ tag }}</span>
+                  <div *ngIf="isEditing" class="flex items-center">
+                    <input
+                      type="text"
+                      [value]="tag"
+                      (input)="handleTagInput($event, i)"
+                      (keydown)="$event.stopPropagation()"
+                      class="bg-transparent border-0 focus:ring-0 p-0 text-sm w-full focus:outline-none"
+                      autocomplete="off"
+                    >
+                    <button
+                      (click)="removeTag(i)"
+                      class="ml-1 text-indigo-600 hover:text-indigo-800"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  *ngIf="isEditing"
+                  (click)="addTag()"
+                  class="inline-flex items-center px-3 py-1 border border-indigo-300 rounded-full text-sm text-indigo-600 bg-white hover:bg-indigo-50 transition-colors"
+                >
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Add Tag
+                </button>
+              </div>
+            </div>
+
+            <!-- Seasons -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Seasons</label>
+              <div class="flex flex-wrap gap-2">
+                <div *ngFor="let season of deal.seasons || []; let i = index"
+                     class="inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                  <span *ngIf="!isEditing">{{ season }}</span>
+                  <div *ngIf="isEditing" class="flex items-center">
+                    <select
+                      [value]="season"
+                      (change)="handleSeasonInput($event, i)"
+                      class="bg-transparent border-0 focus:ring-0 p-0 text-sm"
+                    >
+                      <option value="SPRING">Spring</option>
+                      <option value="SUMMER">Summer</option>
+                      <option value="AUTUMN">Autumn</option>
+                      <option value="WINTER">Winter</option>
+                    </select>
+                    <button
+                      (click)="removeSeason(i)"
+                      class="ml-1 text-green-600 hover:text-green-800"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  *ngIf="isEditing"
+                  (click)="addSeason()"
+                  class="inline-flex items-center px-3 py-1 border border-green-300 rounded-full text-sm text-green-600 bg-white hover:bg-green-50 transition-colors"
+                >
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Add Season
+                </button>
+              </div>
+            </div>
+
+            <!-- Languages -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Languages</label>
+              <div class="flex flex-wrap gap-2">
+                <div *ngFor="let language of deal.languages || []; let i = index"
+                     class="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  <span *ngIf="!isEditing">{{ language }}</span>
+                  <div *ngIf="isEditing" class="flex items-center">
+                    <input
+                      type="text"
+                      [value]="language"
+                      (input)="handleLanguageInput($event, i)"
+                      (keydown)="$event.stopPropagation()"
+                      class="bg-transparent border-0 focus:ring-0 p-0 text-sm w-full"
+                    >
+                    <button
+                      (click)="removeLanguage(i)"
+                      class="ml-1 text-blue-600 hover:text-blue-800"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  *ngIf="isEditing"
+                  (click)="addLanguage()"
+                  class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-full text-sm text-blue-600 bg-white hover:bg-blue-50 transition-colors"
+                >
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Add Language
+                </button>
+              </div>
+            </div>
+
+            <!-- Requirements -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Requirements</label>
+              <div class="flex flex-wrap gap-2">
+                <div *ngFor="let req of deal.requirements || []; let i = index"
+                     class="inline-flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
+                  <span *ngIf="!isEditing">{{ req }}</span>
+                  <div *ngIf="isEditing" class="flex items-center">
+                    <input
+                      type="text"
+                      [value]="req"
+                      (input)="handleRequirementInput($event, i)"
+                      (keydown)="$event.stopPropagation()"
+                      class="bg-transparent border-0 focus:ring-0 p-0 text-sm w-full"
+                    >
+                    <button
+                      (click)="removeRequirement(i)"
+                      class="ml-1 text-yellow-600 hover:text-yellow-800"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  *ngIf="isEditing"
+                  (click)="addRequirement()"
+                  class="inline-flex items-center px-3 py-1 border border-yellow-300 rounded-full text-sm text-yellow-600 bg-white hover:bg-yellow-50 transition-colors"
+                >
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Add Requirement
+                </button>
+              </div>
+            </div>
+
+            <!-- Restrictions -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Restrictions</label>
+              <div class="flex flex-wrap gap-2">
+                <div *ngFor="let restriction of deal.restrictions || []; let i = index"
+                     class="inline-flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
+                  <span *ngIf="!isEditing">{{ restriction }}</span>
+                  <div *ngIf="isEditing" class="flex items-center">
+                    <input
+                      type="text"
+                      [value]="restriction"
+                      (input)="handleRestrictionInput($event, i)"
+                      (keydown)="$event.stopPropagation()"
+                      class="bg-transparent border-0 focus:ring-0 p-0 text-sm w-full"
+                    >
+                    <button
+                      (click)="removeRestriction(i)"
+                      class="ml-1 text-red-600 hover:text-red-800"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  *ngIf="isEditing"
+                  (click)="addRestriction()"
+                  class="inline-flex items-center px-3 py-1 border border-red-300 rounded-full text-sm text-red-600 bg-white hover:bg-red-50 transition-colors"
+                >
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Add Restriction
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map URL -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Location Map</h2>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Map URL</label>
+            <input
+              type="url"
+              [(ngModel)]="deal!.mapUrl"
+              [readonly]="!isEditing"
+              class="form-control w-full border-gray-300 rounded-md"
+              placeholder="Enter Google Maps or other map service URL"
+            >
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>

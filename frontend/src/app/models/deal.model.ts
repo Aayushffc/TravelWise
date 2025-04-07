@@ -61,8 +61,71 @@ export interface Policy {
   description: string;
 }
 
-export interface DealResponseDto extends Deal {
-  status: string;
+export interface DealResponseDto {
+  id: number;
+  title: string;
+  locationId: number;
+  location?: {
+    id: number;
+    name: string;
+  };
+  userId?: string;
+  price: number;
+  discountedPrice: number;
+  discountPercentage: number;
+  rating: number;
+  daysCount: number;
+  nightsCount: number;
+  description?: string;
+  photos?: string[];
+  headline?: string;
+  elderlyFriendly: boolean;
+  internetIncluded: boolean;
+  travelIncluded: boolean;
+  mealsIncluded: boolean;
+  sightseeingIncluded: boolean;
+  stayIncluded: boolean;
+  airTransfer: boolean;
+  roadTransfer: boolean;
+  trainTransfer: boolean;
+  travelCostIncluded: boolean;
+  guideIncluded: boolean;
+  photographyIncluded: boolean;
+  insuranceIncluded: boolean;
+  visaIncluded: boolean;
+  itinerary?: ItineraryDay[];
+  packageOptions?: PackageOption[];
+  mapUrl?: string;
+  policies?: Policy[];
+  packageType?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  clickCount: number;
+  viewCount: number;
+  bookingCount: number;
+  lastClicked: Date;
+  lastViewed: Date;
+  lastBooked: Date;
+  relevanceScore: number;
+  searchKeywords?: string;
+  isFeatured: boolean;
+  featuredUntil: Date;
+  priority: number;
+  tags?: string[];
+  seasons?: string[];
+  difficultyLevel?: string;
+  maxGroupSize?: number;
+  minGroupSize?: number;
+  isInstantBooking: boolean;
+  isLastMinuteDeal: boolean;
+  validFrom?: Date;
+  validUntil?: Date;
+  cancellationPolicy?: string;
+  refundPolicy?: string;
+  languages?: string[];
+  requirements?: string[];
+  restrictions?: string[];
 }
 
 export interface DealCreateDto {

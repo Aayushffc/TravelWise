@@ -27,8 +27,8 @@
   <div class="p-3 glass-content relative z-10 bg-white">
     <!-- Price Tag moved to content section -->
     <div class="price-tag mb-3">
-      <span class="text-white font-bold text-lg text-shadow">${{deal.discountedPrice || deal.price}}</span>
-      <span *ngIf="deal.discountedPrice" class="text-xs text-gray-300 line-through text-shadow ml-2">${{deal.price}}</span>
+      <span class="text-white font-bold text-lg">${{deal.discountedPrice || deal.price}}</span>
+      <span *ngIf="deal.discountedPrice" class="text-xs text-gray-300 line-through ml-2">${{deal.price}}</span>
     </div>
 
     <!-- Key Information with Hover Highlights -->

@@ -94,13 +94,13 @@
 }
 
 .price-tag span {
-  color: #4540aa;
-  font-weight: 500;
+  color: #432dd7;
+  font-weight: 650;
 }
 
 .price-tag span.line-through {
   color: #050a14;
-  opacity: 0.7;
+  opacity: 0.5;
 }
 
 /* Status dot */

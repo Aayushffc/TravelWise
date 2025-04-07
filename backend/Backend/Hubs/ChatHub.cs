@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace Backend.Hubs
 {
     [Authorize]
-    public class ChatHub : Hub
+    public class ChatHub : Hub, IChatHub
     {
         private readonly ILogger<ChatHub> _logger;
 

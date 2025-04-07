@@ -70,4 +70,3 @@ namespace Backend.DTOs
         public DateTime? UpdatedAt { get; set; }
     }
 }
- 

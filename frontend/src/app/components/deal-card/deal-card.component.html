@@ -1,5 +1,5 @@
 <!-- Glass Morphism Card with Premium Hover Effects -->
-<div class="group relative overflow-hidden backdrop-blur-sm bg-white/30 rounded-xl border border-white/20 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer hover:bg-white/40"
+<div class="group relative overflow-hidden backdrop-blur-sm bg-white/30 rounded-xl border border-white/20 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 cursor-pointer hover:bg-white/40"
      (click)="onDealClick()">
   <!-- Full Image Background -->
   <div class="relative aspect-[4/3] w-full overflow-hidden">
@@ -17,7 +17,7 @@
 
     <!-- Discount Badge -->
     <div *ngIf="deal.discountPercentage"
-         class="absolute top-4 left-4 bg-red-500/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-bold shadow-md transform group-hover:scale-110 transition-transform duration-300">
+         class="absolute top-4 left-4 bg-red-500/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-bold shadow-md transition-transform duration-300">
       {{deal.discountPercentage}}% OFF
     </div>
 
@@ -40,15 +40,12 @@
         <span class="text-sm">{{deal.location?.name || 'Unknown Location'}}</span>
       </div>
 
-      <!-- Description -->
-      <p class="text-sm text-gray-200 mb-3 line-clamp-2 max-w-[90%] group-hover:text-white transition-colors duration-300">{{deal.description}}</p>
-
       <!-- Bottom Row -->
       <div class="flex items-center justify-between">
         <!-- Price - Made more translucent -->
         <div class="flex items-baseline backdrop-blur-md bg-white/20 px-3 py-1 rounded-lg border border-black/10">
           <span *ngIf="deal.discountedPrice" class="text-sm text-gray-300 line-through mr-2">${{deal.price}}</span>
-          <span class="text-xl font-bold text-white group-hover:text-indigo-200 transition-colors duration-300">${{deal.discountedPrice || deal.price}}</span>
+          <span class="text-xl font-bold text-white transition-colors duration-300">${{deal.discountedPrice || deal.price}}</span>
         </div>
 
         <!-- Rating -->
@@ -61,7 +58,7 @@
           </div>
 
           <!-- View Details Button -->
-          <button class="bg-indigo-600/90 hover:bg-indigo-700/90 text-white px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 shadow-md transform group-hover:scale-105 backdrop-blur-sm hover:cursor-pointer">
+          <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 backdrop-blur-sm hover:cursor-pointer relative overflow-hidden">
             View Details
           </button>
         </div>

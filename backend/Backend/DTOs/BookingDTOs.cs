@@ -5,6 +5,9 @@ namespace Backend.DTOs
     public class CreateBookingDTO
     {
         [Required]
+        public string AgencyId { get; set; }
+
+        [Required]
         public int DealId { get; set; }
 
         [Required]
@@ -18,18 +21,19 @@ namespace Backend.DTOs
 
     public class RejectBookingDTO
     {
-        [Required]
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
     }
 
     public class CancelBookingDTO
     {
-        [Required]
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
     }
 
     public class SendMessageDTO
     {
+        [Required]
+        public string ReceiverId { get; set; }
+
         [Required]
         public string Message { get; set; }
 
@@ -42,12 +46,12 @@ namespace Backend.DTOs
     public class BookingResponseDTO
     {
         public int Id { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string AgencyId { get; set; }
-        public string AgencyName { get; set; }
+        public string? UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? AgencyId { get; set; }
+        public string? AgencyName { get; set; }
         public int DealId { get; set; }
-        public string Status { get; set; }
+        public string? Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public int NumberOfPeople { get; set; }
@@ -65,10 +69,10 @@ namespace Backend.DTOs
     {
         public int Id { get; set; }
         public int BookingId { get; set; }
-        public string SenderId { get; set; }
-        public string SenderName { get; set; }
-        public string ReceiverId { get; set; }
-        public string Message { get; set; }
+        public string? SenderId { get; set; }
+        public string? SenderName { get; set; }
+        public string? ReceiverId { get; set; }
+        public string? Message { get; set; }
         public DateTime SentAt { get; set; }
         public DateTime? ReadAt { get; set; }
         public bool IsRead { get; set; }
@@ -77,4 +81,4 @@ namespace Backend.DTOs
         public string? FileName { get; set; }
         public long? FileSize { get; set; }
     }
-} 
+}
