@@ -20,6 +20,7 @@ import { ManageDealsComponent } from './components/manage-deals/manage-deals.com
 import { AgencyDealDetailsComponent } from './components/agency-deal-details/agency-deal-details.component';
 import { DealDetailsComponent } from './components/deal-details/deal-details.component';
 import { SearchComponent } from './components/search/search.component';
+import { AgencyDashboardComponent } from './components/agency-dashboard/agency-dashboard.component';
 
 export const routes: Routes = [
   {
@@ -128,6 +129,11 @@ export const routes: Routes = [
   {
     path: 'agency/agency-deal-details/:id',
     component: AgencyDealDetailsComponent,
+    canActivate: [AuthGuard, AgencyGuard]
+  },
+  {
+    path: 'agency-dashboard',
+    component: AgencyDashboardComponent,
     canActivate: [AuthGuard, AgencyGuard]
   },
   {

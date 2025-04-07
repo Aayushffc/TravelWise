@@ -1774,88 +1774,162 @@ namespace Backend.Helper
         {
             try
             {
-                using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync();
-
-                const string sql =
-                    @"
-                    INSERT INTO AgencyProfiles (
-                        UserId, AgencyApplicationId, Website, Email, LogoUrl,
-                        CoverImageUrl, OfficeHours, Languages, Specializations,
-                        SocialMediaLinks, TeamMembers, Certifications, Awards,
-                        Testimonials, TermsAndConditions, PrivacyPolicy,
-                        Rating, TotalReviews, TotalBookings, TotalDeals,
-                        LastActive, IsOnline, CreatedAt, UpdatedAt
-                    )
-                    OUTPUT INSERTED.*
-                    VALUES (
-                        @UserId, @AgencyApplicationId, @Website, @Email, @LogoUrl,
-                        @CoverImageUrl, @OfficeHours, @Languages, @Specializations,
-                        @SocialMediaLinks, @TeamMembers, @Certifications, @Awards,
-                        @Testimonials, @TermsAndConditions, @PrivacyPolicy,
-                        0, 0, 0, 0, GETUTCDATE(), 0, GETUTCDATE(), GETUTCDATE()
-                    )";
-
-                using var command = new SqlCommand(sql, connection);
-                command.Parameters.AddWithValue("@UserId", userId);
-                command.Parameters.AddWithValue("@AgencyApplicationId", model.AgencyApplicationId);
-                command.Parameters.AddWithValue("@Website", (object)model.Website ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Email", (object)model.Email ?? DBNull.Value);
-                command.Parameters.AddWithValue("@LogoUrl", (object)model.LogoUrl ?? DBNull.Value);
-                command.Parameters.AddWithValue(
-                    "@CoverImageUrl",
-                    (object)model.CoverImageUrl ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@OfficeHours",
-                    (object)model.OfficeHours ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@Languages",
-                    (object)model.Languages ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@Specializations",
-                    (object)model.Specializations ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@SocialMediaLinks",
-                    (object)model.SocialMediaLinks ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@TeamMembers",
-                    (object)model.TeamMembers ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@Certifications",
-                    (object)model.Certifications ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue("@Awards", (object)model.Awards ?? DBNull.Value);
-                command.Parameters.AddWithValue(
-                    "@Testimonials",
-                    (object)model.Testimonials ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@TermsAndConditions",
-                    (object)model.TermsAndConditions ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@PrivacyPolicy",
-                    (object)model.PrivacyPolicy ?? DBNull.Value
-                );
-
-                using var reader = await command.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
+                using (var connection = new SqlConnection(_connectionString))
                 {
-                    return MapToAgencyProfileResponseDto(reader);
-                }
+                    await connection.OpenAsync();
 
-                return null;
+                    // First, get the agency application ID for the user
+                    var applicationId = await GetAgencyApplicationId(userId);
+                    if (applicationId == 0)
+                    {
+                        throw new Exception("No agency application found for the user");
+                    }
+
+                    // Convert lists to JSON strings
+                    var socialMediaLinksJson = JsonSerializer.Serialize(
+                        model.SocialMediaLinks ?? new List<SocialMediaLinkDTO>()
+                    );
+                    var teamMembersJson = JsonSerializer.Serialize(
+                        model.TeamMembers ?? new List<TeamMemberDTO>()
+                    );
+                    var certificationsJson = JsonSerializer.Serialize(
+                        model.Certifications ?? new List<CertificationDTO>()
+                    );
+                    var awardsJson = JsonSerializer.Serialize(model.Awards ?? new List<AwardDTO>());
+                    var testimonialsJson = JsonSerializer.Serialize(
+                        model.Testimonials ?? new List<TestimonialDTO>()
+                    );
+
+                    var command = new SqlCommand(
+                        @"
+                        INSERT INTO AgencyProfiles (
+                            UserId,
+                            AgencyApplicationId,
+                            Website,
+                            Email,
+                            LogoUrl,
+                            CoverImageUrl,
+                            OfficeHours,
+                            Languages,
+                            Specializations,
+                            SocialMediaLinks,
+                            TeamMembers,
+                            Certifications,
+                            Awards,
+                            Testimonials,
+                            TermsAndConditions,
+                            PrivacyPolicy,
+                            Rating,
+                            TotalReviews,
+                            TotalBookings,
+                            TotalDeals,
+                            LastActive,
+                            IsOnline,
+                            CreatedAt,
+                            UpdatedAt
+                        ) VALUES (
+                            @UserId,
+                            @AgencyApplicationId,
+                            @Website,
+                            @Email,
+                            @LogoUrl,
+                            @CoverImageUrl,
+                            @OfficeHours,
+                            @Languages,
+                            @Specializations,
+                            @SocialMediaLinks,
+                            @TeamMembers,
+                            @Certifications,
+                            @Awards,
+                            @Testimonials,
+                            @TermsAndConditions,
+                            @PrivacyPolicy,
+                            @Rating,
+                            @TotalReviews,
+                            @TotalBookings,
+                            @TotalDeals,
+                            @LastActive,
+                            @IsOnline,
+                            @CreatedAt,
+                            @UpdatedAt
+                        );
+                        SELECT SCOPE_IDENTITY();",
+                        connection
+                    );
+
+                    command.Parameters.AddWithValue("@UserId", userId);
+                    command.Parameters.AddWithValue("@AgencyApplicationId", applicationId);
+                    command.Parameters.AddWithValue(
+                        "@Website",
+                        (object)model.Website ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue("@Email", (object)model.Email ?? DBNull.Value);
+                    command.Parameters.AddWithValue(
+                        "@LogoUrl",
+                        (object)model.LogoUrl ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue(
+                        "@CoverImageUrl",
+                        (object)model.CoverImageUrl ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue(
+                        "@OfficeHours",
+                        (object)model.OfficeHours ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue(
+                        "@Languages",
+                        (object)model.Languages ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue(
+                        "@Specializations",
+                        (object)model.Specializations ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue("@SocialMediaLinks", socialMediaLinksJson);
+                    command.Parameters.AddWithValue("@TeamMembers", teamMembersJson);
+                    command.Parameters.AddWithValue("@Certifications", certificationsJson);
+                    command.Parameters.AddWithValue("@Awards", awardsJson);
+                    command.Parameters.AddWithValue("@Testimonials", testimonialsJson);
+                    command.Parameters.AddWithValue(
+                        "@TermsAndConditions",
+                        (object)model.TermsAndConditions ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue(
+                        "@PrivacyPolicy",
+                        (object)model.PrivacyPolicy ?? DBNull.Value
+                    );
+                    command.Parameters.AddWithValue("@Rating", 0); // Default rating
+                    command.Parameters.AddWithValue("@TotalReviews", 0); // Default total reviews
+                    command.Parameters.AddWithValue("@TotalBookings", 0); // Default total bookings
+                    command.Parameters.AddWithValue("@TotalDeals", 0); // Default total deals
+                    command.Parameters.AddWithValue("@LastActive", DateTime.UtcNow);
+                    command.Parameters.AddWithValue("@IsOnline", false); // Default offline status
+                    command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow);
+                    command.Parameters.AddWithValue("@UpdatedAt", DateTime.UtcNow);
+
+                    var profileId = Convert.ToInt32(await command.ExecuteScalarAsync());
+
+                    return await GetAgencyProfileById(profileId);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating agency profile");
                 throw;
+            }
+        }
+
+        private async Task<int> GetAgencyApplicationId(string userId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var command = new SqlCommand(
+                    "SELECT TOP 1 Id FROM AgencyApplications WHERE UserId = @UserId ORDER BY CreatedAt DESC",
+                    connection
+                );
+                command.Parameters.AddWithValue("@UserId", userId);
+                var result = await command.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 0;
             }
         }
 
@@ -1900,7 +1974,17 @@ namespace Backend.Helper
 
                 const string sql =
                     @"
-                    SELECT p.*, a.AgencyName
+                    SELECT p.*, 
+                           a.AgencyName,
+                           a.Address,
+                           a.PhoneNumber,
+                           a.Description,
+                           a.BusinessRegistrationNumber,
+                           a.CreatedAt as ApplicationCreatedAt,
+                           a.ReviewedAt,
+                           a.IsApproved,
+                           a.RejectionReason,
+                           a.ReviewedBy
                     FROM AgencyProfiles p
                     INNER JOIN AgencyApplications a ON p.AgencyApplicationId = a.Id
                     WHERE p.UserId = @UserId";
@@ -2111,6 +2195,8 @@ namespace Backend.Helper
 
         private AgencyProfileResponseDTO MapToAgencyProfileResponseDto(SqlDataReader reader)
         {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
             return new AgencyProfileResponseDTO
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
@@ -2139,19 +2225,34 @@ namespace Backend.Helper
                     : reader.GetString(reader.GetOrdinal("Specializations")),
                 SocialMediaLinks = reader.IsDBNull(reader.GetOrdinal("SocialMediaLinks"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("SocialMediaLinks")),
+                    : JsonSerializer.Deserialize<List<SocialMediaLinkDTO>>(
+                        reader.GetString(reader.GetOrdinal("SocialMediaLinks")),
+                        options
+                    ),
                 TeamMembers = reader.IsDBNull(reader.GetOrdinal("TeamMembers"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("TeamMembers")),
+                    : JsonSerializer.Deserialize<List<TeamMemberDTO>>(
+                        reader.GetString(reader.GetOrdinal("TeamMembers")),
+                        options
+                    ),
                 Certifications = reader.IsDBNull(reader.GetOrdinal("Certifications"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("Certifications")),
+                    : JsonSerializer.Deserialize<List<CertificationDTO>>(
+                        reader.GetString(reader.GetOrdinal("Certifications")),
+                        options
+                    ),
                 Awards = reader.IsDBNull(reader.GetOrdinal("Awards"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("Awards")),
+                    : JsonSerializer.Deserialize<List<AwardDTO>>(
+                        reader.GetString(reader.GetOrdinal("Awards")),
+                        options
+                    ),
                 Testimonials = reader.IsDBNull(reader.GetOrdinal("Testimonials"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("Testimonials")),
+                    : JsonSerializer.Deserialize<List<TestimonialDTO>>(
+                        reader.GetString(reader.GetOrdinal("Testimonials")),
+                        options
+                    ),
                 TermsAndConditions = reader.IsDBNull(reader.GetOrdinal("TermsAndConditions"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("TermsAndConditions")),
@@ -2170,6 +2271,37 @@ namespace Backend.Helper
                 UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
                     ? null
                     : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                // Agency Application Fields
+                AgencyName = reader.IsDBNull(reader.GetOrdinal("AgencyName"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("AgencyName")),
+                Address = reader.IsDBNull(reader.GetOrdinal("Address"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Address")),
+                PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Description")),
+                BusinessRegistrationNumber = reader.IsDBNull(
+                    reader.GetOrdinal("BusinessRegistrationNumber")
+                )
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("BusinessRegistrationNumber")),
+                ApplicationCreatedAt = reader.GetDateTime(
+                    reader.GetOrdinal("ApplicationCreatedAt")
+                ),
+                ReviewedAt = reader.IsDBNull(reader.GetOrdinal("ReviewedAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("ReviewedAt")),
+                IsApproved = reader.GetBoolean(reader.GetOrdinal("IsApproved")),
+                RejectionReason = reader.IsDBNull(reader.GetOrdinal("RejectionReason"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("RejectionReason")),
+                ReviewedBy = reader.IsDBNull(reader.GetOrdinal("ReviewedBy"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("ReviewedBy")),
             };
         }
 

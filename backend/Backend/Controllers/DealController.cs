@@ -35,18 +35,6 @@ namespace Backend.Controllers
         {
             try
             {
-                _logger.LogInformation(
-                    "Getting deals with parameters: LocationId={LocationId}, IsActive={IsActive}, IsFeatured={IsFeatured}, PackageType={PackageType}, MinPrice={MinPrice}, MaxPrice={MaxPrice}, MinDays={MinDays}, MaxDays={MaxDays}",
-                    locationId,
-                    isActive,
-                    isFeatured,
-                    packageType,
-                    minPrice,
-                    maxPrice,
-                    minDays,
-                    maxDays
-                );
-
                 var deals = await _dbHelper.GetDeals(
                     locationId,
                     null,
@@ -59,11 +47,9 @@ namespace Backend.Controllers
                     maxDays
                 );
 
-                _logger.LogInformation("Retrieved {Count} deals", deals?.Count() ?? 0);
 
                 if (deals == null || !deals.Any())
                 {
-                    _logger.LogWarning("No deals found for the specified criteria");
                     return Ok(new List<DealResponseDto>());
                 }
 
@@ -71,7 +57,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting deals");
                 return StatusCode(500, "An error occurred while retrieving deals");
             }
         }
@@ -94,7 +79,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting deal {DealId}", id);
                 return StatusCode(500, "An error occurred while retrieving the deal");
             }
         }
@@ -150,7 +134,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating deal");
                 return StatusCode(500, "An error occurred while creating the deal");
             }
         }
@@ -215,7 +198,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating deal {DealId}", id);
                 return StatusCode(500, "An error occurred while updating the deal");
             }
         }
@@ -256,7 +238,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting deal {DealId}", id);
                 return StatusCode(500, "An error occurred while deleting the deal");
             }
         }
@@ -294,7 +275,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error searching deals");
                 return StatusCode(500, "An error occurred while searching deals");
             }
         }
@@ -308,43 +288,21 @@ namespace Backend.Controllers
         {
             try
             {
-                _logger.LogInformation("Request received for deals by user ID: {UserId}", userId);
-
                 if (string.IsNullOrEmpty(userId))
                 {
-                    _logger.LogWarning("Invalid user ID provided");
                     return BadRequest("User ID cannot be empty");
                 }
 
                 var deals = await _dbHelper.GetDealsByUserId(userId, null, isActive);
 
-                _logger.LogInformation(
-                    "Successfully retrieved {Count} deals for user {UserId}",
-                    deals?.Count() ?? 0,
-                    userId
-                );
-
                 return Ok(deals ?? new List<DealResponseDto>());
             }
             catch (Microsoft.Data.SqlClient.SqlException sqlEx)
             {
-                _logger.LogError(
-                    sqlEx,
-                    "SQL error getting deals for user {UserId}. Error: {ErrorMessage}, Number: {ErrorNumber}",
-                    userId,
-                    sqlEx.Message,
-                    sqlEx.Number
-                );
                 return StatusCode(500, "Database error occurred while retrieving deals");
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error getting deals for user {UserId}. Exception type: {ExceptionType}",
-                    userId,
-                    ex.GetType().Name
-                );
                 return StatusCode(500, "An error occurred while retrieving deals");
             }
         }
@@ -390,7 +348,6 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error toggling deal status {DealId}", id);
                 return StatusCode(500, "An error occurred while updating the deal status");
             }
         }
