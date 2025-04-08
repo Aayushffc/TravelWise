@@ -5,7 +5,6 @@ import { DealService } from '../../services/deal.service';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { FileUploadService } from '../../services/file-upload.service';
 import { DealResponseDto, ItineraryDay, PackageOption, Policy } from '../../models/deal.model';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { LocationService } from '../../services/location.service';
@@ -40,6 +39,7 @@ export class AgencyDealDetailsComponent implements OnInit {
   selectedFiles: File[] = [];
   currentUserId: string | null = null;
   isImageSliding: boolean = false;
+  slideDirection: 'left' | 'right' = 'left';
   isDragging: boolean = false;
   difficultyLevels = ['EASY', 'MODERATE', 'CHALLENGING', 'DIFFICULT'];
   seasons = ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER', 'ALL SEASONS'];
@@ -47,11 +47,9 @@ export class AgencyDealDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private dealService: DealService,
     private location: Location,
     private authService: AuthService,
-    private fileUploadService: FileUploadService,
     private locationService: LocationService
   ) {}
 
@@ -122,17 +120,13 @@ export class AgencyDealDetailsComponent implements OnInit {
 
   nextImage(): void {
     if (this.deal?.photos && this.currentImageIndex < this.deal.photos.length - 1) {
-      this.isImageSliding = true;
       this.currentImageIndex++;
-      setTimeout(() => this.isImageSliding = false, 300);
     }
   }
 
   previousImage(): void {
     if (this.currentImageIndex > 0) {
-      this.isImageSliding = true;
       this.currentImageIndex--;
-      setTimeout(() => this.isImageSliding = false, 300);
     }
   }
 

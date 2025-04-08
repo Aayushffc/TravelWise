@@ -25,7 +25,7 @@
   }
 }
 
-.animate-fadeIn {
+.animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
 }
 
@@ -120,5 +120,48 @@
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* Hover effects */
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Card animations */
+.card-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.card-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Image gallery transitions */
+.image-transition {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Button animations */
+.button-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
   }
 }
