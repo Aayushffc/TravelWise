@@ -110,7 +110,7 @@
 }
 
 .button-hover:hover {
-  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Form Input Focus */
@@ -472,7 +472,6 @@
 }
 
 .bg-white:hover {
-  transform: translateY(-2px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -553,7 +552,6 @@
 }
 
 .p-4.bg-gray-50:hover {
-  transform: translateX(5px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -562,11 +560,11 @@
   .grid {
     grid-template-columns: 1fr;
   }
-  
+
   .space-y-8 > * {
     animation: none;
   }
-  
+
   .grid > * {
     animation: none;
   }

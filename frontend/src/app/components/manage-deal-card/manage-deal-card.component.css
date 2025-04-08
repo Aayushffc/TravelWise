@@ -20,8 +20,8 @@
 }
 
 .card-container:hover {
-  transform: translateY(-8px) scale(1.01);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 20px 15px rgba(0, 0, 0, 0.15);
 }
 
 /* Subtle shimmer effect on hover */
@@ -175,7 +175,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   border-radius: 8px;
-  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
   position: relative;
   overflow: hidden;
   letter-spacing: 0.025em;
@@ -185,28 +185,11 @@
 }
 
 .glass-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .glass-btn:active {
-  transform: translateY(-1px);
-}
-
-.glass-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(100%);
-  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-  z-index: -1;
-}
-
-.glass-btn:hover::before {
   transform: translateY(0);
 }
 
@@ -219,6 +202,7 @@
 
 .active-btn:hover {
   background: rgba(253, 230, 138, 0.8);
+  box-shadow: 0 6px 16px rgba(253, 230, 138, 0.2);
 }
 
 .inactive-btn {
@@ -229,6 +213,7 @@
 
 .inactive-btn:hover {
   background: rgba(167, 243, 208, 0.8);
+  box-shadow: 0 6px 16px rgba(167, 243, 208, 0.2);
 }
 
 .delete-btn {
@@ -239,6 +224,11 @@
 
 .delete-btn:hover {
   background: rgba(254, 202, 202, 0.8);
+  box-shadow: 0 6px 16px rgba(254, 202, 202, 0.2);
+}
+
+.delete-btn:active {
+  background: rgba(254, 202, 202, 0.9);
 }
 
 /* Truncate text */

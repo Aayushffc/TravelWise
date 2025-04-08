@@ -2,7 +2,7 @@
 <div class="min-h-screen bg-gray-50">
   <!-- Header -->
   <header class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="container mx-auto py-4 px-6">
+    <div class="container mx-auto py-2 px-6">
       <div class="flex items-center">
         <button
           (click)="goBack()"
@@ -208,10 +208,11 @@
         <app-manage-deal-card
           *ngFor="let deal of deals"
           [deal]="deal"
-          (delete)="deleteDeal($event)"
+          (edit)="editDeal(deal)"
+          (delete)="onDeleteDeal($event)"
           (toggleStatus)="onToggleStatus($event)"
-          (error)="showError($event)">
-        </app-manage-deal-card>
+          (error)="showError($event)"
+        ></app-manage-deal-card>
       </div>
             </div>
             </div>
@@ -666,6 +667,13 @@
     </div>
   </div>
 </div>
+
+<app-delete-confirmation
+  [isOpen]="showDeleteConfirmation"
+  [dealTitle]="dealToDelete?.title || ''"
+  (close)="onDeleteCancelled()"
+  (confirm)="onDeleteConfirmed()"
+></app-delete-confirmation>
 
 <style>
 .photo-gallery {

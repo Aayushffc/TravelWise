@@ -455,12 +455,6 @@ namespace Backend.Helper
 
                 sql += " ORDER BY d.CreatedAt DESC";
 
-                _logger.LogInformation("Executing SQL query: {Sql}", sql);
-                _logger.LogInformation(
-                    "Parameters: {Parameters}",
-                    string.Join(", ", parameters.Select(p => $"{p.ParameterName}={p.Value}"))
-                );
-
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddRange(parameters.ToArray());
 
@@ -488,14 +482,6 @@ namespace Backend.Helper
                         string seasonsJson = reader.IsDBNull(reader.GetOrdinal("Seasons"))
                             ? "[]"
                             : reader.GetString(reader.GetOrdinal("Seasons"));
-
-                        _logger.LogInformation(
-                            "Raw JSON data - Photos: {Photos}, Headlines: {Headlines}, Tags: {Tags}, Seasons: {Seasons}",
-                            photosJson,
-                            headlinesJson,
-                            tagsJson,
-                            seasonsJson
-                        );
 
                         var deal = new DealResponseDto
                         {
@@ -1107,9 +1093,7 @@ namespace Backend.Helper
 
             const string sql =
                 @"
-                UPDATE Deals
-                SET IsActive = 0,
-                    UpdatedAt = GETUTCDATE()
+                DELETE FROM Deals
                 WHERE Id = @Id";
 
             using var command = new SqlCommand(sql, connection);
@@ -1802,7 +1786,7 @@ namespace Backend.Helper
 
                     var command = new SqlCommand(
                         @"
-                        INSERT INTO AgencyProfiles (
+                    INSERT INTO AgencyProfiles (
                             UserId,
                             AgencyApplicationId,
                             Website,
@@ -2303,6 +2287,35 @@ namespace Backend.Helper
                     ? null
                     : reader.GetString(reader.GetOrdinal("ReviewedBy")),
             };
+        }
+
+        public async Task<bool> UpdateAgencyTotalDeals(string userId, int change)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (
+                        var command = new SqlCommand(
+                            @"UPDATE AgencyProfiles 
+                          SET TotalDeals = TotalDeals + @change
+                          WHERE UserId = @userId",
+                            connection
+                        )
+                    )
+                    {
+                        command.Parameters.AddWithValue("@userId", userId);
+                        command.Parameters.AddWithValue("@change", change);
+                        return await command.ExecuteNonQueryAsync() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating agency total deals");
+                return false;
+            }
         }
 
         #endregion

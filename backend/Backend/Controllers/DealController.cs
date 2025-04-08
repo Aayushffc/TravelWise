@@ -130,6 +130,9 @@ namespace Backend.Controllers
                     return StatusCode(500, "Failed to create deal");
                 }
 
+                // Update total deals count
+                await _dbHelper.UpdateAgencyTotalDeals(userId, 1);
+
                 return CreatedAtAction(nameof(GetDeal), new { id = deal.Id }, deal);
             }
             catch (Exception ex)
@@ -233,6 +236,9 @@ namespace Backend.Controllers
                 {
                     return StatusCode(500, "Failed to delete deal");
                 }
+
+                // Update total deals count
+                await _dbHelper.UpdateAgencyTotalDeals(userId, -1);
 
                 return Ok(new { Success = true, Message = "Deal deleted successfully" });
             }

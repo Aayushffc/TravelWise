@@ -86,6 +86,7 @@ namespace Backend.Helper
             CreateAgencyProfileDTO model,
             string userId
         );
+        Task<bool> UpdateAgencyTotalDeals(string userId, int change);
         Task<AgencyProfileResponseDTO> GetAgencyProfileById(int id);
         Task<AgencyProfileResponseDTO> GetAgencyProfileByUserId(string userId);
         Task<bool> UpdateAgencyProfile(int id, UpdateAgencyProfileDTO model, string userId);

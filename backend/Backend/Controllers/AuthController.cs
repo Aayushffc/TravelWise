@@ -170,21 +170,14 @@ namespace TravelWiseAPI.Controllers
                 var info = await _signInManager.GetExternalLoginInfoAsync();
                 if (info == null)
                 {
-                    _logger.LogError("Failed to get external login info");
                     return Redirect(
                         $"{_configuration["FrontendUrl"]}/auth/callback?error=external_login_failed"
                     );
                 }
 
-                _logger.LogInformation(
-                    "External login info received for email: {Email}",
-                    info.Principal.FindFirstValue(ClaimTypes.Email)
-                );
-
                 var email = info.Principal.FindFirstValue(ClaimTypes.Email);
                 if (string.IsNullOrEmpty(email))
                 {
-                    _logger.LogError("Failed to get email from Google login");
                     return BadRequest("Could not retrieve email from Google login.");
                 }
 
@@ -222,10 +215,6 @@ namespace TravelWiseAPI.Controllers
                         var createResult = await _userManager.CreateAsync(user);
                         if (!createResult.Succeeded)
                         {
-                            _logger.LogError(
-                                "Failed to create user from Google login: {Errors}",
-                                string.Join(", ", createResult.Errors.Select(e => e.Description))
-                            );
                             return BadRequest("Failed to create user from Google login.");
                         }
 
@@ -252,10 +241,6 @@ namespace TravelWiseAPI.Controllers
                     var createResult = await _userManager.CreateAsync(user);
                     if (!createResult.Succeeded)
                     {
-                        _logger.LogError(
-                            "Failed to create user from Google login: {Errors}",
-                            string.Join(", ", createResult.Errors.Select(e => e.Description))
-                        );
                         return BadRequest("Failed to create user from Google login.");
                     }
 
@@ -266,10 +251,6 @@ namespace TravelWiseAPI.Controllers
                     var addLoginResult = await _userManager.AddLoginAsync(user, info);
                     if (!addLoginResult.Succeeded)
                     {
-                        _logger.LogError(
-                            "Failed to add Google login information: {Errors}",
-                            string.Join(", ", addLoginResult.Errors.Select(e => e.Description))
-                        );
                         return BadRequest("Failed to add Google login information to user.");
                     }
                 }
@@ -294,7 +275,6 @@ namespace TravelWiseAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during Google callback");
                 return Redirect($"{returnUrl}?error=authentication_failed");
             }
         }
@@ -344,7 +324,6 @@ namespace TravelWiseAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending verification email to {Email}", user.Email);
                 return StatusCode(
                     500,
                     "Failed to send verification email. Please try again later."
@@ -367,7 +346,6 @@ namespace TravelWiseAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating verification code");
                 throw;
             }
         }
@@ -440,7 +418,6 @@ namespace TravelWiseAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending password reset email to {Email}", user.Email);
                 return StatusCode(
                     500,
                     "Failed to send password reset email. Please try again later."

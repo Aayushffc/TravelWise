@@ -13,6 +13,7 @@ import { tap } from 'rxjs/operators';
 import { ManageDealCardComponent } from '../manage-deal-card/manage-deal-card.component';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { FileUploadService } from '../../services/file-upload.service';
+import { DeleteConfirmationComponent } from '../delete-confirmation/delete-confirmation.component';
 
 @Component({
   selector: 'app-manage-deals',
@@ -21,7 +22,8 @@ import { FileUploadService } from '../../services/file-upload.service';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    ManageDealCardComponent
+    ManageDealCardComponent,
+    DeleteConfirmationComponent
   ],
   templateUrl: './manage-deals.component.html',
   styleUrls: ['./manage-deals.component.css', './manage-deals-css.component.css'],
@@ -68,6 +70,8 @@ export class ManageDealsComponent implements OnInit {
   isSubmitting = false;
   activeTab = 'basic'; // For tabbed form navigation
   private fileUploadService: FileUploadService;
+  showDeleteConfirmation = false;
+  dealToDelete: { id: number, title: string } | null = null;
 
   // Categories for the form
   categories: string[] = [
@@ -574,5 +578,33 @@ export class ManageDealsComponent implements OnInit {
           this.formError = 'Failed to create location. Please try again.';
         }
       });
+  }
+
+  onDeleteDeal(dealInfo: { id: number, title: string }): void {
+    this.dealToDelete = dealInfo;
+    this.showDeleteConfirmation = true;
+  }
+
+  onDeleteConfirmed(): void {
+    if (this.dealToDelete) {
+      this.dealService.deleteDeal(this.dealToDelete.id)
+        .subscribe({
+          next: () => {
+            this.loadData();
+            this.showDeleteConfirmation = false;
+            this.dealToDelete = null;
+          },
+          error: (err) => {
+            console.error('Error deleting deal:', err);
+            this.showDeleteConfirmation = false;
+            this.dealToDelete = null;
+          }
+        });
+    }
+  }
+
+  onDeleteCancelled(): void {
+    this.showDeleteConfirmation = false;
+    this.dealToDelete = null;
   }
 }

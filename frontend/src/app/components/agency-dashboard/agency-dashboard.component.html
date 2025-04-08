@@ -8,18 +8,20 @@
   <div *ngIf="!isLoading" class="min-h-screen bg-gray-50">
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
-      <div class="container mx-auto px-6 py-4">
+      <div class="container mx-auto px-6 py-2">
         <div class="flex justify-between items-center">
           <div class="flex items-center space-x-4">
             <button
               (click)="goBack()"
-              class="text-gray-600 hover:text-indigo-600 transition-colors"
+              class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors hover:cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
             <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Agency Dashboard</h1>
+          </div>
+          <div class="flex items-center space-x-8">
             <div
               (click)="toggleOnlineStatus()"
               class="status-dot-container cursor-pointer"
@@ -28,35 +30,29 @@
               <div class="status-dot"></div>
               <div class="status-ripple"></div>
             </div>
+            <div class="flex space-x-6">
+              <button
+                *ngFor="let tab of tabs"
+                (click)="switchTab(tab)"
+                class="px-3 py-2 font-medium text-sm rounded-md transition-colors"
+                [ngClass]="{
+                  'bg-indigo-50 text-indigo-600 hover:cursor-pointer': activeTab === tab,
+                  'text-gray-500 hover:bg-gray-100 hover:cursor-pointer': activeTab !== tab
+                }"
+              >
+                {{ tab | titlecase }}
+                <span
+                  *ngIf="tab === 'chat' && unreadMessages > 0"
+                  class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                >
+                  {{ unreadMessages }}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </header>
-
-    <!-- Navigation Tabs -->
-    <nav class="bg-white border-b">
-      <div class="container mx-auto px-6">
-        <div class="flex space-x-8">
-          <button
-            *ngFor="let tab of tabs"
-            (click)="switchTab(tab)"
-            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors"
-            [ngClass]="{
-              'border-indigo-500 text-indigo-600': activeTab === tab,
-              'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== tab
-            }"
-          >
-            {{ tab | titlecase }}
-            <span
-              *ngIf="tab === 'chat' && unreadMessages > 0"
-              class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
-            >
-              {{ unreadMessages }}
-            </span>
-          </button>
-        </div>
-      </div>
-    </nav>
 
     <!-- Content Area -->
     <main class="container mx-auto px-6 py-8">
@@ -64,17 +60,17 @@
       <div *ngIf="activeTab === 'profile'" class="space-y-8">
         <!-- Cover Image and Logo -->
         <div class="relative h-64 bg-gray-100 rounded-lg overflow-hidden">
-          <img 
-            *ngIf="profile?.coverImageUrl" 
-            [src]="profile.coverImageUrl" 
+          <img
+            *ngIf="profile?.coverImageUrl"
+            [src]="profile.coverImageUrl"
             class="w-full h-full object-cover"
           >
           <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-6">
             <div class="flex items-end space-x-4">
               <div class="relative w-24 h-24 bg-white rounded-full overflow-hidden border-4 border-white">
-                <img 
-                  *ngIf="profile?.logoUrl" 
-                  [src]="profile.logoUrl" 
+                <img
+                  *ngIf="profile?.logoUrl"
+                  [src]="profile.logoUrl"
                   class="w-full h-full object-cover"
                 >
               </div>
