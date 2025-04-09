@@ -34,4 +34,8 @@ export class AgencyProfileService {
   getAgencyProfile(id: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/${id}`);
   }
+
+  getAgencyInfoByUserId(userId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/user/${userId}`);
+  }
 }

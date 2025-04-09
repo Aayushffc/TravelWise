@@ -42,7 +42,7 @@ namespace Backend.DTOs
         public string LogoUrl { get; set; }
         public string CoverImageUrl { get; set; }
         public string OfficeHours { get; set; }
-        public string Languages { get; set; }
+        public List<string> Languages { get; set; }
         public string Specializations { get; set; }
         public List<SocialMediaLinkDTO> SocialMediaLinks { get; set; }
         public List<TeamMemberDTO> TeamMembers { get; set; }
@@ -60,7 +60,7 @@ namespace Backend.DTOs
         public string? LogoUrl { get; set; }
         public string? CoverImageUrl { get; set; }
         public string? OfficeHours { get; set; }
-        public string? Languages { get; set; }
+        public List<string>? Languages { get; set; }
         public string? Specializations { get; set; }
         public List<SocialMediaLinkDTO>? SocialMediaLinks { get; set; }
         public List<TeamMemberDTO>? TeamMembers { get; set; }
@@ -81,7 +81,7 @@ namespace Backend.DTOs
         public string? LogoUrl { get; set; }
         public string? CoverImageUrl { get; set; }
         public string? OfficeHours { get; set; }
-        public string? Languages { get; set; }
+        public List<string>? Languages { get; set; }
         public string? Specializations { get; set; }
         public List<SocialMediaLinkDTO>? SocialMediaLinks { get; set; }
         public List<TeamMemberDTO>? TeamMembers { get; set; }
@@ -110,5 +110,17 @@ namespace Backend.DTOs
         public bool IsApproved { get; set; }
         public string? RejectionReason { get; set; }
         public string? ReviewedBy { get; set; }
+    }
+
+    public class AgencyInfoResponseDTO
+    {
+        public int AgencyId { get; set; }
+        public string AgencyName { get; set; }
+        public string LogoUrl { get; set; }
+        public int Rating { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Website { get; set; }
+        public int TotalReviews { get; set; }
+        public List<string> Languages { get; set; }
     }
 }

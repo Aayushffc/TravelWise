@@ -144,25 +144,14 @@ export class AgencyDealDetailsComponent implements OnInit {
   saveDeal(): void {
     if (!this.deal) return;
 
-    // Ensure all arrays are initialized
-    this.deal.tags = this.deal.tags || [];
-    this.deal.seasons = this.deal.seasons || [];
-    this.deal.languages = this.deal.languages || [];
-    this.deal.requirements = this.deal.requirements || [];
-    this.deal.restrictions = this.deal.restrictions || [];
-
-    // Remove any empty strings from arrays
-    this.deal.tags = this.deal.tags.filter(t => t.trim());
-    this.deal.seasons = this.deal.seasons.filter(s => s.trim());
-    this.deal.languages = this.deal.languages.filter(l => l.trim());
-    this.deal.requirements = this.deal.requirements.filter(r => r.trim());
-    this.deal.restrictions = this.deal.restrictions.filter(r => r.trim());
-
-    // Update the deal's timestamp
-    this.deal.updatedAt = new Date();
+    // Create an update object with only the changed fields
+    const updateData = {
+      updatedAt: new Date(),
+      headlines: this.deal.headlines
+    };
 
     this.isLoading = true;
-    this.dealService.updateDeal(Number(this.dealId), this.deal).subscribe({
+    this.dealService.updateDeal(Number(this.dealId), updateData).subscribe({
       next: () => {
         this.successMessage = 'Deal updated successfully!';
         this.isEditing = false;
@@ -429,13 +418,6 @@ export class AgencyDealDetailsComponent implements OnInit {
     }
   }
 
-  handleTagInput(event: Event, index: number): void {
-    const input = event.target as HTMLInputElement;
-    if (this.deal?.tags) {
-      this.deal.tags[index] = input.value;
-    }
-  }
-
   // Languages Management
   addLanguage(): void {
     if (!this.deal) return;
@@ -451,11 +433,8 @@ export class AgencyDealDetailsComponent implements OnInit {
     }
   }
 
-  handleLanguageInput(event: Event, index: number): void {
-    const input = event.target as HTMLInputElement;
-    if (this.deal?.languages) {
-      this.deal.languages[index] = input.value;
-    }
+  trackByIndex(index: number, item: string): number {
+    return index;
   }
 
   // Requirements Management
@@ -473,13 +452,6 @@ export class AgencyDealDetailsComponent implements OnInit {
     }
   }
 
-  handleRequirementInput(event: Event, index: number): void {
-    const input = event.target as HTMLInputElement;
-    if (this.deal?.requirements) {
-      this.deal.requirements[index] = input.value;
-    }
-  }
-
   // Restrictions Management
   addRestriction(): void {
     if (!this.deal) return;
@@ -492,13 +464,6 @@ export class AgencyDealDetailsComponent implements OnInit {
   removeRestriction(index: number): void {
     if (this.deal?.restrictions) {
       this.deal.restrictions.splice(index, 1);
-    }
-  }
-
-  handleRestrictionInput(event: Event, index: number): void {
-    const input = event.target as HTMLInputElement;
-    if (this.deal?.restrictions) {
-      this.deal.restrictions[index] = input.value;
     }
   }
 

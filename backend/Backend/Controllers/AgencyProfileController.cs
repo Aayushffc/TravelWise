@@ -199,5 +199,38 @@ namespace TravelWiseAPI.Controllers
                 );
             }
         }
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetAgencyInfoByUserId(string userId)
+        {
+            try
+            {
+                var profile = await _dbHelper.GetAgencyProfileByUserId(userId);
+                if (profile == null)
+                    return NotFound(new { message = "Agency profile not found" });
+
+                var response = new AgencyInfoResponseDTO
+                {
+                    AgencyId = profile.Id,
+                    AgencyName = profile.AgencyName,
+                    LogoUrl = profile.LogoUrl,
+                    Rating = profile.Rating,
+                    PhoneNumber = profile.PhoneNumber,
+                    Website = profile.Website,
+                    TotalReviews = profile.TotalReviews,
+                    Languages = profile.Languages,
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting agency info");
+                return StatusCode(
+                    500,
+                    new { message = "An error occurred while getting the agency info" }
+                );
+            }
+        }
     }
 }

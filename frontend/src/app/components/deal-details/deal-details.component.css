@@ -165,3 +165,277 @@
     transform: scale(1);
   }
 }
+
+/* Base Styles */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Card Styles */
+.section-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.section-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.info-card {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Feature Cards */
+.feature-card {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #f3f4f6;
+  transition: all 0.3s ease;
+}
+
+.feature-card.feature-included {
+  background-color: #eef2ff;
+  border-left: 4px solid #4f46e5;
+}
+
+.feature-card:not(.feature-included) {
+  opacity: 0.7;
+}
+
+.feature-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.75rem;
+  color: #4f46e5;
+}
+
+.feature-text {
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+/* Package Options */
+.package-option-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: border-color 0.3s ease;
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.package-option-card:hover {
+  border-color: #6366f1;
+}
+
+/* Policies */
+.policy-card {
+  border-left: 4px solid #6366f1;
+  padding-left: 1rem;
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+/* Tags */
+.tag {
+  padding: 0.25rem 0.75rem;
+  background-color: #eef2ff;
+  color: #3730a3;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.tag:hover {
+  background-color: #e0e7ff;
+}
+
+.language-tag {
+  padding: 0.25rem 0.75rem;
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Itinerary */
+.itinerary-day-card {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.itinerary-day-card:hover {
+  background-color: #eef2ff;
+  transform: scale(1.05);
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  color: #4b5563;
+}
+
+/* Booking Card */
+.booking-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.booking-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.primary-button {
+  width: 100%;
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.primary-button:hover {
+  background-color: #4338ca;
+}
+
+.secondary-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.secondary-button:hover {
+  background-color: #e5e7eb;
+}
+
+/* Agency Card */
+.agency-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.agency-logo {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.contact-info {
+  display: flex;
+  align-items: center;
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 9999px;
+  height: 8rem;
+  width: 8rem;
+  border-top: 2px solid #6366f1;
+  border-bottom: 2px solid #6366f1;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Image Gallery */
+.image-nav-button {
+  transition: all 0.3s ease;
+}
+
+.image-nav-button:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .section-card {
+    padding: 1rem;
+  }
+
+  .info-card {
+    padding: 0.75rem;
+  }
+
+  .feature-card {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .section-title {
+    font-size: 1.125rem;
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Collapsible Sections */
+.excluded-features {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+/* Rotate Animation */
+.rotate-180 {
+  transform: rotate(180deg);
+}

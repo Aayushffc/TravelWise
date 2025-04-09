@@ -47,7 +47,6 @@ namespace Backend.Controllers
                     maxDays
                 );
 
-
                 if (deals == null || !deals.Any())
                 {
                     return Ok(new List<DealResponseDto>());

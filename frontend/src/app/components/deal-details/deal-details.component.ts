@@ -8,6 +8,7 @@ import { DealResponseDto } from '../../models/deal.model';
 import { LocationService } from '../../services/location.service';
 import { AuthService } from '../../services/auth.service';
 import { AgencyProfileService } from '../../services/agency-profile.service';
+import { firstValueFrom } from 'rxjs';
 
 // Use DealResponseDto directly instead of custom Deal interface
 type Deal = DealResponseDto;
@@ -40,6 +41,7 @@ interface Policy {
 })
 export class DealDetailsComponent implements OnInit {
   deal: DealResponseDto | null = null;
+  agencyProfile: any = null;
   isLoading = true;
   error: string | null = null;
   currentImageIndex = 0;
@@ -49,7 +51,8 @@ export class DealDetailsComponent implements OnInit {
   selectedDate: string = '';
   selectedTravelers: number = 2;
   activeTab: 'overview' | 'inclusions' | 'itinerary' | 'reviews' = 'overview';
-  agencyProfile: any = null;
+  showFeatures = false;
+  showTransfers = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -61,36 +64,28 @@ export class DealDetailsComponent implements OnInit {
     private agencyProfileService: AgencyProfileService
   ) {}
 
-  ngOnInit(): void {
-    this.isLoggedIn = this.authService.isAuthenticated();
-    const dealId = this.route.snapshot.paramMap.get('id');
-    if (dealId) {
-      this.loadDealDetails(parseInt(dealId));
-    } else {
-      this.error = 'Invalid deal ID';
+  async ngOnInit() {
+    try {
+      this.isLoggedIn = this.authService.isAuthenticated();
+      const dealId = this.route.snapshot.paramMap.get('id');
+      if (!dealId) {
+        this.error = 'Deal ID not found';
+        return;
+      }
+
+      this.deal = await firstValueFrom(this.dealService.getDealById(parseInt(dealId, 10)));
+      this.loadLocationName(this.deal.locationId);
+
+      // Get agency profile using the new API
+      if (this.deal?.userId) {
+        this.agencyProfile = await firstValueFrom(this.agencyProfileService.getAgencyInfoByUserId(this.deal.userId));
+      }
+    } catch (error) {
+      this.error = 'Error loading deal details';
+      console.error('Error:', error);
+    } finally {
       this.isLoading = false;
     }
-  }
-
-  private loadDealDetails(dealId: number): void {
-    this.isLoading = true;
-    this.error = null;
-
-    this.dealService.getDealById(dealId).subscribe({
-      next: (deal) => {
-        this.deal = deal;
-        this.loadLocationName(deal.locationId);
-        if (deal.userId) {
-          this.loadAgencyProfile(deal.userId);
-        }
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading deal:', err);
-        this.error = 'Failed to load deal details. Please try again later.';
-        this.isLoading = false;
-      }
-    });
   }
 
   private loadLocationName(locationId: number): void {
@@ -101,22 +96,6 @@ export class DealDetailsComponent implements OnInit {
       error: (err) => {
         console.error('Error loading location:', err);
         this.locationName = 'Location not specified';
-      }
-    });
-  }
-
-  private loadAgencyProfile(userId: string): void {
-    const profileId = parseInt(userId, 10);
-    if (isNaN(profileId)) {
-      console.error('Invalid user ID:', userId);
-      return;
-    }
-    this.agencyProfileService.getAgencyProfile(profileId).subscribe({
-      next: (profile) => {
-        this.agencyProfile = profile;
-      },
-      error: (err) => {
-        console.error('Error loading agency profile:', err);
       }
     });
   }
@@ -221,5 +200,13 @@ export class DealDetailsComponent implements OnInit {
   bookNow(): void {
     // Navigate to the booking page with the deal ID
     this.router.navigate(['/booking', this.deal?.id]);
+  }
+
+  toggleFeatures() {
+    this.showFeatures = !this.showFeatures;
+  }
+
+  toggleTransfers() {
+    this.showTransfers = !this.showTransfers;
   }
 }

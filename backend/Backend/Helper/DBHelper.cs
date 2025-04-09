@@ -513,7 +513,9 @@ namespace Backend.Helper
                             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                             UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                            Headlines = SafeDeserializeJson<List<string>>(headlinesJson),
+                            Headlines = reader.IsDBNull(reader.GetOrdinal("Headlines"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("Headlines")),
                             Tags = SafeDeserializeJson<List<string>>(tagsJson),
                             Seasons = SafeDeserializeJson<List<string>>(seasonsJson),
                             Location = new LocationResponseDto
@@ -950,9 +952,7 @@ namespace Backend.Helper
                 if (deal.Headlines != null)
                 {
                     updateFields.Add("Headlines = @Headlines");
-                    parameters.Add(
-                        new SqlParameter("@Headlines", JsonSerializer.Serialize(deal.Headlines))
-                    );
+                    parameters.Add(new SqlParameter("@Headlines", deal.Headlines));
                 }
 
                 if (deal.Tags != null)
@@ -2203,7 +2203,9 @@ namespace Backend.Helper
                     : reader.GetString(reader.GetOrdinal("OfficeHours")),
                 Languages = reader.IsDBNull(reader.GetOrdinal("Languages"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("Languages")),
+                    : SafeDeserializeJson<List<string>>(
+                        reader.GetString(reader.GetOrdinal("Languages"))
+                    ),
                 Specializations = reader.IsDBNull(reader.GetOrdinal("Specializations"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("Specializations")),
@@ -2478,7 +2480,9 @@ namespace Backend.Helper
                         ? null
                         : reader.GetString(reader.GetOrdinal("SearchKeywords")),
                     Tags = SafeJsonDeserialize<List<string>>("Tags"),
-                    Headlines = SafeJsonDeserialize<List<string>>("Headlines"),
+                    Headlines = reader.IsDBNull(reader.GetOrdinal("Headlines"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("Headlines")),
                     IsFeatured = GetBoolOrDefault("IsFeatured"),
                     FeaturedUntil = reader.IsDBNull(reader.GetOrdinal("FeaturedUntil"))
                         ? DateTime.MinValue
@@ -2566,10 +2570,7 @@ namespace Backend.Helper
             );
             command.Parameters.AddWithValue("@PackageType", deal.PackageType);
             command.Parameters.AddWithValue("@IsActive", deal.IsActive);
-            command.Parameters.AddWithValue(
-                "@Headlines",
-                JsonSerializer.Serialize(deal.Headlines ?? new List<string>())
-            );
+            command.Parameters.AddWithValue("@Headlines", (object)deal.Headlines ?? DBNull.Value);
             command.Parameters.AddWithValue(
                 "@Tags",
                 JsonSerializer.Serialize(deal.Tags ?? new List<string>())

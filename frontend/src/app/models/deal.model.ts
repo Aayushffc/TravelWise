@@ -78,7 +78,7 @@ export interface DealResponseDto {
   nightsCount: number;
   description?: string;
   photos?: string[];
-  headline?: string;
+  headlines?: string;
   elderlyFriendly: boolean;
   internetIncluded: boolean;
   travelIncluded: boolean;

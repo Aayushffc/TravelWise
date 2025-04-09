@@ -32,7 +32,7 @@ namespace Backend.DTOs
         public List<Policy>? Policies { get; set; }
         public string? PackageType { get; set; }
         public bool IsActive { get; set; }
-        public List<string>? Headlines { get; set; }
+        public string? Headlines { get; set; }
         public List<string>? Tags { get; set; }
         public List<string>? Seasons { get; set; }
         public string? DifficultyLevel { get; set; }
@@ -87,7 +87,7 @@ namespace Backend.DTOs
         public List<Policy>? Policies { get; set; }
         public string? PackageType { get; set; }
         public bool? IsActive { get; set; }
-        public List<string>? Headlines { get; set; }
+        public string? Headlines { get; set; }
         public List<string>? Tags { get; set; }
         public List<string>? Seasons { get; set; }
         public string? DifficultyLevel { get; set; }
@@ -164,7 +164,7 @@ namespace Backend.DTOs
         public bool IsFeatured { get; set; }
         public DateTime FeaturedUntil { get; set; }
         public int Priority { get; set; }
-        public List<string>? Headlines { get; set; }
+        public string? Headlines { get; set; }
         public List<string>? Tags { get; set; }
         public List<string>? Seasons { get; set; }
         public string? DifficultyLevel { get; set; }
