@@ -2,13 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DealService } from '../../services/deal.service';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { DealResponseDto } from '../../models/deal.model';
 import { LocationService } from '../../services/location.service';
 import { AuthService } from '../../services/auth.service';
 import { AgencyProfileService } from '../../services/agency-profile.service';
+import { BookingService } from '../../services/booking.service';
 import { firstValueFrom } from 'rxjs';
+import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
+import { SearchCountryField, CountryISO, PhoneNumberFormat } from 'ngx-intl-tel-input';
 
 // Use DealResponseDto directly instead of custom Deal interface
 type Deal = DealResponseDto;
@@ -32,10 +35,21 @@ interface Policy {
   description: string;
 }
 
+interface EnquiryForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  phoneNumberObject: any; // This will store the full phone number object
+  travelDate: string;
+  travelerCount: number;
+  message: string;
+}
+
 @Component({
   selector: 'app-deal-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgxIntlTelInputModule],
   templateUrl: './deal-details.component.html',
   styleUrls: ['./deal-details.component.css']
 })
@@ -53,6 +67,50 @@ export class DealDetailsComponent implements OnInit {
   activeTab: 'overview' | 'inclusions' | 'itinerary' | 'reviews' = 'overview';
   showFeatures = false;
   showTransfers = false;
+  showEnquiryPopup = false;
+
+  // Phone input configuration
+  SearchCountryField = SearchCountryField;
+  CountryISO = CountryISO;
+  PhoneNumberFormat = PhoneNumberFormat;
+  preferredCountries: CountryISO[] = [CountryISO.UnitedStates, CountryISO.UnitedKingdom, CountryISO.India];
+  separateDialCode = true;
+  searchCountryPlaceholder = 'Search country';
+  searchCountryField = [SearchCountryField.All];
+  maxLength = 15;
+  phoneValidation = true;
+  autoCountrySelect = true;
+  numberFormat = PhoneNumberFormat.International;
+
+  enquiryForm: EnquiryForm = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    phoneNumberObject: null,
+    travelDate: '',
+    travelerCount: 2,
+    message: ''
+  };
+
+  get includedFeatures(): string[] {
+    if (!this.deal) return [];
+
+    const features = [];
+    if (this.deal.elderlyFriendly) features.push('Elderly Friendly');
+    if (this.deal.internetIncluded) features.push('Internet Access');
+    if (this.deal.travelIncluded) features.push('Travel Included');
+    if (this.deal.mealsIncluded) features.push('Meals Included');
+    if (this.deal.sightseeingIncluded) features.push('Sightseeing');
+    if (this.deal.stayIncluded) features.push('Accommodation');
+    if (this.deal.travelCostIncluded) features.push('Travel Cost Included');
+    if (this.deal.guideIncluded) features.push('Guide Included');
+    if (this.deal.photographyIncluded) features.push('Photography');
+    if (this.deal.insuranceIncluded) features.push('Insurance');
+    if (this.deal.visaIncluded) features.push('Visa Included');
+
+    return features;
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -61,7 +119,8 @@ export class DealDetailsComponent implements OnInit {
     private locationService: LocationService,
     private authService: AuthService,
     private location: Location,
-    private agencyProfileService: AgencyProfileService
+    private agencyProfileService: AgencyProfileService,
+    private bookingService: BookingService
   ) {}
 
   async ngOnInit() {
@@ -79,6 +138,19 @@ export class DealDetailsComponent implements OnInit {
       // Get agency profile using the new API
       if (this.deal?.userId) {
         this.agencyProfile = await firstValueFrom(this.agencyProfileService.getAgencyInfoByUserId(this.deal.userId));
+      }
+
+      // Pre-fill user information if logged in
+      if (this.isLoggedIn) {
+        const user = this.authService.getCurrentUser();
+        if (user) {
+          this.enquiryForm = {
+            ...this.enquiryForm,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || ''
+          };
+        }
       }
     } catch (error) {
       this.error = 'Error loading deal details';
@@ -198,8 +270,11 @@ export class DealDetailsComponent implements OnInit {
   }
 
   bookNow(): void {
-    // Navigate to the booking page with the deal ID
-    this.router.navigate(['/booking', this.deal?.id]);
+    if (!this.isLoggedIn) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.showEnquiryPopup = true;
   }
 
   toggleFeatures() {
@@ -208,5 +283,46 @@ export class DealDetailsComponent implements OnInit {
 
   toggleTransfers() {
     this.showTransfers = !this.showTransfers;
+  }
+
+  async submitEnquiry() {
+    try {
+      if (!this.deal) return;
+
+      if (!this.isLoggedIn) {
+        this.router.navigate(['/login']);
+        return;
+      }
+
+      // Get the phone number in international format
+      const phoneNumber = this.enquiryForm.phoneNumberObject?.internationalNumber ||
+                         this.enquiryForm.phoneNumber;
+
+      const bookingData = {
+        agencyId: this.deal.userId,
+        dealId: this.deal.id,
+        numberOfPeople: this.enquiryForm.travelerCount,
+        travelDate: this.enquiryForm.travelDate,
+        specialRequirements: this.enquiryForm.message,
+        notes: `Enquiry from ${this.enquiryForm.firstName} ${this.enquiryForm.lastName}\nEmail: ${this.enquiryForm.email}\nPhone: ${phoneNumber}`
+      };
+
+      await firstValueFrom(this.bookingService.createBooking(bookingData));
+      this.showEnquiryPopup = false;
+      this.enquiryForm = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        phoneNumberObject: null,
+        travelDate: '',
+        travelerCount: 2,
+        message: ''
+      };
+      alert('Your enquiry has been submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting enquiry:', error);
+      alert('There was an error submitting your enquiry. Please try again.');
+    }
   }
 }

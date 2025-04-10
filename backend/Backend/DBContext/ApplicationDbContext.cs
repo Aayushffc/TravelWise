@@ -16,6 +16,8 @@ namespace Backend.DBContext
         public DbSet<AgencyApplication> AgencyApplications { get; set; }
         public DbSet<AgencyProfile> AgencyProfiles { get; set; }
         public DbSet<FAQ> FAQs { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

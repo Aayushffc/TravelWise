@@ -35,6 +35,17 @@ namespace Backend.Models
         public string? SpecialRequirements { get; set; }
         public string? Notes { get; set; }
 
+        // Contact information
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string PhoneNumber { get; set; }
+
+        [Required]
+        public string BookingMessage { get; set; }
+
         // Chat related
         public string? LastMessage { get; set; }
         public DateTime? LastMessageAt { get; set; }

@@ -1345,12 +1345,12 @@ namespace Backend.Helper
                     @"
                     INSERT INTO Bookings (
                         UserId, AgencyId, DealId, Status, CreatedAt, UpdatedAt,
-                        NumberOfPeople, TravelDate, SpecialRequirements, Notes
+                        NumberOfPeople, TravelDate, SpecialRequirements
                     )
                     OUTPUT INSERTED.*
                     VALUES (
                         @UserId, @AgencyId, @DealId, 'Pending', GETUTCDATE(), GETUTCDATE(),
-                        @NumberOfPeople, @TravelDate, @SpecialRequirements, @Notes
+                        @NumberOfPeople, @TravelDate, @SpecialRequirements
                     )";
 
                 using var command = new SqlCommand(sql, connection);
@@ -1366,7 +1366,6 @@ namespace Backend.Helper
                     "@SpecialRequirements",
                     (object)model.SpecialRequirements ?? DBNull.Value
                 );
-                command.Parameters.AddWithValue("@Notes", (object)model.Notes ?? DBNull.Value);
 
                 using var reader = await command.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
@@ -1567,6 +1566,41 @@ namespace Backend.Helper
                     ? null
                     : reader.GetString(reader.GetOrdinal("PaymentStatus")),
             };
+        }
+
+        public async Task<bool> UpdateBookingLastMessage(
+            int bookingId,
+            string message,
+            string userId
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE Bookings 
+                    SET LastMessage = @Message,
+                        LastMessageAt = GETUTCDATE(),
+                        LastMessageBy = @UserId,
+                        HasUnreadMessages = 1
+                    WHERE Id = @BookingId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@BookingId", bookingId);
+                command.Parameters.AddWithValue("@Message", message);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                var result = await command.ExecuteNonQueryAsync();
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating booking last message");
+                throw;
+            }
         }
 
         #endregion

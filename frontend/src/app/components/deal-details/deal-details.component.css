@@ -179,6 +179,11 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
   transition: all 0.3s ease;
+  margin-bottom: 2rem;
+}
+
+.section-card:last-child {
+  margin-bottom: 0;
 }
 
 .section-card:hover {
@@ -212,19 +217,43 @@
   border-left: 4px solid #4f46e5;
 }
 
-.feature-card:not(.feature-included) {
-  opacity: 0.7;
+.feature-included {
+  background-color: #eef2ff !important;
+  border: 1px solid #e0e7ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1);
+}
+
+.feature-included .feature-icon {
+  color: #4f46e5;
+}
+
+.feature-included .feature-text {
+  color: #1e1b4b;
+  font-weight: 600;
+}
+
+.feature-not-included {
+  opacity: 0.75;
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+}
+
+.feature-not-included .feature-icon {
+  color: #dc2626;
+}
+
+.feature-not-included .feature-text {
+  color: #991b1b;
 }
 
 .feature-icon {
   width: 1.5rem;
   height: 1.5rem;
   margin-right: 0.75rem;
-  color: #4f46e5;
 }
 
 .feature-text {
-  color: #374151;
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -243,6 +272,11 @@
   padding: 1rem;
   transition: border-color 0.3s ease;
   animation: slideIn 0.5s ease-out forwards;
+  margin-bottom: 1rem;
+}
+
+.package-option-card:last-child {
+  margin-bottom: 0;
 }
 
 .package-option-card:hover {
@@ -254,6 +288,11 @@
   border-left: 4px solid #6366f1;
   padding-left: 1rem;
   animation: slideIn 0.5s ease-out forwards;
+  margin-bottom: 1rem;
+}
+
+.policy-card:last-child {
+  margin-bottom: 0;
 }
 
 /* Tags */
@@ -286,6 +325,11 @@
   border-radius: 0.5rem;
   transition: all 0.3s ease;
   animation: slideIn 0.5s ease-out forwards;
+  margin-bottom: 1.5rem;
+}
+
+.itinerary-day-card:last-child {
+  margin-bottom: 0;
 }
 
 .itinerary-day-card:hover {
@@ -438,4 +482,144 @@
 /* Rotate Animation */
 .rotate-180 {
   transform: rotate(180deg);
+}
+
+/* Quick Info Cards Grid */
+.quick-info-grid {
+  margin-bottom: 2rem;
+}
+
+/* Features Section */
+.features-section {
+  margin-bottom: 2rem;
+}
+
+/* Transfer Options */
+.transfer-options {
+  margin-bottom: 2rem;
+}
+
+/* Requirements & Restrictions Grid */
+.requirements-restrictions-grid {
+  margin-bottom: 2rem;
+}
+
+/* Phone input styles */
+::ng-deep .iti {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+::ng-deep .iti__flag-container {
+  position: relative;
+  height: 42px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem 0 0 0.5rem;
+  width: 120px;
+  background-color: #f9fafb;
+  margin-right: -1px;
+}
+
+::ng-deep .iti__selected-flag {
+  padding: 0 8px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background-color: #f9fafb;
+  border-radius: 0.5rem 0 0 0.5rem;
+  width: 100%;
+}
+
+::ng-deep .iti__country-list {
+  position: absolute;
+  z-index: 50;
+  width: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background-color: white;
+  margin-top: 4px;
+}
+
+::ng-deep .iti__country {
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+}
+
+::ng-deep .iti__country:hover {
+  background-color: #f3f4f6;
+}
+
+::ng-deep .iti__country.iti__highlight {
+  background-color: #e5e7eb;
+}
+
+::ng-deep .iti__flag {
+  box-shadow: none;
+  margin-right: 6px;
+}
+
+::ng-deep .iti__country-name {
+  margin-left: 6px;
+  flex: 1;
+}
+
+::ng-deep .iti__dial-code {
+  color: #6b7280;
+  margin-left: 6px;
+}
+
+::ng-deep .iti__arrow {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #6b7280;
+  margin-left: 8px;
+}
+
+::ng-deep .iti__arrow--up {
+  border-bottom: 4px solid #6b7280;
+  border-top: none;
+}
+
+::ng-deep .iti__selected-flag:hover {
+  background-color: #f3f4f6;
+}
+
+::ng-deep .iti__selected-flag:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+::ng-deep .iti__flag-container:hover {
+  background-color: #f3f4f6;
+}
+
+::ng-deep .iti input {
+  padding-left: 12px !important;
+  height: 42px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0 0.5rem 0.5rem 0;
+  border-left: none;
+  width: calc(100% - 120px);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #111827;
+  background-color: white;
+  transition: all 0.2s;
+}
+
+::ng-deep .iti input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+::ng-deep .iti input::placeholder {
+  color: #9ca3af;
 }

@@ -71,6 +71,7 @@ namespace Backend.Helper
         Task<BookingResponseDTO> GetBookingById(int id, string userId);
         Task<bool> UpdateBookingStatus(int id, string status, string reason, string userId);
         Task<bool> IncrementBookingCount(int dealId);
+        Task<bool> UpdateBookingLastMessage(int bookingId, string message, string userId);
 
         // Chat Message Operations
         Task<ChatMessageResponseDTO> SendMessage(

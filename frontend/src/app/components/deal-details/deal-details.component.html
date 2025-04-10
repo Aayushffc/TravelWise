@@ -22,6 +22,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
+          <button (click)="showEnquiryPopup = true" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+            Enquire
+          </button>
         </div>
       </div>
     </div>
@@ -45,6 +48,91 @@
           <p class="text-sm text-red-700">{{ error }}</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Enquiry Popup -->
+  <div *ngIf="showEnquiryPopup" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-2xl transform transition-all duration-300 ease-in-out">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold text-gray-900">Send Enquiry</h2>
+        <button (click)="showEnquiryPopup = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form (ngSubmit)="submitEnquiry()" class="space-y-6">
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+            <input type="text" [(ngModel)]="enquiryForm.firstName" name="firstName" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+            <input type="text" [(ngModel)]="enquiryForm.lastName" name="lastName" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" [(ngModel)]="enquiryForm.email" name="email" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+          <ngx-intl-tel-input
+            [cssClass]="'w-full'"
+            [preferredCountries]="preferredCountries"
+            [enableAutoCountrySelect]="autoCountrySelect"
+            [enablePlaceholder]="true"
+            [searchCountryFlag]="true"
+            [searchCountryField]="searchCountryField"
+            [searchCountryPlaceholder]="searchCountryPlaceholder"
+            [selectFirstCountry]="true"
+            [selectedCountryISO]="CountryISO.India"
+            [maxLength]="maxLength"
+            [phoneValidation]="phoneValidation"
+            [separateDialCode]="separateDialCode"
+            [numberFormat]="numberFormat"
+            [(ngModel)]="enquiryForm.phoneNumberObject"
+            name="phoneNumber"
+            #phone="ngModel"
+            required>
+          </ngx-intl-tel-input>
+          <div *ngIf="phone.invalid && phone.touched" class="text-red-500 text-sm mt-1">
+            Please enter a valid phone number
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Travel Date</label>
+            <input type="date" [(ngModel)]="enquiryForm.travelDate" name="travelDate" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Number of Travelers</label>
+            <input type="number" [(ngModel)]="enquiryForm.travelerCount" name="travelerCount" min="1" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+          <textarea [(ngModel)]="enquiryForm.message" name="message" rows="4" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"></textarea>
+        </div>
+        <div class="flex justify-end space-x-4 pt-4">
+          <button type="button" (click)="showEnquiryPopup = false"
+            class="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button type="submit"
+            class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+            Send Enquiry
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -104,7 +192,7 @@
         </div>
 
         <!-- Quick Info Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 quick-info-grid">
           <div class="info-card">
             <div class="text-sm text-gray-500">Duration</div>
             <div class="text-lg font-semibold text-indigo-600">{{ deal.daysCount }}D/{{ deal.nightsCount }}N</div>
@@ -130,151 +218,91 @@
         </div>
 
         <!-- Features -->
-        <div class="section-card">
+        <div class="section-card features-section">
           <div class="flex items-center justify-between cursor-pointer" (click)="toggleFeatures()">
-            <h2 class="section-title">What's included</h2>
+            <h2 class="section-title mb-0">What's included</h2>
             <svg class="w-6 h-6 text-indigo-500 transform transition-transform duration-200" [ngClass]="{'rotate-180': showFeatures}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <!-- Main Features -->
-            <div class="feature-card" *ngIf="deal.elderlyFriendly">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+
+          <!-- Included Features -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            <div *ngFor="let feature of includedFeatures" class="feature-card feature-included">
+              <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span class="feature-text">Elderly Friendly</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.internetIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              <span class="feature-text">Internet Access</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.travelIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span class="feature-text">Travel Included</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.mealsIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-              </svg>
-              <span class="feature-text">Meals Included</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.sightseeingIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span class="feature-text">Sightseeing</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.stayIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span class="feature-text">Accommodation</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.travelCostIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span class="feature-text">Travel Cost Included</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.guideIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span class="feature-text">Guide Included</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.photographyIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="feature-text">Photography</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.insuranceIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <span class="feature-text">Insurance</span>
-            </div>
-            <div class="feature-card" *ngIf="deal.visaIncluded">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span class="feature-text">Visa Included</span>
+              <span class="feature-text">{{ feature }}</span>
             </div>
           </div>
+
           <!-- Not Included Features -->
-          <div class="excluded-features" [ngClass]="{'max-h-0': !showFeatures, 'max-h-96': showFeatures}">
-            <h3 class="text-sm font-medium text-gray-500 mt-4 mb-2">Not Included:</h3>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div class="feature-card" *ngIf="!deal.elderlyFriendly">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          <div class="excluded-features" [ngClass]="{'max-h-0': !showFeatures, 'max-h-[1000px]': showFeatures}">
+            <h3 class="text-sm font-medium text-gray-500 mt-6 mb-4">Not Included:</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div *ngIf="!deal.elderlyFriendly" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Elderly Friendly</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.internetIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              <div *ngIf="!deal.internetIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Internet Access</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.travelIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              <div *ngIf="!deal.travelIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Travel</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.mealsIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+              <div *ngIf="!deal.mealsIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span class="feature-text">Meals Included</span>
+                <span class="feature-text">Meals</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.sightseeingIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div *ngIf="!deal.sightseeingIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Sightseeing</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.stayIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              <div *ngIf="!deal.stayIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span class="feature-text">Accommodation</span>
+                <span class="feature-text">Stay</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.travelCostIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div *ngIf="!deal.travelCostIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Travel Cost</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.guideIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <div *ngIf="!deal.guideIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Guide</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.photographyIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              <div *ngIf="!deal.photographyIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Photography</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.insuranceIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <div *ngIf="!deal.insuranceIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Insurance</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.visaIncluded">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <div *ngIf="!deal.visaIncluded" class="feature-card feature-not-included">
+                <svg xmlns="http://www.w3.org/2000/svg" class="feature-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="feature-text">Visa</span>
               </div>
@@ -283,7 +311,7 @@
         </div>
 
         <!-- Transfer Options -->
-        <div class="section-card">
+        <div class="section-card transfer-options">
           <div class="flex items-center justify-between cursor-pointer" (click)="toggleTransfers()">
             <h2 class="section-title">Transfer Options</h2>
             <svg class="w-6 h-6 text-indigo-500 transform transition-transform duration-200" [ngClass]="{'rotate-180': showTransfers}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,44 +319,45 @@
             </svg>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <!-- Main Transfers -->
-            <div class="feature-card" *ngIf="deal.airTransfer">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Included Transfers -->
+            <div *ngIf="deal.airTransfer" class="feature-card feature-included">
+              <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
               <span class="feature-text">Air</span>
             </div>
-            <div class="feature-card" *ngIf="deal.roadTransfer">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div *ngIf="deal.roadTransfer" class="feature-card feature-included">
+              <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <span class="feature-text">Road</span>
             </div>
-            <div class="feature-card" *ngIf="deal.trainTransfer">
-              <svg class="feature-icon text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div *ngIf="deal.trainTransfer" class="feature-card feature-included">
+              <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <span class="feature-text">Train</span>
             </div>
           </div>
+
           <!-- Not Included Transfers -->
           <div class="excluded-features" [ngClass]="{'max-h-0': !showTransfers, 'max-h-96': showTransfers}">
             <h3 class="text-sm font-medium text-gray-500 mt-4 mb-2">Not Included:</h3>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div class="feature-card" *ngIf="!deal.airTransfer">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div *ngIf="!deal.airTransfer" class="feature-card feature-not-included">
+                <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
                 <span class="feature-text">Air</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.roadTransfer">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div *ngIf="!deal.roadTransfer" class="feature-card feature-not-included">
+                <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
                 <span class="feature-text">Road</span>
               </div>
-              <div class="feature-card" *ngIf="!deal.trainTransfer">
-                <svg class="feature-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div *ngIf="!deal.trainTransfer" class="feature-card feature-not-included">
+                <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
                 <span class="feature-text">Train</span>
@@ -367,7 +396,7 @@
         </div>
 
         <!-- Requirements & Restrictions -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 requirements-restrictions-grid">
           <div *ngIf="deal.requirements && deal.requirements.length > 0" class="section-card">
             <h2 class="section-title">Requirements</h2>
             <ul class="list-disc list-inside text-gray-600 space-y-2">
@@ -456,8 +485,8 @@
 
             <!-- Action Buttons -->
             <div class="space-y-4">
-              <button (click)="bookNow()" class="primary-button hover:cursor-pointer">
-                Book Now
+              <button (click)="showEnquiryPopup = true" class="primary-button hover:cursor-pointer">
+                Enquire Now
               </button>
               <button (click)="toggleWishlist()" class="secondary-button hover:cursor-pointer">
                 <svg class="w-5 h-5" [ngClass]="{'text-red-500': isWishlisted}" fill="none" stroke="currentColor" viewBox="0 0 24 24">

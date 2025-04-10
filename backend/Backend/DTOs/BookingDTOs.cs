@@ -14,9 +14,18 @@ namespace Backend.DTOs
         [Range(1, int.MaxValue)]
         public int NumberOfPeople { get; set; }
 
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string PhoneNumber { get; set; }
+
+        [Required]
+        public string BookingMessage { get; set; }
+
         public DateTime? TravelDate { get; set; }
         public string? SpecialRequirements { get; set; }
-        public string? Notes { get; set; }
     }
 
     public class RejectBookingDTO
