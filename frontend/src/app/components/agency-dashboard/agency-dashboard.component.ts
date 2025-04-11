@@ -137,9 +137,12 @@ export class AgencyDashboardComponent implements OnInit {
 
   private async loadBookings() {
     try {
-      this.bookings = await firstValueFrom(this.bookingService.getAgencyBookings());
+      const response = await firstValueFrom(this.bookingService.getAgencyBookings());
+      this.bookings = response || [];
+      console.log('Loaded bookings:', this.bookings);
     } catch (error) {
       console.error('Error loading bookings:', error);
+      this.bookings = [];
     }
   }
 

@@ -1341,30 +1341,78 @@ namespace Backend.Helper
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync();
 
+                // First check if user already has a booking for this deal
+                const string checkSql =
+                    @"
+                    SELECT COUNT(*) 
+                    FROM Bookings 
+                    WHERE UserId = @UserId AND DealId = @DealId";
+
+                using var checkCommand = new SqlCommand(checkSql, connection);
+                checkCommand.Parameters.AddWithValue("@UserId", userId);
+                checkCommand.Parameters.AddWithValue("@DealId", model.DealId);
+
+                var existingCount = (int)await checkCommand.ExecuteScalarAsync();
+                if (existingCount > 0)
+                {
+                    throw new Exception("You have already made an inquiry for this deal.");
+                }
+
                 const string sql =
                     @"
+                    DECLARE @InsertedId TABLE (Id INT);
+                    
                     INSERT INTO Bookings (
                         UserId, AgencyId, DealId, Status, CreatedAt, UpdatedAt,
-                        NumberOfPeople, TravelDate, SpecialRequirements
+                        NumberOfPeople, TravelDate, SpecialRequirements,
+                        Email, PhoneNumber, BookingMessage,
+                        HasUnreadMessages, LastMessage, LastMessageAt, LastMessageBy
                     )
-                    OUTPUT INSERTED.*
+                    OUTPUT INSERTED.Id INTO @InsertedId
                     VALUES (
                         @UserId, @AgencyId, @DealId, 'Pending', GETUTCDATE(), GETUTCDATE(),
-                        @NumberOfPeople, @TravelDate, @SpecialRequirements
-                    )";
+                        @NumberOfPeople, @TravelDate, @SpecialRequirements,
+                        @Email, @PhoneNumber, @BookingMessage,
+                        0, NULL, NULL, NULL
+                    );
+
+                    SELECT b.*, u.FullName as UserFullName, a.AgencyName
+                    FROM Bookings b
+                    INNER JOIN AspNetUsers u ON b.UserId = u.Id
+                    INNER JOIN AgencyApplications a ON b.AgencyId = a.UserId
+                    WHERE b.Id = (SELECT TOP 1 Id FROM @InsertedId);";
 
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@UserId", userId);
                 command.Parameters.AddWithValue("@AgencyId", model.AgencyId);
                 command.Parameters.AddWithValue("@DealId", model.DealId);
                 command.Parameters.AddWithValue("@NumberOfPeople", model.NumberOfPeople);
+                command.Parameters.AddWithValue("@Email", model.Email);
+                command.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+                command.Parameters.AddWithValue("@BookingMessage", model.BookingMessage);
                 command.Parameters.AddWithValue(
                     "@TravelDate",
                     model.TravelDate ?? (object)DBNull.Value
                 );
                 command.Parameters.AddWithValue(
                     "@SpecialRequirements",
-                    (object)model.SpecialRequirements ?? DBNull.Value
+                    model.SpecialRequirements ?? (object)DBNull.Value
+                );
+
+                _logger.LogInformation(
+                    "Creating booking with parameters: {@Parameters}",
+                    new
+                    {
+                        UserId = userId,
+                        model.AgencyId,
+                        model.DealId,
+                        model.NumberOfPeople,
+                        model.Email,
+                        model.PhoneNumber,
+                        model.BookingMessage,
+                        model.TravelDate,
+                        model.SpecialRequirements,
+                    }
                 );
 
                 using var reader = await command.ExecuteReaderAsync();
@@ -1373,11 +1421,12 @@ namespace Backend.Helper
                     return MapToBookingResponseDto(reader);
                 }
 
+                _logger.LogError("Failed to create booking - no rows returned");
                 return null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating booking");
+                _logger.LogError(ex, "Error creating booking: {Message}", ex.Message);
                 throw;
             }
         }
@@ -1391,11 +1440,16 @@ namespace Backend.Helper
 
                 const string sql =
                     @"
-                    SELECT b.*, u.FullName as UserName, a.FullName as AgencyName
+                    SELECT 
+                        b.*,
+                        u.FullName as UserFullName,
+                        a.FullName as AgencyName,
+                        d.Title as DealName
                     FROM Bookings b
                     INNER JOIN AspNetUsers u ON b.UserId = u.Id
                     INNER JOIN AspNetUsers a ON b.AgencyId = a.Id
-                    WHERE b.UserId = @UserId OR b.AgencyId = @UserId
+                    INNER JOIN Deals d ON b.DealId = d.Id
+                    WHERE b.AgencyId = @UserId
                     ORDER BY b.CreatedAt DESC";
 
                 using var command = new SqlCommand(sql, connection);
@@ -1412,7 +1466,7 @@ namespace Backend.Helper
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting bookings");
+                _logger.LogError(ex, "Error getting bookings: {Message}", ex.Message);
                 throw;
             }
         }
@@ -1531,41 +1585,98 @@ namespace Backend.Helper
 
         private BookingResponseDTO MapToBookingResponseDto(SqlDataReader reader)
         {
-            return new BookingResponseDTO
+            try
             {
-                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                UserId = reader.GetString(reader.GetOrdinal("UserId")),
-                UserName = reader.GetString(reader.GetOrdinal("UserName")),
-                AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
-                AgencyName = reader.GetString(reader.GetOrdinal("AgencyName")),
-                DealId = reader.GetInt32(reader.GetOrdinal("DealId")),
-                Status = reader.GetString(reader.GetOrdinal("Status")),
-                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                NumberOfPeople = reader.GetInt32(reader.GetOrdinal("NumberOfPeople")),
-                TravelDate = reader.IsDBNull(reader.GetOrdinal("TravelDate"))
-                    ? null
-                    : reader.GetDateTime(reader.GetOrdinal("TravelDate")),
-                SpecialRequirements = reader.IsDBNull(reader.GetOrdinal("SpecialRequirements"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("SpecialRequirements")),
-                Notes = reader.IsDBNull(reader.GetOrdinal("Notes"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("Notes")),
-                LastMessage = reader.IsDBNull(reader.GetOrdinal("LastMessage"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("LastMessage")),
-                LastMessageAt = reader.IsDBNull(reader.GetOrdinal("LastMessageAt"))
-                    ? null
-                    : reader.GetDateTime(reader.GetOrdinal("LastMessageAt")),
-                HasUnreadMessages = reader.GetBoolean(reader.GetOrdinal("HasUnreadMessages")),
-                TotalAmount = reader.IsDBNull(reader.GetOrdinal("TotalAmount"))
-                    ? null
-                    : reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
-                PaymentStatus = reader.IsDBNull(reader.GetOrdinal("PaymentStatus"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("PaymentStatus")),
-            };
+                return new BookingResponseDTO
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    UserId = reader.GetString(reader.GetOrdinal("UserId")),
+                    UserName = reader.IsDBNull(reader.GetOrdinal("UserFullName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("UserFullName")),
+                    AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
+                    AgencyName = reader.IsDBNull(reader.GetOrdinal("AgencyName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("AgencyName")),
+                    DealId = reader.GetInt32(reader.GetOrdinal("DealId")),
+                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                    UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                    NumberOfPeople = reader.GetInt32(reader.GetOrdinal("NumberOfPeople")),
+                    TravelDate = reader.IsDBNull(reader.GetOrdinal("TravelDate"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("TravelDate")),
+                    SpecialRequirements = reader.IsDBNull(reader.GetOrdinal("SpecialRequirements"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("SpecialRequirements")),
+                    Notes = reader.IsDBNull(reader.GetOrdinal("Notes"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("Notes")),
+                    Email = reader.GetString(reader.GetOrdinal("Email")),
+                    PhoneNumber = reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                    BookingMessage = reader.GetString(reader.GetOrdinal("BookingMessage")),
+                    LastMessage = reader.IsDBNull(reader.GetOrdinal("LastMessage"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("LastMessage")),
+                    LastMessageAt = reader.IsDBNull(reader.GetOrdinal("LastMessageAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("LastMessageAt")),
+                    HasUnreadMessages = reader.GetBoolean(reader.GetOrdinal("HasUnreadMessages")),
+                    TotalAmount = reader.IsDBNull(reader.GetOrdinal("TotalAmount"))
+                        ? null
+                        : reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                    PaymentStatus = reader.IsDBNull(reader.GetOrdinal("PaymentStatus"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("PaymentStatus")),
+                    LastMessageBy = reader.IsDBNull(reader.GetOrdinal("LastMessageBy"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("LastMessageBy")),
+                    // Additional fields from Booking model
+                    AcceptedAt = reader.IsDBNull(reader.GetOrdinal("AcceptedAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("AcceptedAt")),
+                    RejectedAt = reader.IsDBNull(reader.GetOrdinal("RejectedAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("RejectedAt")),
+                    CompletedAt = reader.IsDBNull(reader.GetOrdinal("CompletedAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("CompletedAt")),
+                    CancelledAt = reader.IsDBNull(reader.GetOrdinal("CancelledAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("CancelledAt")),
+                    RejectionReason = reader.IsDBNull(reader.GetOrdinal("RejectionReason"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("RejectionReason")),
+                    CancellationReason = reader.IsDBNull(reader.GetOrdinal("CancellationReason"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("CancellationReason")),
+                    PaymentMethod = reader.IsDBNull(reader.GetOrdinal("PaymentMethod"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("PaymentMethod")),
+                    PaymentId = reader.IsDBNull(reader.GetOrdinal("PaymentId"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("PaymentId")),
+                    PaymentDate = reader.IsDBNull(reader.GetOrdinal("PaymentDate"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("PaymentDate")),
+                    Rating = reader.IsDBNull(reader.GetOrdinal("Rating"))
+                        ? null
+                        : reader.GetInt32(reader.GetOrdinal("Rating")),
+                    Review = reader.IsDBNull(reader.GetOrdinal("Review"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("Review")),
+                    ReviewedAt = reader.IsDBNull(reader.GetOrdinal("ReviewedAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("ReviewedAt")),
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error mapping booking response: {Message}", ex.Message);
+                throw;
+            }
         }
 
         public async Task<bool> UpdateBookingLastMessage(

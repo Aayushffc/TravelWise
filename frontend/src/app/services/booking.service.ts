@@ -3,6 +3,17 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 
+export interface CreateBookingDTO {
+  agencyId: string;
+  dealId: number;
+  numberOfPeople: number;
+  email: string;
+  phoneNumber: string;
+  bookingMessage: string;
+  travelDate?: Date;
+  specialRequirements?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -11,12 +22,12 @@ export class BookingService {
 
   constructor(private http: HttpClient) {}
 
-  createBooking(bookingData: any): Observable<any> {
-    return this.http.post(this.apiUrl, bookingData);
+  createBooking(bookingData: CreateBookingDTO): Observable<any> {
+    return this.http.post(`${this.apiUrl}/create`, bookingData);
   }
 
   getAgencyBookings(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/agency-bookings`);
+    return this.http.get(`${this.apiUrl}/my-bookings`);
   }
 
   getBookingDetails(id: number): Observable<any> {

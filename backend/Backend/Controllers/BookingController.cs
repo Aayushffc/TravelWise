@@ -77,6 +77,11 @@ namespace TravelWiseAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating booking");
+                // Return the specific error message if it's about duplicate booking
+                if (ex.Message.Contains("already made an inquiry"))
+                {
+                    return BadRequest(new { message = ex.Message });
+                }
                 return StatusCode(
                     500,
                     new { message = "An error occurred while creating the booking" }
@@ -91,17 +96,37 @@ namespace TravelWiseAPI.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
+                {
+                    _logger.LogWarning("User not found while getting bookings");
                     return Unauthorized(new { message = "User not found" });
+                }
 
+                _logger.LogInformation("Getting bookings for user {UserId}", user.Id);
                 var bookings = await _dbHelper.GetBookings(user.Id);
+
+                if (bookings == null)
+                {
+                    _logger.LogWarning("No bookings found for user {UserId}", user.Id);
+                    return Ok(new List<BookingResponseDTO>());
+                }
+
+                _logger.LogInformation(
+                    "Successfully retrieved {Count} bookings for user {UserId}",
+                    bookings.Count(),
+                    user.Id
+                );
                 return Ok(bookings);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting bookings");
+                _logger.LogError(ex, "Error getting bookings: {Message}", ex.Message);
                 return StatusCode(
                     500,
-                    new { message = "An error occurred while getting bookings" }
+                    new
+                    {
+                        message = "An error occurred while getting bookings",
+                        details = ex.Message,
+                    }
                 );
             }
         }

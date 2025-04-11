@@ -8,7 +8,7 @@ import { DealResponseDto } from '../../models/deal.model';
 import { LocationService } from '../../services/location.service';
 import { AuthService } from '../../services/auth.service';
 import { AgencyProfileService } from '../../services/agency-profile.service';
-import { BookingService } from '../../services/booking.service';
+import { BookingService, CreateBookingDTO } from '../../services/booking.service';
 import { firstValueFrom } from 'rxjs';
 import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { SearchCountryField, CountryISO, PhoneNumberFormat } from 'ngx-intl-tel-input';
@@ -68,6 +68,8 @@ export class DealDetailsComponent implements OnInit {
   showFeatures = false;
   showTransfers = false;
   showEnquiryPopup = false;
+  successMessage = '';
+  hasExistingInquiry = false;
 
   // Phone input configuration
   SearchCountryField = SearchCountryField;
@@ -82,15 +84,15 @@ export class DealDetailsComponent implements OnInit {
   autoCountrySelect = true;
   numberFormat = PhoneNumberFormat.International;
 
-  enquiryForm: EnquiryForm = {
+  enquiryForm = {
     firstName: '',
     lastName: '',
     email: '',
-    phoneNumber: '',
     phoneNumberObject: null,
-    travelDate: '',
-    travelerCount: 2,
-    message: ''
+    travelDate: null,
+    travelerCount: 1,
+    message: '',
+    specialRequirements: ''
   };
 
   get includedFeatures(): string[] {
@@ -285,44 +287,42 @@ export class DealDetailsComponent implements OnInit {
     this.showTransfers = !this.showTransfers;
   }
 
-  async submitEnquiry() {
-    try {
-      if (!this.deal) return;
+  submitEnquiry() {
+    if (!this.deal) return;
 
-      if (!this.isLoggedIn) {
-        this.router.navigate(['/login']);
-        return;
+    const bookingData: CreateBookingDTO = {
+      agencyId: this.deal.userId || '',
+      dealId: this.deal.id,
+      numberOfPeople: this.enquiryForm.travelerCount,
+      email: this.enquiryForm.email,
+      phoneNumber: this.enquiryForm.phoneNumberObject ? (this.enquiryForm.phoneNumberObject as any).internationalNumber || '' : '',
+      bookingMessage: this.enquiryForm.message,
+      travelDate: this.enquiryForm.travelDate ? new Date(this.enquiryForm.travelDate) : undefined,
+      specialRequirements: this.enquiryForm.specialRequirements
+    };
+
+    this.bookingService.createBooking(bookingData).subscribe({
+      next: (response) => {
+        this.showEnquiryPopup = false;
+        this.successMessage = 'Booking request sent successfully!';
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      },
+      error: (error) => {
+        console.error('Error creating booking:', error);
+        if (error.error?.message?.includes('already made an inquiry')) {
+          this.hasExistingInquiry = true;
+          this.error = error.error.message;
+          this.showEnquiryPopup = false;
+        } else {
+          this.error = 'Failed to send booking request. Please try again.';
+        }
+        setTimeout(() => {
+          this.error = '';
+          this.hasExistingInquiry = false;
+        }, 5000);
       }
-
-      // Get the phone number in international format
-      const phoneNumber = this.enquiryForm.phoneNumberObject?.internationalNumber ||
-                         this.enquiryForm.phoneNumber;
-
-      const bookingData = {
-        agencyId: this.deal.userId,
-        dealId: this.deal.id,
-        numberOfPeople: this.enquiryForm.travelerCount,
-        travelDate: this.enquiryForm.travelDate,
-        specialRequirements: this.enquiryForm.message,
-        notes: `Enquiry from ${this.enquiryForm.firstName} ${this.enquiryForm.lastName}\nEmail: ${this.enquiryForm.email}\nPhone: ${phoneNumber}`
-      };
-
-      await firstValueFrom(this.bookingService.createBooking(bookingData));
-      this.showEnquiryPopup = false;
-      this.enquiryForm = {
-        firstName: '',
-        lastName: '',
-        email: '',
-        phoneNumber: '',
-        phoneNumberObject: null,
-        travelDate: '',
-        travelerCount: 2,
-        message: ''
-      };
-      alert('Your enquiry has been submitted successfully!');
-    } catch (error) {
-      console.error('Error submitting enquiry:', error);
-      alert('There was an error submitting your enquiry. Please try again.');
-    }
+    });
   }
 }

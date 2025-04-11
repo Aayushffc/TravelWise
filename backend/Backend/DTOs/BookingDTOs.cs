@@ -72,6 +72,22 @@ namespace Backend.DTOs
         public bool HasUnreadMessages { get; set; }
         public decimal? TotalAmount { get; set; }
         public string? PaymentStatus { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? BookingMessage { get; set; }
+        public string? LastMessageBy { get; set; }
+        public DateTime? AcceptedAt { get; set; }
+        public DateTime? RejectedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        public DateTime? CancelledAt { get; set; }
+        public string? RejectionReason { get; set; }
+        public string? CancellationReason { get; set; }
+        public string? PaymentMethod { get; set; }
+        public string? PaymentId { get; set; }
+        public DateTime? PaymentDate { get; set; }
+        public int? Rating { get; set; }
+        public string? Review { get; set; }
+        public DateTime? ReviewedAt { get; set; }
     }
 
     public class ChatMessageResponseDTO
