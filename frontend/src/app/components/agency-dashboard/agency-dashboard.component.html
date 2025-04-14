@@ -93,7 +93,7 @@
               </div>
               <div>
                 <p class="text-sm text-gray-500">Total Bookings</p>
-                <p class="text-2xl font-semibold text-gray-900">{{ profile?.totalBookings }}</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ bookings.length || 0 }}</p>
               </div>
             </div>
           </div>
@@ -314,65 +314,142 @@
       </div>
 
       <!-- Bookings Section -->
-      <div *ngIf="activeTab === 'bookings'" class="space-y-6">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-6">Recent Bookings</h2>
-
-          <div *ngIf="bookings.length === 0" class="text-center py-12">
-            <p class="text-gray-600">No bookings yet.</p>
-          </div>
-
-          <div *ngIf="bookings.length > 0" class="space-y-4">
-            <div *ngFor="let booking of bookings" class="border rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div class="flex justify-between items-start">
-                <div>
-                  <h3 class="font-medium text-gray-800">Booking #{{ booking.id }}</h3>
-                  <p class="text-sm text-gray-600">From: {{ booking.userName }}</p>
-                </div>
-                <span
-                  class="px-2 py-1 text-xs rounded-full"
-                  [ngClass]="{
-                    'bg-yellow-100 text-yellow-800': booking.status === 'Pending',
-                    'bg-green-100 text-green-800': booking.status === 'Accepted',
-                    'bg-red-100 text-red-800': booking.status === 'Rejected',
-                    'bg-gray-100 text-gray-800': booking.status === 'Completed'
-                  }"
-                >
-                  {{ booking.status }}
-                </span>
+      <div *ngIf="activeTab === 'bookings'" class="space-y-8">
+        <!-- Booking Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-4">
+              <div class="p-3 bg-blue-100 rounded-full">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
               </div>
+              <div>
+                <p class="text-sm text-gray-500">Total Bookings</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ bookings.length || 0 }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-4">
+              <div class="p-3 bg-green-100 rounded-full">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Confirmed</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ confirmedBookingsCount }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-4">
+              <div class="p-3 bg-yellow-100 rounded-full">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Pending</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ pendingBookingsCount }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-4">
+              <div class="p-3 bg-red-100 rounded-full">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Cancelled</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ cancelledBookingsCount }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-gray-600">Deal: {{ booking.dealName }}</p>
-                  <p class="text-sm text-gray-600">Date: {{ booking.date | date }}</p>
-                  <p class="text-sm text-gray-600">Number of People: {{ booking.numberOfPeople }}</p>
-                  <p class="text-sm text-gray-600">Email: {{ booking.email }}</p>
-                  <p class="text-sm text-gray-600">Phone: {{ booking.phoneNumber }}</p>
-                  <p class="text-sm text-gray-600">Message: {{ booking.bookingMessage }}</p>
+        <!-- Booking List -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Recent Bookings</h2>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <div *ngFor="let booking of bookings" class="p-6 hover:bg-gray-50 transition-colors">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-4">
+                  <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-medium text-gray-900">{{ booking.userName }}</h3>
+                    <p class="text-sm text-gray-500">Booking #{{ booking.id }}</p>
+                  </div>
                 </div>
-                <div class="flex justify-end space-x-2">
-                  <button
-                    *ngIf="booking.status === 'Pending'"
-                    (click)="acceptBooking(booking.id)"
-                    class="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    *ngIf="booking.status === 'Pending'"
-                    (click)="rejectBooking(booking.id)"
-                    class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    (click)="viewChat(booking.id)"
-                    class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-                  >
-                    Chat
-                  </button>
+                <div class="flex flex-col md:items-end space-y-2">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                    [ngClass]="{
+                      'bg-green-100 text-green-800': booking.status === 'Confirmed',
+                      'bg-yellow-100 text-yellow-800': booking.status === 'Pending',
+                      'bg-red-100 text-red-800': booking.status === 'Cancelled'
+                    }">
+                    {{ booking.status }}
+                  </span>
+                  <p class="text-sm text-gray-500">{{ booking.createdAt | date:'medium' }}</p>
                 </div>
+              </div>
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex items-center space-x-2">
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <span class="text-sm text-gray-600">{{ booking.travelDate | date:'mediumDate' }}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-sm text-gray-600">{{ booking.numberOfPeople }} people</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-sm text-gray-600">${{ booking.totalAmount || '0' }}</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <p class="text-sm text-gray-600 mb-2">Special Requirements: {{ booking.specialRequirements || 'None' }}</p>
+                <p class="text-sm text-gray-600">Booking Message: {{ booking.bookingMessage || 'No message' }}</p>
+              </div>
+              <div class="mt-4 flex space-x-3">
+                <button
+                  *ngIf="booking.status === 'Pending'"
+                  (click)="acceptBooking(booking.id)"
+                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Accept
+                </button>
+                <button
+                  *ngIf="booking.status === 'Pending'"
+                  (click)="rejectBooking(booking.id)"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Reject
+                </button>
+                <button
+                  (click)="viewChat(booking.id)"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Chat
+                </button>
               </div>
             </div>
           </div>

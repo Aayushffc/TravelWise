@@ -106,4 +106,23 @@ namespace Backend.DTOs
         public string? FileName { get; set; }
         public long? FileSize { get; set; }
     }
+
+    public class UserBookingResponseDTO
+    {
+        public int Id { get; set; }
+        public string AgencyId { get; set; }
+        public string AgencyName { get; set; }
+        public int DealId { get; set; }
+        public string Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public int NumberOfPeople { get; set; }
+        public DateTime? TravelDate { get; set; }
+        public string SpecialRequirements { get; set; }
+        public string LastMessage { get; set; }
+        public DateTime? LastMessageAt { get; set; }
+        public bool HasUnreadMessages { get; set; }
+        public decimal? TotalAmount { get; set; }
+        public string PaymentStatus { get; set; }
+    }
 }

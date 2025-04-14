@@ -1714,6 +1714,92 @@ namespace Backend.Helper
             }
         }
 
+        public async Task<IEnumerable<UserBookingResponseDTO>> GetUserBookings(string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT 
+                        b.Id,
+                        b.AgencyId,
+                        a.FullName as AgencyName,
+                        b.DealId,
+                        b.Status,
+                        b.CreatedAt,
+                        b.UpdatedAt,
+                        b.NumberOfPeople,
+                        b.TravelDate,
+                        b.SpecialRequirements,
+                        b.LastMessage,
+                        b.LastMessageAt,
+                        b.HasUnreadMessages,
+                        b.TotalAmount,
+                        b.PaymentStatus
+                    FROM Bookings b
+                    INNER JOIN AspNetUsers a ON b.AgencyId = a.Id
+                    WHERE b.UserId = @UserId
+                    ORDER BY b.CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                var bookings = new List<UserBookingResponseDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    bookings.Add(
+                        new UserBookingResponseDTO
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
+                            AgencyName = reader.GetString(reader.GetOrdinal("AgencyName")),
+                            DealId = reader.GetInt32(reader.GetOrdinal("DealId")),
+                            Status = reader.GetString(reader.GetOrdinal("Status")),
+                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                                ? null
+                                : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                            NumberOfPeople = reader.GetInt32(reader.GetOrdinal("NumberOfPeople")),
+                            TravelDate = reader.IsDBNull(reader.GetOrdinal("TravelDate"))
+                                ? null
+                                : reader.GetDateTime(reader.GetOrdinal("TravelDate")),
+                            SpecialRequirements = reader.IsDBNull(
+                                reader.GetOrdinal("SpecialRequirements")
+                            )
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("SpecialRequirements")),
+                            LastMessage = reader.IsDBNull(reader.GetOrdinal("LastMessage"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("LastMessage")),
+                            LastMessageAt = reader.IsDBNull(reader.GetOrdinal("LastMessageAt"))
+                                ? null
+                                : reader.GetDateTime(reader.GetOrdinal("LastMessageAt")),
+                            HasUnreadMessages = reader.GetBoolean(
+                                reader.GetOrdinal("HasUnreadMessages")
+                            ),
+                            TotalAmount = reader.IsDBNull(reader.GetOrdinal("TotalAmount"))
+                                ? null
+                                : reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                            PaymentStatus = reader.IsDBNull(reader.GetOrdinal("PaymentStatus"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("PaymentStatus")),
+                        }
+                    );
+                }
+
+                return bookings;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user bookings");
+                throw;
+            }
+        }
+
         #endregion
 
         #region Chat Message Operations

@@ -87,6 +87,22 @@ export class AgencyDashboardComponent implements OnInit {
   newTestimonial: Testimonial = { name: '', title: '', message: '' };
   availablePlatforms = ['Instagram', 'Facebook', 'LinkedIn', 'Twitter', 'YouTube'];
 
+  // Add computed properties for booking counts
+  get confirmedBookingsCount(): number {
+    if (!this.bookings || !Array.isArray(this.bookings)) return 0;
+    return this.bookings.filter(b => b.status === 'Confirmed').length;
+  }
+
+  get pendingBookingsCount(): number {
+    if (!this.bookings || !Array.isArray(this.bookings)) return 0;
+    return this.bookings.filter(b => b.status === 'Pending').length;
+  }
+
+  get cancelledBookingsCount(): number {
+    if (!this.bookings || !Array.isArray(this.bookings)) return 0;
+    return this.bookings.filter(b => b.status === 'Cancelled').length;
+  }
+
   constructor(
     private agencyProfileService: AgencyProfileService,
     private bookingService: BookingService,
@@ -138,8 +154,18 @@ export class AgencyDashboardComponent implements OnInit {
   private async loadBookings() {
     try {
       const response = await firstValueFrom(this.bookingService.getAgencyBookings());
-      this.bookings = response || [];
-      console.log('Loaded bookings:', this.bookings);
+      console.log('Raw bookings response:', response);
+
+      if (response && Array.isArray(response)) {
+        this.bookings = response;
+      } else if (response && response.data && Array.isArray(response.data)) {
+        this.bookings = response.data;
+      } else {
+        console.warn('Unexpected bookings response format:', response);
+        this.bookings = [];
+      }
+
+      console.log('Processed bookings:', this.bookings);
     } catch (error) {
       console.error('Error loading bookings:', error);
       this.bookings = [];

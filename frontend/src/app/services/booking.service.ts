@@ -61,4 +61,8 @@ export class BookingService {
   markMessageAsRead(messageId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/messages/${messageId}/read`, {});
   }
+
+  getUserBookings(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/user-bookings`);
+  }
 }

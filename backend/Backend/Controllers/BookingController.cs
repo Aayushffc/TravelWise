@@ -443,5 +443,47 @@ namespace TravelWiseAPI.Controllers
                 );
             }
         }
+
+        [HttpGet("user-bookings")]
+        public async Task<IActionResult> GetUserBookings()
+        {
+            try
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found while getting user bookings");
+                    return Unauthorized(new { message = "User not found" });
+                }
+
+                _logger.LogInformation("Getting bookings for user {UserId}", user.Id);
+                var bookings = await _dbHelper.GetUserBookings(user.Id);
+
+                if (bookings == null)
+                {
+                    _logger.LogWarning("No bookings found for user {UserId}", user.Id);
+                    return Ok(new List<UserBookingResponseDTO>());
+                }
+
+                _logger.LogInformation(
+                    "Successfully retrieved {Count} bookings for user {UserId}",
+                    bookings.Count(),
+                    user.Id
+                );
+                return Ok(bookings);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user bookings: {Message}", ex.Message);
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        message = "An error occurred while getting user bookings",
+                        details = ex.Message,
+                    }
+                );
+            }
+        }
     }
 }

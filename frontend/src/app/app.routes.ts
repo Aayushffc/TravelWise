@@ -21,6 +21,7 @@ import { AgencyDealDetailsComponent } from './components/agency-deal-details/age
 import { DealDetailsComponent } from './components/deal-details/deal-details.component';
 import { SearchComponent } from './components/search/search.component';
 import { AgencyDashboardComponent } from './components/agency-dashboard/agency-dashboard.component';
+import { BookingComponent } from './components/booking/booking.component';
 
 export const routes: Routes = [
   {
@@ -86,7 +87,7 @@ export const routes: Routes = [
   },
   {
     path: 'bookings',
-    component: ProfileComponent,
+    component: BookingComponent,
     canActivate: [AuthGuard]
   },
   {
