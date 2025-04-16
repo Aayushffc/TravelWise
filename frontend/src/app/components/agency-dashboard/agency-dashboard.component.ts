@@ -154,7 +154,6 @@ export class AgencyDashboardComponent implements OnInit {
   private async loadBookings() {
     try {
       const response = await firstValueFrom(this.bookingService.getAgencyBookings());
-      console.log('Raw bookings response:', response);
 
       if (response && Array.isArray(response)) {
         this.bookings = response;
@@ -165,7 +164,6 @@ export class AgencyDashboardComponent implements OnInit {
         this.bookings = [];
       }
 
-      console.log('Processed bookings:', this.bookings);
     } catch (error) {
       console.error('Error loading bookings:', error);
       this.bookings = [];

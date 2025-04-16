@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+
+declare var google: any;
 
 @Component({
   selector: 'app-login',
@@ -12,7 +14,7 @@ import { RouterLink } from '@angular/router';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
   email: string = '';
   password: string = '';
   errorMessage: string = '';
@@ -22,6 +24,65 @@ export class LoginComponent {
     private authService: AuthService,
     private router: Router
   ) {}
+
+  ngAfterViewInit() {
+    // Wait for the Google script to load
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: '334522416360-h3ipni5mvi5g9pnds92ts48j32k7stpr.apps.googleusercontent.com',
+        callback: this.handleCredentialResponse.bind(this)
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById('google-btn'),
+        {
+          theme: 'outline',
+          size: 'large',
+          width: '100%',
+          text: 'continue_with'
+        }
+      );
+    } else {
+      console.error('Google Identity Services script not loaded');
+    }
+  }
+
+  handleCredentialResponse(response: any) {
+    if (response.credential) {
+      this.authService.googleLogin(response.credential).subscribe({
+        next: (res) => {
+          // Save the token and user info
+          // this.authService.saveToken(res);
+
+          // Check email confirmation using the raw response structure
+          if (res.user?.emailConfirmed === false) {
+            this.router.navigate(['/verify-email'], {
+              queryParams: { email: res.user?.email }
+            });
+          } else {
+            // Get user role and then navigate (uses token saved within googleLogin)
+            this.authService.getUserRole().subscribe({
+              next: (role) => {
+                console.log('User role:', role);
+                // Navigate to home and force reload
+                this.router.navigateByUrl('/home', { skipLocationChange: true }).then(() => {
+                  window.location.href = '/home';
+                });
+              },
+              error: (err) => {
+                console.error('Error getting user role:', err);
+                this.router.navigate(['/home']);
+              }
+            });
+          }
+        },
+        error: (err) => {
+          console.error('Backend login error:', err);
+          this.errorMessage = 'Google login failed. Please try again.';
+        }
+      });
+    }
+  }
 
   login() {
     if (!this.email || !this.password) {
@@ -73,11 +134,6 @@ export class LoginComponent {
           this.isLoading = false;
         }
       });
-  }
-
-  // Add Google login method
-  loginWithGoogle() {
-    this.authService.loginWithGoogle();
   }
 
   forgotPassword() {

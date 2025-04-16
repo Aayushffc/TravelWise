@@ -124,31 +124,6 @@ builder
                 return context.Response.WriteAsync(result);
             },
         };
-    })
-    .AddGoogle(options =>
-    {
-        var clientId =
-            builder.Configuration["Authentication:Google:ClientId"]
-            ?? throw new InvalidOperationException("Google ClientId is missing in configuration.");
-        var clientSecret =
-            builder.Configuration["Authentication:Google:ClientSecret"]
-            ?? throw new InvalidOperationException(
-                "Google ClientSecret is missing in configuration."
-            );
-
-        options.ClientId = clientId;
-        options.ClientSecret = clientSecret;
-        options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.SaveTokens = true;
-        options.CallbackPath = "/api/auth/google-callback";
-
-        // Explicitly configure correlation cookie
-        options.CorrelationCookie.Name = "AspNetCore.Correlation.Google";
-        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // HTTP locally
-        options.CorrelationCookie.SameSite = SameSiteMode.None; // Cross-site
-        options.CorrelationCookie.HttpOnly = true;
-        options.CorrelationCookie.IsEssential = true;
-        options.CorrelationCookie.Path = "/"; // Ensure it's available site-wide
     });
 
 builder.Services.AddHealthChecks();

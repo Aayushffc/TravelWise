@@ -6,6 +6,7 @@ using Backend.DBContext;
 using Backend.DTOs.Auth;
 using Backend.Helper;
 using Backend.Models.Auth;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -154,131 +155,6 @@ namespace TravelWiseAPI.Controllers
             );
         }
 
-        [HttpGet("google-login")]
-        public IActionResult GoogleLogin()
-        {
-            var returnUrl = _configuration["FrontendUrl"] + "/auth/callback";
-            var properties = new AuthenticationProperties { RedirectUri = returnUrl };
-            return Challenge(properties, "Google");
-        }
-
-        [HttpGet("google-callback")]
-        public async Task<IActionResult> GoogleCallback(string returnUrl)
-        {
-            try
-            {
-                var info = await _signInManager.GetExternalLoginInfoAsync();
-                if (info == null)
-                {
-                    return Redirect(
-                        $"{_configuration["FrontendUrl"]}/auth/callback?error=external_login_failed"
-                    );
-                }
-
-                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-                if (string.IsNullOrEmpty(email))
-                {
-                    return BadRequest("Could not retrieve email from Google login.");
-                }
-
-                // Try to sign in with existing account
-                var result = await _signInManager.ExternalLoginSignInAsync(
-                    info.LoginProvider,
-                    info.ProviderKey,
-                    isPersistent: false
-                );
-
-                ApplicationUser user;
-
-                if (result.Succeeded)
-                {
-                    // Existing user login
-                    user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == email);
-                    if (user == null)
-                    {
-                        // If somehow FirstOrDefaultAsync returned null but ExternalLoginSignInAsync succeeded,
-                        // we'll just create a new user
-                        var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
-                        var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
-                        var fullName = $"{firstName} {lastName}".Trim();
-
-                        user = new ApplicationUser
-                        {
-                            UserName = email,
-                            Email = email,
-                            FirstName = firstName,
-                            LastName = lastName,
-                            FullName = fullName,
-                            EmailConfirmed = true,
-                        };
-
-                        var createResult = await _userManager.CreateAsync(user);
-                        if (!createResult.Succeeded)
-                        {
-                            return BadRequest("Failed to create user from Google login.");
-                        }
-
-                        await _dbHelper.AddUserRole(user);
-                    }
-                }
-                else
-                {
-                    // New user, create an account
-                    var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
-                    var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
-                    var fullName = $"{firstName} {lastName}".Trim();
-
-                    user = new ApplicationUser
-                    {
-                        UserName = email,
-                        Email = email,
-                        FirstName = firstName,
-                        LastName = lastName,
-                        FullName = fullName,
-                        EmailConfirmed = true,
-                    };
-
-                    var createResult = await _userManager.CreateAsync(user);
-                    if (!createResult.Succeeded)
-                    {
-                        return BadRequest("Failed to create user from Google login.");
-                    }
-
-                    // Add user to default role
-                    await _dbHelper.AddUserRole(user);
-
-                    // Add the external login provider to the user
-                    var addLoginResult = await _userManager.AddLoginAsync(user, info);
-                    if (!addLoginResult.Succeeded)
-                    {
-                        return BadRequest("Failed to add Google login information to user.");
-                    }
-                }
-
-                // Generate token
-                var token = await _dbHelper.GenerateJwtToken(user);
-
-                // Set the token as a cookie
-                Response.Cookies.Append(
-                    "ACCESS_TOKEN",
-                    token,
-                    new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = false,
-                        SameSite = SameSiteMode.Lax,
-                        Expires = DateTimeOffset.UtcNow.AddDays(7),
-                    }
-                );
-
-                return Redirect($"{returnUrl}?success=true");
-            }
-            catch (Exception ex)
-            {
-                return Redirect($"{returnUrl}?error=authentication_failed");
-            }
-        }
-
         [HttpPost("request-verification-code")]
         public async Task<IActionResult> RequestVerificationCode([FromBody] EmailRequestDTO model)
         {
@@ -328,6 +204,64 @@ namespace TravelWiseAPI.Controllers
                     500,
                     "Failed to send verification email. Please try again later."
                 );
+            }
+        }
+
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDTO model)
+        {
+            try
+            {
+                var payload = await GoogleJsonWebSignature.ValidateAsync(
+                    model.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { _configuration["Authentication:Google:ClientId"] },
+                    }
+                );
+
+                var user = await _userManager.FindByEmailAsync(payload.Email);
+                if (user == null)
+                {
+                    // Register a new user
+                    user = new ApplicationUser
+                    {
+                        Email = payload.Email,
+                        UserName = payload.Email,
+                        FirstName = payload.GivenName ?? "Google",
+                        LastName = payload.FamilyName ?? "User",
+                        FullName = payload.Name,
+                        EmailConfirmed = true,
+                    };
+
+                    var result = await _userManager.CreateAsync(user);
+                    if (!result.Succeeded)
+                        return BadRequest(result.Errors);
+
+                    await _dbHelper.AddUserRole(user); // Add default role
+                }
+
+                var token = await _dbHelper.GenerateJwtToken(user);
+
+                return Ok(
+                    new
+                    {
+                        token,
+                        user = new
+                        {
+                            user.Id,
+                            user.Email,
+                            user.FullName,
+                            user.FirstName,
+                            user.LastName,
+                            user.EmailConfirmed,
+                        },
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized("Google token validation failed.");
             }
         }
 

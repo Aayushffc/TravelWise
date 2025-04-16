@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
+import { SocialAuthService, GoogleLoginProvider, SocialUser } from '@abacritt/angularx-social-login';
+
 
 // Add this type definition
 type PasswordRequirementKey = 'minLength' | 'hasNumber' | 'hasSpecial' | 'hasUppercase' | 'hasLowercase';
@@ -45,7 +47,8 @@ export class RegisterComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private socialAuthService: SocialAuthService
   ) {}
 
   // Add this method to check password requirements
@@ -142,8 +145,23 @@ export class RegisterComponent {
     });
   }
 
-  // Add Google login method
-  loginWithGoogle() {
-    this.authService.loginWithGoogle();
+  signInWithGoogle(): void {
+    this.socialAuthService.signIn(GoogleLoginProvider.PROVIDER_ID).then((user: SocialUser) => {
+      this.authService.googleLogin(user.idToken).subscribe({
+        next: (res) => {
+          if (res.emailConfirmed === false) {
+            this.router.navigate(['/verify-email'], {
+              queryParams: { email: res.email }
+            });
+          } else {
+            this.authService.navigateBasedOnRole();
+          }
+        },
+        error: (err) => {
+          this.errorMessage = 'Google login failed. Please try again.';
+          console.error(err);
+        }
+      });
+    });
   }
 }

@@ -118,21 +118,27 @@ export class AuthService {
     );
   }
 
-  // Google OAuth Login
-  loginWithGoogle(): void {
-    // Redirect to the Google login URL on the backend
-    window.location.href = `${this.apiUrl}/google-login`;
-  }
-
-  // Handle OAuth Callback
-  handleAuthCallback(token: string): void {
-    const authData: AuthResponse = {
-      id: '',  // This will be extracted from the token
-      token,
-      email: '',  // This will be extracted from the token
-    };
-    this.saveToken(authData);
-    this.startRefreshTokenTimer();
+  googleLogin(idToken: string) {
+    return this.http.post<any>(`${this.apiUrl}/google-login`, { idToken }).pipe(
+      tap(response => {
+        // Create a proper AuthResponse object from the Google login response
+        const authResponse: AuthResponse = {
+          id: response.user?.id || '',
+          token: response.token,
+          email: response.user?.email || '',
+          firstName: response.user?.firstName,
+          lastName: response.user?.lastName,
+          fullName: response.user?.fullName,
+          emailConfirmed: response.user?.emailConfirmed || true
+        };
+        this.saveToken(authResponse);
+        this.startRefreshTokenTimer();
+      }),
+      catchError(error => {
+        console.error('Google login error', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Refresh token

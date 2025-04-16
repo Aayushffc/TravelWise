@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { HomeComponent } from './components/home/home.component';
-import { AuthCallbackComponent } from './components/auth/auth-callback.component';
 import { VerifyEmailComponent } from './components/verify-email/verify-email.component';
 import { LocationDetailsComponent } from './components/location-details/location-details.component';
 import { FAQComponent } from './components/faq/faq.component';
@@ -104,10 +103,6 @@ export const routes: Routes = [
     path: 'passengers',
     component: ProfileComponent,
     canActivate: [AuthGuard]
-  },
-  {
-    path: 'auth/callback',
-    component: AuthCallbackComponent
   },
   {
     path: 'verify-email',

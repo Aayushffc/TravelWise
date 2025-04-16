@@ -1480,7 +1480,7 @@ namespace Backend.Helper
 
                 const string sql =
                     @"
-                    SELECT b.*, u.FullName as UserName, a.FullName as AgencyName
+                    SELECT b.*, u.FullName as UserFullName, a.FullName as AgencyName
                     FROM Bookings b
                     INNER JOIN AspNetUsers u ON b.UserId = u.Id
                     INNER JOIN AspNetUsers a ON b.AgencyId = a.Id
@@ -1633,7 +1633,6 @@ namespace Backend.Helper
                     LastMessageBy = reader.IsDBNull(reader.GetOrdinal("LastMessageBy"))
                         ? null
                         : reader.GetString(reader.GetOrdinal("LastMessageBy")),
-                    // Additional fields from Booking model
                     AcceptedAt = reader.IsDBNull(reader.GetOrdinal("AcceptedAt"))
                         ? null
                         : reader.GetDateTime(reader.GetOrdinal("AcceptedAt")),

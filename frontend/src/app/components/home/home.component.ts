@@ -73,20 +73,46 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadUserInfo();
-    this.loadLocations();
+    this.checkAuthAndLoadData();
+  }
+
+  checkAuthAndLoadData(): void {
+    this.isAuthenticated = this.authService.isAuthenticated();
+
+    if (this.isAuthenticated) {
+      this.loadUserInfo();
+      this.loadLocations();
+    } else {
+      this.router.navigate(['/login']);
+    }
   }
 
   loadUserInfo(): void {
-    this.isAuthenticated = this.authService.isAuthenticated();
     const user = this.authService.getCurrentUser();
+    console.log('Current user from auth service:', user);
+
     if (user) {
-      // Use email as fallback if fullName is not available
-      if (user.fullName) {
-        this.userName = user.fullName.split(' ')[0];
-      } else {
-        this.userName = user.email.split('@')[0];
+      // Handle the user data based on the response structure
+      let userName = 'User';
+
+      if (user.firstName) {
+        userName = user.firstName;
+        console.log('Using firstName:', userName);
       }
+      // If no firstName, use fullName if available
+      else if (user.fullName) {
+        userName = user.fullName;
+      }
+      // If no firstName or fullName, try to construct from firstName and lastName
+      else if (user.firstName && user.lastName) { // This case might be redundant now but kept for safety
+        userName = `${user.firstName} ${user.lastName}`;
+      }
+      // If no name available, use email
+      else if (user.email) {
+        userName = user.email.split('@')[0];
+      }
+
+      this.userName = userName;
 
       // Get user role and profile in parallel
       forkJoin({
@@ -106,9 +132,15 @@ export class HomeComponent implements OnInit {
         next: (data) => {
           this.userRole = data.role;
           this.isEmailVerified = data.profile.emailConfirmed;
+          console.log('User role and profile updated:', { role: this.userRole, emailVerified: this.isEmailVerified });
           this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error in forkJoin:', error);
         }
       });
+    } else {
+      console.log('No user found in auth service');
     }
   }
 

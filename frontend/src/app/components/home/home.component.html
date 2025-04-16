@@ -179,7 +179,7 @@
               <!-- Location Image with Overlay -->
               <div class="relative h-36 w-full location-image-container">
                 <img
-                  [src]="location.imageUrl || 'assets/placeholder-location.jpg'"
+                  [src]="location.imageUrl || 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'"
                   [alt]="location.name"
                   class="location-image"
                   loading="lazy"
@@ -317,7 +317,7 @@
                  (click)="viewLocation(location.id)"
                  class="group cursor-pointer">
                 <div class="relative rounded-sm overflow-hidden" style="padding-top: 60%;">
-                  <img [src]="location.imageUrl || 'assets/placeholder-location.jpg'"
+                  <img [src]="location.imageUrl || 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'"
                        [alt]="location.name"
                        class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300">
                   <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-all"></div>

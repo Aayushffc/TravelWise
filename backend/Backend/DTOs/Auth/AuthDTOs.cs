@@ -26,3 +26,7 @@ public class ResetPasswordDTO
     [StringLength(100, MinimumLength = 6)]
     public string NewPassword { get; set; }
 }
+public class GoogleLoginDTO
+{
+    public string IdToken { get; set; } = default!;
+}
