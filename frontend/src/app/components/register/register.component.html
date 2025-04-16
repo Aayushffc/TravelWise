@@ -6,27 +6,22 @@
     </div>
 
     <!-- Google Sign Up Button -->
-    <div class="mt-6">
-      <div class="mt-4 text-center">
-        <button
-          (click)="signInWithGoogle()"
-          class="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="h-5 w-5">
-          Continue with Google
-        </button>
-      </div>
-
-      <div class="relative mt-6">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300"></div>
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white text-gray-500">Or continue with email</span>
-        </div>
-      </div>
+    <div class="mt-4 text-center">
+      <div id="google-signup-btn" class="w-full flex justify-center items-center min-h-[42px]"></div>
     </div>
 
+    <!-- Divider -->
+    <div class="relative my-6">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-gray-300"></div>
+      </div>
+      <div class="relative flex justify-center text-sm">
+        <span class="px-2 bg-white text-gray-500">
+          Or sign up with
+        </span>
+      </div>
+    </div>
+    
     <!-- Step 1: Basic Information -->
     <div *ngIf="currentStep === 1" class="mt-6">
       <form (ngSubmit)="nextStep()">

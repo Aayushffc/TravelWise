@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { SocialAuthService, GoogleLoginProvider, SocialUser } from '@abacritt/angularx-social-login';
 
+declare var google: any;
 
 // Add this type definition
 type PasswordRequirementKey = 'minLength' | 'hasNumber' | 'hasSpecial' | 'hasUppercase' | 'hasLowercase';
@@ -16,7 +17,7 @@ type PasswordRequirementKey = 'minLength' | 'hasNumber' | 'hasSpecial' | 'hasUpp
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit, AfterViewInit {
   currentStep: number = 1;
   firstName: string = '';
   lastName: string = '';
@@ -26,6 +27,8 @@ export class RegisterComponent {
   userName: string = '';
   errorMessage: string = '';
   isLoading: boolean = false;
+  passwordVisible: boolean = false;
+  confirmPasswordVisible: boolean = false;
 
   // Add these new properties
   passwordRequirements: Record<PasswordRequirementKey, boolean> = {
@@ -48,8 +51,74 @@ export class RegisterComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private socialAuthService: SocialAuthService
+    private socialAuthService: SocialAuthService,
+    private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnInit(): void {
+    // Initialization logic if needed
+  }
+
+  ngAfterViewInit() {
+    // Wait for the Google script to load
+    if (typeof google !== 'undefined') {
+      try {
+        google.accounts.id.initialize({
+          client_id: '334522416360-h3ipni5mvi5g9pnds92ts48j32k7stpr.apps.googleusercontent.com', // Use your actual client ID
+          callback: this.handleCredentialResponse.bind(this)
+        });
+
+        google.accounts.id.renderButton(
+          document.getElementById('google-signup-btn'),
+          {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            text: 'signup_with' // Changed text to indicate sign up
+          }
+        );
+      } catch (error) {
+        console.error('Error initializing Google Identity Services:', error);
+        this.errorMessage = 'Could not initialize Google Sign-Up.';
+        this.cdr.detectChanges(); // Update view with error message
+      }
+    } else {
+      console.error('Google Identity Services script not loaded');
+      this.errorMessage = 'Google Sign-Up is unavailable.';
+      this.cdr.detectChanges(); // Update view with error message
+    }
+  }
+
+  handleCredentialResponse(response: any) {
+    if (response.credential) {
+      this.isLoading = true;
+      this.errorMessage = '';
+      this.cdr.detectChanges();
+
+      this.authService.googleLogin(response.credential).subscribe({
+        next: (res) => { // 'res' is the raw backend response { token: '...', user: {...} }
+          this.isLoading = false;
+          this.cdr.detectChanges();
+
+          // User is authenticated via Google, now navigate
+          if (res.user?.emailConfirmed === false) {
+            this.router.navigate(['/verify-email'], {
+              queryParams: { email: res.user?.email }
+            });
+          } else {
+            // Email confirmed or doesn't require confirmation via Google path
+            this.router.navigateByUrl('/home', { replaceUrl: true });
+          }
+        },
+        error: (err) => {
+          this.isLoading = false;
+          console.error('Google Sign-Up/Login error:', err);
+          this.errorMessage = err.error?.message || 'Google Sign-Up failed. Please try again.';
+          this.cdr.detectChanges();
+        }
+      });
+    }
+  }
 
   // Add this method to check password requirements
   checkPasswordStrength() {
