@@ -21,6 +21,7 @@ import { DealDetailsComponent } from './components/deal-details/deal-details.com
 import { SearchComponent } from './components/search/search.component';
 import { AgencyDashboardComponent } from './components/agency-dashboard/agency-dashboard.component';
 import { BookingComponent } from './components/booking/booking.component';
+import { CreateEditProfileComponent } from './components/agency-profile/create-edit-profile.component';
 
 export const routes: Routes = [
   {
@@ -130,6 +131,16 @@ export const routes: Routes = [
   {
     path: 'agency-dashboard',
     component: AgencyDashboardComponent,
+    canActivate: [AuthGuard, AgencyGuard]
+  },
+  {
+    path: 'agency/create-profile',
+    component: CreateEditProfileComponent,
+    canActivate: [AuthGuard, AgencyGuard]
+  },
+  {
+    path: 'agency/edit-profile/:id',
+    component: CreateEditProfileComponent,
     canActivate: [AuthGuard, AgencyGuard]
   },
   {

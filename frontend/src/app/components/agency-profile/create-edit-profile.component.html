@@ -1,0 +1,625 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
+    <div class="container mx-auto px-6 py-2">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+          <button
+            (click)="goBack()"
+            class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors hover:cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            {{ isEdit ? 'Edit Agency Profile' : 'Create Agency Profile' }}
+          </h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content with padding for fixed header -->
+  <div class="pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Progress Bar -->
+      <div class="mb-8">
+        <div class="flex justify-between mb-2">
+          <span class="text-sm font-medium text-gray-600">Step {{ currentStep }} of {{ totalSteps }}</span>
+          <span class="text-sm font-medium text-gray-600">{{ Math.round((currentStep / totalSteps) * 100) }}% Complete</span>
+        </div>
+        <div class="h-2 bg-gray-200 rounded-full">
+          <div
+            class="h-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full transition-all duration-300"
+            [style.width.%]="(currentStep / totalSteps) * 100"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Error/Success Messages -->
+      <div *ngIf="errorMessage" class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+        {{ errorMessage }}
+      </div>
+      <div *ngIf="successMessage" class="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
+        {{ successMessage }}
+      </div>
+
+      <!-- Step 1: Basic Information -->
+      <div *ngIf="currentStep === 1" class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6 border border-transparent hover:border-indigo-100 focus-within:border-indigo-200 transition-colors duration-200">
+        <div class="p-6 sm:p-8">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Basic Information</h2>
+              <p class="mt-1 text-sm text-gray-500">Enter your agency's basic details</p>
+            </div>
+          </div>
+
+          <div class="space-y-8">
+            <!-- Logo Upload -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Agency Logo</label>
+              <div class="flex items-center space-x-4">
+                <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                  <img *ngIf="logoPreview" [src]="logoPreview" class="w-full h-full object-cover">
+                  <div *ngIf="!logoPreview" class="w-full h-full flex items-center justify-center text-gray-400">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  (change)="onLogoUpload($event)"
+                  class="hidden"
+                  #logoInput
+                >
+                <button
+                  type="button"
+                  (click)="logoInput.click()"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Upload Logo
+                </button>
+              </div>
+            </div>
+
+            <!-- Cover Image Upload -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Cover Image</label>
+              <div class="flex items-center space-x-4">
+                <div class="w-48 h-24 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                  <img *ngIf="coverPreview" [src]="coverPreview" class="w-full h-full object-cover">
+                  <div *ngIf="!coverPreview" class="w-full h-full flex items-center justify-center text-gray-400">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  (change)="onCoverUpload($event)"
+                  class="hidden"
+                  #coverInput
+                >
+                <button
+                  type="button"
+                  (click)="coverInput.click()"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Upload Cover
+                </button>
+              </div>
+            </div>
+
+            <!-- Website -->
+            <div class="profile-field">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+              <div class="relative rounded-lg shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                  </svg>
+                </div>
+                <input
+                  type="url"
+                  [(ngModel)]="profile.website"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="https://example.com"
+                >
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="profile-field">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <div class="relative rounded-lg shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="email"
+                  [(ngModel)]="profile.email"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="contact@agency.com"
+                >
+              </div>
+            </div>
+
+            <!-- Office Hours -->
+            <div class="profile-field">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Office Hours</label>
+              <div class="relative rounded-lg shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  [(ngModel)]="profile.officeHours"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Mon-Fri: 9 AM - 5 PM"
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Languages and Specializations -->
+      <div *ngIf="currentStep === 2" class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6 border border-transparent hover:border-indigo-100 focus-within:border-indigo-200 transition-colors duration-200">
+        <div class="p-6 sm:p-8">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Languages & Specializations</h2>
+              <p class="mt-1 text-sm text-gray-500">Specify languages and areas of expertise</p>
+            </div>
+          </div>
+
+          <div class="space-y-8">
+            <!-- Languages -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Languages</label>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <span
+                  *ngFor="let language of profile.languages"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800"
+                >
+                  {{ language }}
+                  <button
+                    type="button"
+                    (click)="removeLanguage(language)"
+                    class="ml-2 inline-flex items-center p-0.5 rounded-full text-indigo-600 hover:bg-indigo-200"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              </div>
+              <div class="flex gap-2">
+                <select
+                  [(ngModel)]="newLanguage"
+                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                >
+                  <option value="">Select a language</option>
+                  <option *ngFor="let lang of commonLanguages" [value]="lang">{{ lang }}</option>
+                </select>
+                <button
+                  type="button"
+                  (click)="addLanguage()"
+                  class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <!-- Specializations -->
+            <div class="profile-field">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Specializations</label>
+              <div class="relative rounded-lg shadow-sm">
+                <div class="absolute top-3 left-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <textarea
+                  [(ngModel)]="profile.specializations"
+                  rows="4"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="List your agency's specializations..."
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Social Media Links -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Social Media Links</label>
+              <div class="space-y-2">
+                <div
+                  *ngFor="let link of profile.socialMediaLinks; let i = index"
+                  class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
+                >
+                  <span class="w-24 text-sm font-medium text-gray-600">{{ link.platform }}</span>
+                  <span class="flex-1 text-sm text-gray-900">{{ link.url }}</span>
+                  <button
+                    type="button"
+                    (click)="removeSocialMediaLink(i)"
+                    class="p-1 text-gray-400 hover:text-gray-500"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <select
+                  [(ngModel)]="newSocialMediaLink.platform"
+                  class="block w-1/3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                >
+                  <option value="">Select platform</option>
+                  <option *ngFor="let platform of availablePlatforms" [value]="platform">{{ platform }}</option>
+                </select>
+                <input
+                  type="url"
+                  [(ngModel)]="newSocialMediaLink.url"
+                  class="block flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="https://..."
+                >
+                <button
+                  type="button"
+                  (click)="addSocialMediaLink()"
+                  class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Team and Certifications -->
+      <div *ngIf="currentStep === 3" class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6 border border-transparent hover:border-indigo-100 focus-within:border-indigo-200 transition-colors duration-200">
+        <div class="p-6 sm:p-8">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Team & Certifications</h2>
+              <p class="mt-1 text-sm text-gray-500">Add team members and certifications</p>
+            </div>
+          </div>
+
+          <div class="space-y-8">
+            <!-- Team Members -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Team Members</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div
+                  *ngFor="let member of profile.teamMembers; let i = index"
+                  class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p class="font-medium text-gray-900">{{ member.name }}</p>
+                    <p class="text-sm text-gray-600">{{ member.role }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeTeamMember(i)"
+                    class="p-1 text-gray-400 hover:text-gray-500"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  [(ngModel)]="newTeamMember.name"
+                  class="block w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Member name"
+                >
+                <input
+                  type="text"
+                  [(ngModel)]="newTeamMember.role"
+                  class="block w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Role"
+                >
+                <button
+                  type="button"
+                  (click)="addTeamMember()"
+                  class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <!-- Certifications -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Certifications</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div
+                  *ngFor="let cert of profile.certifications; let i = index"
+                  class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p class="font-medium text-gray-900">{{ cert.name }}</p>
+                    <p class="text-sm text-gray-600">{{ cert.provider }}</p>
+                    <p class="text-sm text-gray-500">{{ cert.date | date }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeCertification(i)"
+                    class="p-1 text-gray-400 hover:text-gray-500"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  [(ngModel)]="newCertification.name"
+                  class="block w-1/3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Certification name"
+                >
+                <input
+                  type="text"
+                  [(ngModel)]="newCertification.provider"
+                  class="block w-1/3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Provider"
+                >
+                <input
+                  type="date"
+                  [(ngModel)]="newCertification.date"
+                  class="block w-1/3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                >
+                <button
+                  type="button"
+                  (click)="addCertification()"
+                  class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Awards and Testimonials -->
+      <div *ngIf="currentStep === 4" class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6 border border-transparent hover:border-indigo-100 focus-within:border-indigo-200 transition-colors duration-200">
+        <div class="p-6 sm:p-8">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Awards & Testimonials</h2>
+              <p class="mt-1 text-sm text-gray-500">Add awards and client testimonials</p>
+            </div>
+          </div>
+
+          <div class="space-y-8">
+            <!-- Awards -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Awards</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div
+                  *ngFor="let award of profile.awards; let i = index"
+                  class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p class="font-medium text-gray-900">{{ award.title }}</p>
+                    <p class="text-sm text-gray-500">{{ award.date | date }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeAward(i)"
+                    class="p-1 text-gray-400 hover:text-gray-500"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  [(ngModel)]="newAward.title"
+                  class="block w-2/3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Award title"
+                >
+                <input
+                  type="date"
+                  [(ngModel)]="newAward.date"
+                  class="block w-1/3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                >
+                <button
+                  type="button"
+                  (click)="addAward()"
+                  class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <!-- Testimonials -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Testimonials</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div
+                  *ngFor="let testimonial of profile.testimonials; let i = index"
+                  class="flex flex-col p-4 bg-gray-50 rounded-lg"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <div>
+                      <p class="font-medium text-gray-900">{{ testimonial.name }}</p>
+                      <p class="text-sm text-gray-600">{{ testimonial.title }}</p>
+                    </div>
+                    <button
+                      type="button"
+                      (click)="removeTestimonial(i)"
+                      class="p-1 text-gray-400 hover:text-gray-500"
+                    >
+                      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="text-gray-700">{{ testimonial.message }}</p>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="newTestimonial.name"
+                    class="block w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                    placeholder="Client name"
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="newTestimonial.title"
+                    class="block w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                    placeholder="Title/Position"
+                  >
+                </div>
+                <div class="flex gap-2">
+                  <textarea
+                    [(ngModel)]="newTestimonial.message"
+                    rows="3"
+                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm focus:outline-none"
+                    placeholder="Testimonial message"
+                  ></textarea>
+                  <button
+                    type="button"
+                    (click)="addTestimonial()"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Privacy Policy -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Privacy Policy</label>
+              <div class="relative rounded-lg shadow-sm">
+                <div class="absolute top-3 left-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <textarea
+                  [(ngModel)]="profile.privacyPolicy"
+                  rows="6"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Enter your agency's privacy policy..."
+                ></textarea>
+              </div>
+              <p class="text-xs text-gray-500">This privacy policy will be displayed on your agency profile page.</p>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Terms and Conditions</label>
+              <div class="relative rounded-lg shadow-sm">
+                <div class="absolute top-3 left-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <textarea
+                  [(ngModel)]="profile.termsAndConditions"
+                  rows="6"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm focus:outline-none"
+                  placeholder="Enter your agency's terms and conditions..."
+                ></textarea>
+              </div>
+              <p class="text-xs text-gray-500">These terms and conditions will be displayed on your agency profile page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="mt-8 flex justify-between">
+        <button
+          *ngIf="currentStep > 1"
+          type="button"
+          (click)="previousStep()"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Previous
+        </button>
+        <div class="flex-1"></div>
+        <button
+          *ngIf="currentStep < totalSteps"
+          type="button"
+          (click)="nextStep()"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Next
+          <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        <button
+          *ngIf="currentStep === totalSteps"
+          type="button"
+          (click)="onSubmit()"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          {{ isEdit ? 'Update Profile' : 'Create Profile' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
