@@ -388,4 +388,10 @@ export class AgencyDashboardComponent implements OnInit {
   navigateToCreateProfile() {
     this.router.navigate(['/agency/create-profile']);
   }
+
+  navigateToEditProfile() {
+    if (this.profile && this.profile.id) {
+      this.router.navigate(['/agency/edit-profile', this.profile.id]);
+    }
+  }
 }

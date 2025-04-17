@@ -298,49 +298,57 @@ export class CreateEditProfileComponent implements OnInit {
         return;
       }
 
-      // Standardize date formats
-      this.profile.certifications = this.profile.certifications.map(cert => ({
-        ...cert,
-        date: new Date(cert.date).toISOString()
-      }));
-      this.profile.awards = this.profile.awards.map(award => ({
-        ...award,
-        date: new Date(award.date).toISOString()
-      }));
+      // Create a deep copy of the profile to avoid modifying the original
+      const profileToSubmit = JSON.parse(JSON.stringify(this.profile));
+
+      // Standardize date formats for certifications and awards
+      if (profileToSubmit.certifications && profileToSubmit.certifications.length > 0) {
+        profileToSubmit.certifications = profileToSubmit.certifications.map((cert: any) => ({
+          ...cert,
+          date: new Date(cert.date).toISOString()
+        }));
+      }
+
+      if (profileToSubmit.awards && profileToSubmit.awards.length > 0) {
+        profileToSubmit.awards = profileToSubmit.awards.map((award: any) => ({
+          ...award,
+          date: new Date(award.date).toISOString()
+        }));
+      }
 
       // Ensure all arrays are properly initialized
-      if (!Array.isArray(this.profile.languages)) {
-        this.profile.languages = [];
+      if (!Array.isArray(profileToSubmit.languages)) {
+        profileToSubmit.languages = [];
       }
-      if (!Array.isArray(this.profile.socialMediaLinks)) {
-        this.profile.socialMediaLinks = [];
+      if (!Array.isArray(profileToSubmit.socialMediaLinks)) {
+        profileToSubmit.socialMediaLinks = [];
       }
-      if (!Array.isArray(this.profile.teamMembers)) {
-        this.profile.teamMembers = [];
+      if (!Array.isArray(profileToSubmit.teamMembers)) {
+        profileToSubmit.teamMembers = [];
       }
-      if (!Array.isArray(this.profile.certifications)) {
-        this.profile.certifications = [];
+      if (!Array.isArray(profileToSubmit.certifications)) {
+        profileToSubmit.certifications = [];
       }
-      if (!Array.isArray(this.profile.awards)) {
-        this.profile.awards = [];
+      if (!Array.isArray(profileToSubmit.awards)) {
+        profileToSubmit.awards = [];
       }
-      if (!Array.isArray(this.profile.testimonials)) {
-        this.profile.testimonials = [];
+      if (!Array.isArray(profileToSubmit.testimonials)) {
+        profileToSubmit.testimonials = [];
       }
 
       if (this.isEdit) {
         await firstValueFrom(this.agencyProfileService.updateAgencyProfile(
           parseInt(this.route.snapshot.params['id']),
-          this.profile
+          profileToSubmit
         ));
         this.successMessage = 'Profile updated successfully';
       } else {
-        await firstValueFrom(this.agencyProfileService.createAgencyProfile(this.profile));
+        await firstValueFrom(this.agencyProfileService.createAgencyProfile(profileToSubmit));
         this.successMessage = 'Profile created successfully';
       }
 
       setTimeout(() => {
-        this.router.navigate(['/agency/dashboard']);
+        this.router.navigate(['/agency-dashboard']);
       }, 1500);
     } catch (error: any) {
       console.error('Error saving profile:', error);

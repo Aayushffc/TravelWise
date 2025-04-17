@@ -2000,6 +2000,9 @@ namespace Backend.Helper
                     }
 
                     // Convert lists to JSON strings
+                    var languagesJson = JsonSerializer.Serialize(
+                        model.Languages ?? new List<string>()
+                    );
                     var socialMediaLinksJson = JsonSerializer.Serialize(
                         model.SocialMediaLinks ?? new List<SocialMediaLinkDTO>()
                     );
@@ -2090,10 +2093,7 @@ namespace Backend.Helper
                         "@OfficeHours",
                         (object)model.OfficeHours ?? DBNull.Value
                     );
-                    command.Parameters.AddWithValue(
-                        "@Languages",
-                        (object)model.Languages ?? DBNull.Value
-                    );
+                    command.Parameters.AddWithValue("@Languages", languagesJson);
                     command.Parameters.AddWithValue(
                         "@Specializations",
                         (object)model.Specializations ?? DBNull.Value
@@ -2156,7 +2156,17 @@ namespace Backend.Helper
 
                 const string sql =
                     @"
-                    SELECT p.*, a.AgencyName
+                    SELECT p.*, 
+                           a.AgencyName,
+                           a.Address,
+                           a.PhoneNumber,
+                           a.Description,
+                           a.BusinessRegistrationNumber,
+                           a.CreatedAt as ApplicationCreatedAt,
+                           a.ReviewedAt,
+                           a.IsApproved,
+                           a.RejectionReason,
+                           a.ReviewedBy
                     FROM AgencyProfiles p
                     INNER JOIN AgencyApplications a ON p.AgencyApplicationId = a.Id
                     WHERE p.Id = @Id";
@@ -2232,6 +2242,32 @@ namespace Backend.Helper
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync();
 
+                // Convert lists to JSON strings
+                var languagesJson =
+                    model.Languages != null
+                        ? JsonSerializer.Serialize(model.Languages)
+                        : (object)DBNull.Value;
+                var socialMediaLinksJson =
+                    model.SocialMediaLinks != null
+                        ? JsonSerializer.Serialize(model.SocialMediaLinks)
+                        : (object)DBNull.Value;
+                var teamMembersJson =
+                    model.TeamMembers != null
+                        ? JsonSerializer.Serialize(model.TeamMembers)
+                        : (object)DBNull.Value;
+                var certificationsJson =
+                    model.Certifications != null
+                        ? JsonSerializer.Serialize(model.Certifications)
+                        : (object)DBNull.Value;
+                var awardsJson =
+                    model.Awards != null
+                        ? JsonSerializer.Serialize(model.Awards)
+                        : (object)DBNull.Value;
+                var testimonialsJson =
+                    model.Testimonials != null
+                        ? JsonSerializer.Serialize(model.Testimonials)
+                        : (object)DBNull.Value;
+
                 const string sql =
                     @"
                     UPDATE AgencyProfiles
@@ -2266,31 +2302,16 @@ namespace Backend.Helper
                     "@OfficeHours",
                     (object)model.OfficeHours ?? DBNull.Value
                 );
-                command.Parameters.AddWithValue(
-                    "@Languages",
-                    (object)model.Languages ?? DBNull.Value
-                );
+                command.Parameters.AddWithValue("@Languages", languagesJson);
                 command.Parameters.AddWithValue(
                     "@Specializations",
                     (object)model.Specializations ?? DBNull.Value
                 );
-                command.Parameters.AddWithValue(
-                    "@SocialMediaLinks",
-                    (object)model.SocialMediaLinks ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@TeamMembers",
-                    (object)model.TeamMembers ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@Certifications",
-                    (object)model.Certifications ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue("@Awards", (object)model.Awards ?? DBNull.Value);
-                command.Parameters.AddWithValue(
-                    "@Testimonials",
-                    (object)model.Testimonials ?? DBNull.Value
-                );
+                command.Parameters.AddWithValue("@SocialMediaLinks", socialMediaLinksJson);
+                command.Parameters.AddWithValue("@TeamMembers", teamMembersJson);
+                command.Parameters.AddWithValue("@Certifications", certificationsJson);
+                command.Parameters.AddWithValue("@Awards", awardsJson);
+                command.Parameters.AddWithValue("@Testimonials", testimonialsJson);
                 command.Parameters.AddWithValue(
                     "@TermsAndConditions",
                     (object)model.TermsAndConditions ?? DBNull.Value
