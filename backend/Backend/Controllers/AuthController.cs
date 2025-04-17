@@ -59,9 +59,16 @@ namespace TravelWiseAPI.Controllers
                 // Check if user was registered through Google
                 if (existingUser.PasswordHash == null)
                 {
-                    return BadRequest(new { message = "This email is already registered through Google. Please use Google login instead." });
+                    return BadRequest(
+                        new
+                        {
+                            message = "This email is already registered through Google. Please use Google login instead.",
+                        }
+                    );
                 }
-                return BadRequest(new { message = "Email already exists. Please use login instead." });
+                return BadRequest(
+                    new { message = "Email already exists. Please use login instead." }
+                );
             }
 
             var user = new ApplicationUser
@@ -146,7 +153,12 @@ namespace TravelWiseAPI.Controllers
             // Check if user was registered through Google (no password)
             if (user.PasswordHash == null)
             {
-                return BadRequest(new { message = "This account was registered through Google. Please use Google login instead." });
+                return BadRequest(
+                    new
+                    {
+                        message = "This account was registered through Google. Please use Google login instead.",
+                    }
+                );
             }
 
             var result = await _signInManager.PasswordSignInAsync(
@@ -260,7 +272,12 @@ namespace TravelWiseAPI.Controllers
                 else if (user.PasswordHash != null)
                 {
                     // User exists but was registered through regular registration
-                    return BadRequest(new { message = "This email is already registered. Please use regular login instead." });
+                    return BadRequest(
+                        new
+                        {
+                            message = "This email is already registered. Please use regular login instead.",
+                        }
+                    );
                 }
 
                 var token = await _dbHelper.GenerateJwtToken(user);

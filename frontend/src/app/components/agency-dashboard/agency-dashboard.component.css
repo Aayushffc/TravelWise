@@ -569,3 +569,35 @@
     animation: none;
   }
 }
+
+/* Booking Filter Navigation */
+.booking-filter-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.booking-filter-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Ensure selected filter maintains its border on hover */
+.booking-filter-card.ring-2:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Specific colors for each filter type */
+.booking-filter-card.ring-indigo-500:hover {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.booking-filter-card.ring-green-500:hover {
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.booking-filter-card.ring-yellow-500:hover {
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.booking-filter-card.ring-red-500:hover {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

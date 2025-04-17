@@ -370,7 +370,7 @@
           <!-- Booking Stats -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div
-              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer booking-filter-card"
               (click)="setBookingFilter('all')"
               [ngClass]="{'ring-2 ring-indigo-500': bookingFilter === 'all'}"
             >
@@ -387,7 +387,7 @@
               </div>
             </div>
             <div
-              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer booking-filter-card"
               (click)="setBookingFilter('confirmed')"
               [ngClass]="{'ring-2 ring-green-500': bookingFilter === 'confirmed'}"
             >
@@ -404,7 +404,7 @@
               </div>
             </div>
             <div
-              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer booking-filter-card"
               (click)="setBookingFilter('pending')"
               [ngClass]="{'ring-2 ring-yellow-500': bookingFilter === 'pending'}"
             >
@@ -421,7 +421,7 @@
               </div>
             </div>
             <div
-              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer booking-filter-card"
               (click)="setBookingFilter('cancelled')"
               [ngClass]="{'ring-2 ring-red-500': bookingFilter === 'cancelled'}"
             >
