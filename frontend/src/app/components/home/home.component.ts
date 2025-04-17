@@ -157,8 +157,8 @@ export class HomeComponent implements OnInit {
     ).subscribe({
       next: (data) => {
         this.locations = data;
-        // Load deals for the first 3 locations initially
-        const initialLocations = this.locations.slice(0, 3);
+        // Load deals for the first 12 locations initially instead of just 3
+        const initialLocations = this.locations.slice(0, 12);
         this.loadDealsForLocations(initialLocations);
       },
       error: (error) => {
@@ -198,7 +198,8 @@ export class HomeComponent implements OnInit {
     );
 
     if (remainingLocations.length > 0) {
-      const nextBatch = remainingLocations.slice(0, 3);
+      // Load the next 12 locations instead of just 3
+      const nextBatch = remainingLocations.slice(0, 12);
       this.loadDealsForLocations(nextBatch);
     }
   }
