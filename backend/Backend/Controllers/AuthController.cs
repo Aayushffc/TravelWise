@@ -52,6 +52,18 @@ namespace TravelWiseAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Check if user exists
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+            {
+                // Check if user was registered through Google
+                if (existingUser.PasswordHash == null)
+                {
+                    return BadRequest(new { message = "This email is already registered through Google. Please use Google login instead." });
+                }
+                return BadRequest(new { message = "Email already exists. Please use login instead." });
+            }
+
             var user = new ApplicationUser
             {
                 UserName = model.UserName,
@@ -129,8 +141,13 @@ namespace TravelWiseAPI.Controllers
                 return Unauthorized("Invalid credentials");
 
             // If multiple users found with the same email, use the first one
-            // This is a temporary fix - you should ensure email uniqueness in your database
             var user = users.First();
+
+            // Check if user was registered through Google (no password)
+            if (user.PasswordHash == null)
+            {
+                return BadRequest(new { message = "This account was registered through Google. Please use Google login instead." });
+            }
 
             var result = await _signInManager.PasswordSignInAsync(
                 user,
@@ -239,6 +256,11 @@ namespace TravelWiseAPI.Controllers
                         return BadRequest(result.Errors);
 
                     await _dbHelper.AddUserRole(user); // Add default role
+                }
+                else if (user.PasswordHash != null)
+                {
+                    // User exists but was registered through regular registration
+                    return BadRequest(new { message = "This email is already registered. Please use regular login instead." });
                 }
 
                 var token = await _dbHelper.GenerateJwtToken(user);

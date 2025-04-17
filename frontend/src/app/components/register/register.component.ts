@@ -113,6 +113,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         error: (err) => {
           this.isLoading = false;
           console.error('Google Sign-Up/Login error:', err);
+          // Show the specific error message from the backend
           this.errorMessage = err.error?.message || 'Google Sign-Up failed. Please try again.';
           this.cdr.detectChanges();
         }
@@ -206,7 +207,9 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       },
       error: (error) => {
         this.isLoading = false;
+        // Show the specific error message from the backend
         this.errorMessage = error.error?.message || 'An error occurred during registration';
+        this.cdr.detectChanges();
       },
       complete: () => {
         this.isLoading = false;
@@ -227,8 +230,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
           }
         },
         error: (err) => {
-          this.errorMessage = 'Google login failed. Please try again.';
+          // Show the specific error message from the backend
+          this.errorMessage = err.error?.message || 'Google login failed. Please try again.';
           console.error(err);
+          this.cdr.detectChanges();
         }
       });
     });

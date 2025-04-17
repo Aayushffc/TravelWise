@@ -3,12 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LocationService } from '../../../services/location.service';
 import { FileUploadService } from '../../../services/file-upload.service';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 
 interface Location {
   id: number;
   name: string;
   description?: string;
   imageUrl?: string;
+  country?: string;
+  continent?: string;
+  currency?: string;
   isPopular: boolean;
   isActive: boolean;
   clickCount: number;
@@ -21,7 +25,28 @@ interface Location {
   selector: 'app-manage-locations',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './manage-locations.component.html'
+  templateUrl: './manage-locations.component.html',
+  animations: [
+    trigger('listAnimation', [
+      transition('* => *', [
+        query(':enter', [
+          style({ opacity: 0, transform: 'translateY(20px)' }),
+          stagger(100, [
+            animate('0.3s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ], { optional: true })
+      ])
+    ]),
+    trigger('fadeInOut', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('0.3s ease-out', style({ opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('0.3s ease-in', style({ opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class ManageLocationsComponent implements OnInit {
   locations: Location[] = [];
@@ -33,11 +58,16 @@ export class ManageLocationsComponent implements OnInit {
   selectedLocation: Location | null = null;
   selectedFile: File | null = null;
   isUploading: boolean = false;
+  continents: string[] = ['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania', 'Antarctica'];
+  readonly DESCRIPTION_MAX_LENGTH = 40;
 
   locationForm: Partial<Location> = {
     name: '',
     description: '',
     imageUrl: '',
+    country: '',
+    continent: '',
+    currency: '',
     isPopular: false,
     isActive: true
   };
@@ -49,6 +79,12 @@ export class ManageLocationsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadLocations();
+  }
+
+  truncateDescription(description: string | undefined): string {
+    if (!description) return 'No description';
+    if (description.length <= this.DESCRIPTION_MAX_LENGTH) return description;
+    return description.substring(0, this.DESCRIPTION_MAX_LENGTH) + '...';
   }
 
   loadLocations(): void {
@@ -75,10 +111,12 @@ export class ManageLocationsComponent implements OnInit {
           this.locationForm.imageUrl = response.url;
           this.isUploading = false;
           this.success = 'Image uploaded successfully';
+          setTimeout(() => this.success = null, 3000);
         },
         error: (error) => {
           this.error = 'Failed to upload image';
           this.isUploading = false;
+          setTimeout(() => this.error = null, 3000);
         }
       });
     }
@@ -89,6 +127,9 @@ export class ManageLocationsComponent implements OnInit {
       name: '',
       description: '',
       imageUrl: '',
+      country: '',
+      continent: '',
+      currency: '',
       isPopular: false,
       isActive: true
     };
@@ -121,9 +162,11 @@ export class ManageLocationsComponent implements OnInit {
         this.success = 'Location created successfully';
         this.closeModals();
         this.loadLocations();
+        setTimeout(() => this.success = null, 3000);
       },
       error: (error) => {
         this.error = 'Failed to create location';
+        setTimeout(() => this.error = null, 3000);
       }
     });
   }
@@ -139,9 +182,11 @@ export class ManageLocationsComponent implements OnInit {
         this.success = 'Location updated successfully';
         this.closeModals();
         this.loadLocations();
+        setTimeout(() => this.success = null, 3000);
       },
       error: (error) => {
         this.error = 'Failed to update location';
+        setTimeout(() => this.error = null, 3000);
       }
     });
   }
@@ -152,9 +197,11 @@ export class ManageLocationsComponent implements OnInit {
         next: () => {
           this.success = 'Location deleted successfully';
           this.loadLocations();
+          setTimeout(() => this.success = null, 3000);
         },
         error: (error) => {
           this.error = 'Failed to delete location';
+          setTimeout(() => this.error = null, 3000);
         }
       });
     }
@@ -170,9 +217,11 @@ export class ManageLocationsComponent implements OnInit {
       next: () => {
         this.success = `Location ${updatedLocation.isActive ? 'activated' : 'deactivated'} successfully`;
         this.loadLocations();
+        setTimeout(() => this.success = null, 3000);
       },
       error: (error) => {
         this.error = 'Failed to update location status';
+        setTimeout(() => this.error = null, 3000);
       }
     });
   }
@@ -187,9 +236,11 @@ export class ManageLocationsComponent implements OnInit {
       next: () => {
         this.success = `Location ${updatedLocation.isPopular ? 'marked as popular' : 'removed from popular'} successfully`;
         this.loadLocations();
+        setTimeout(() => this.success = null, 3000);
       },
       error: (error) => {
         this.error = 'Failed to update location popularity';
+        setTimeout(() => this.error = null, 3000);
       }
     });
   }

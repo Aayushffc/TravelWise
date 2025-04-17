@@ -78,7 +78,7 @@ export class LoginComponent implements AfterViewInit {
         },
         error: (err) => {
           console.error('Backend login error:', err);
-          this.errorMessage = 'Google login failed. Please try again.';
+          this.errorMessage = err.error?.message || 'Google login failed. Please try again.';
         }
       });
     }
@@ -125,6 +125,7 @@ export class LoginComponent implements AfterViewInit {
           } else if (error.status === 0) {
             this.errorMessage = 'Unable to connect to server. Please check your internet connection';
           } else if (error.error?.message) {
+            // Show the specific error message from the backend
             this.errorMessage = error.error.message;
           } else {
             this.errorMessage = 'An unexpected error occurred. Please try again later';

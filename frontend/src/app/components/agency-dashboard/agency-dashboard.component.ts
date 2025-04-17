@@ -150,8 +150,13 @@ export class AgencyDashboardComponent implements OnInit {
       if (this.profile) {
         this.profileForm = { ...this.profile };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading profile:', error);
+      // Check if the error is a 404 (profile not found)
+      if (error.status === 404) {
+        this.profile = null;
+        this.showProfileForm = true;
+      }
     }
   }
 
@@ -378,5 +383,9 @@ export class AgencyDashboardComponent implements OnInit {
 
   removeTestimonial(index: number) {
     this.profileForm.testimonials.splice(index, 1);
+  }
+
+  navigateToCreateProfile() {
+    this.router.navigate(['/agency/create-profile']);
   }
 }
