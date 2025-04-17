@@ -10,6 +10,7 @@ import { FileUploadService } from '../../services/file-upload.service';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Location } from '@angular/common';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { trigger, state, style, animate, transition } from '@angular/animations';
 
 interface SocialMediaLink {
   platform: string;
@@ -43,10 +44,17 @@ type TabType = 'profile' | 'bookings' | 'payments';
 @Component({
   selector: 'app-agency-dashboard',
   standalone: true,
-  imports: [ CommonModule, FormsModule, RouterModule ],
+  imports: [CommonModule, FormsModule, RouterModule],
   schemas: [NO_ERRORS_SCHEMA],
   templateUrl: './agency-dashboard.component.html',
-  styleUrls: ['./agency-dashboard.component.css']
+  styleUrls: ['./agency-dashboard.component.css'],
+  animations: [
+    trigger('fadeSlide', [
+      state('void', style({ opacity: 0, transform: 'translateY(20px)' })),
+      state('*', style({ opacity: 1, transform: 'translateY(0)' })),
+      transition('void <=> *', animate('300ms ease-in-out')),
+    ]),
+  ],
 })
 export class AgencyDashboardComponent implements OnInit {
   activeTab: TabType = 'profile';
@@ -260,6 +268,7 @@ export class AgencyDashboardComponent implements OnInit {
 
   async viewChat(id: number) {
     this.selectedBooking = this.bookings.find(b => b.id === id);
+    this.chatService.selectedBooking = this.selectedBooking;
     this.activeTab = 'bookings';
     await this.loadChatMessages(id);
   }
@@ -279,10 +288,19 @@ export class AgencyDashboardComponent implements OnInit {
   }
 
   async sendMessage() {
-    if (!this.newMessage.trim() || !this.selectedBooking) return;
+    console.log('Attempting to send message:', {
+      message: this.newMessage,
+      selectedBooking: this.selectedBooking
+    });
+
+    if (!this.newMessage.trim() || !this.selectedBooking) {
+      console.error('No message or booking selected');
+      return;
+    }
 
     try {
       await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
+      console.log('Message sent successfully');
       this.newMessage = '';
       await this.loadChatMessages(this.selectedBooking.id);
     } catch (error) {
