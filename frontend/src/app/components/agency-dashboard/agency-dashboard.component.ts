@@ -90,7 +90,7 @@ export class AgencyDashboardComponent implements OnInit {
   // Add computed properties for booking counts
   get confirmedBookingsCount(): number {
     if (!this.bookings || !Array.isArray(this.bookings)) return 0;
-    return this.bookings.filter(b => b.status === 'Confirmed').length;
+    return this.bookings.filter(b => b.status === 'Accepted').length;
   }
 
   get pendingBookingsCount(): number {
@@ -100,7 +100,11 @@ export class AgencyDashboardComponent implements OnInit {
 
   get cancelledBookingsCount(): number {
     if (!this.bookings || !Array.isArray(this.bookings)) return 0;
-    return this.bookings.filter(b => b.status === 'Cancelled').length;
+    return this.bookings.filter(b => b.status === 'Rejected' || b.status === 'Cancelled').length;
+  }
+
+  canShowChat(booking: any): boolean {
+    return booking.status !== 'Rejected' && booking.status !== 'Cancelled';
   }
 
   constructor(
