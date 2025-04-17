@@ -33,21 +33,15 @@
             </div>
             <div class="flex space-x-6">
               <button
-                *ngFor="let tab of tabs"
+                *ngFor="let tab of availableTabs"
                 (click)="switchTab(tab)"
-                class="px-3 py-2 font-medium text-sm rounded-md transition-colors"
-                [ngClass]="{
-                  'bg-indigo-50 text-indigo-600 hover:cursor-pointer': activeTab === tab,
-                  'text-gray-500 hover:bg-gray-100 hover:cursor-pointer': activeTab !== tab
-                }"
+                [class.bg-indigo-100]="activeTab === tab"
+                [class.text-indigo-700]="activeTab === tab"
+                [class.bg-white]="activeTab !== tab"
+                [class.text-gray-500]="activeTab !== tab"
+                class="px-4 py-2 text-sm font-medium rounded-md hover:text-indigo-700 hover:bg-indigo-50 transition-colors duration-200"
               >
                 {{ tab | titlecase }}
-                <span
-                  *ngIf="tab === 'chat' && unreadMessages > 0"
-                  class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
-                >
-                  {{ unreadMessages }}
-                </span>
               </button>
             </div>
           </div>
@@ -375,7 +369,11 @@
         <div *ngIf="profile" class="space-y-8">
           <!-- Booking Stats -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              (click)="setBookingFilter('all')"
+              [ngClass]="{'ring-2 ring-indigo-500': bookingFilter === 'all'}"
+            >
               <div class="flex items-center space-x-4">
                 <div class="p-3 bg-blue-100 rounded-full">
                   <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -388,7 +386,11 @@
                 </div>
               </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              (click)="setBookingFilter('confirmed')"
+              [ngClass]="{'ring-2 ring-green-500': bookingFilter === 'confirmed'}"
+            >
               <div class="flex items-center space-x-4">
                 <div class="p-3 bg-green-100 rounded-full">
                   <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -401,7 +403,11 @@
                 </div>
               </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              (click)="setBookingFilter('pending')"
+              [ngClass]="{'ring-2 ring-yellow-500': bookingFilter === 'pending'}"
+            >
               <div class="flex items-center space-x-4">
                 <div class="p-3 bg-yellow-100 rounded-full">
                   <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -414,7 +420,11 @@
                 </div>
               </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div
+              class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+              (click)="setBookingFilter('cancelled')"
+              [ngClass]="{'ring-2 ring-red-500': bookingFilter === 'cancelled'}"
+            >
               <div class="flex items-center space-x-4">
                 <div class="p-3 bg-red-100 rounded-full">
                   <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,10 +442,13 @@
           <!-- Booking List -->
           <div class="bg-white rounded-lg shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
-              <h2 class="text-lg font-semibold text-gray-900">Recent Bookings</h2>
+              <h2 class="text-lg font-semibold text-gray-900">
+                {{ bookingFilter === 'all' ? 'All' : bookingFilter | titlecase }} Bookings
+                <span class="text-sm font-normal text-gray-500 ml-2">({{ filteredBookings.length }} of {{ bookings.length }})</span>
+              </h2>
             </div>
             <div class="divide-y divide-gray-200">
-              <div *ngFor="let booking of bookings" class="p-6 hover:bg-gray-50 transition-colors">
+              <div *ngFor="let booking of filteredBookings" class="p-6 hover:bg-gray-50 transition-colors">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                   <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">

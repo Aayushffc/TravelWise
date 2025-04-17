@@ -54,6 +54,8 @@ export class AgencyDashboardComponent implements OnInit {
   isLoading = true;
   profile: any = null;
   bookings: any[] = [];
+  filteredBookings: any[] = [];
+  bookingFilter: 'all' | 'confirmed' | 'pending' | 'cancelled' = 'all';
   unreadMessages: number = 0;
   user: any = null;
   selectedChatId: number | null = null;
@@ -106,6 +108,8 @@ export class AgencyDashboardComponent implements OnInit {
   canShowChat(booking: any): boolean {
     return booking.status !== 'Rejected' && booking.status !== 'Cancelled';
   }
+
+  readonly availableTabs: TabType[] = ['profile', 'bookings', 'chat'];
 
   constructor(
     private agencyProfileService: AgencyProfileService,
@@ -173,6 +177,9 @@ export class AgencyDashboardComponent implements OnInit {
         this.bookings = [];
       }
 
+      // Apply initial filter
+      this.applyBookingFilter();
+
     } catch (error) {
       console.error('Error loading bookings:', error);
       this.bookings = [];
@@ -185,7 +192,7 @@ export class AgencyDashboardComponent implements OnInit {
     });
   }
 
-  switchTab(tab: TabType) {
+  switchTab(tab: TabType): void {
     this.activeTab = tab;
   }
 
@@ -392,6 +399,33 @@ export class AgencyDashboardComponent implements OnInit {
   navigateToEditProfile() {
     if (this.profile && this.profile.id) {
       this.router.navigate(['/agency/edit-profile', this.profile.id]);
+    }
+  }
+
+  // Add new methods for booking filtering
+  setBookingFilter(filter: 'all' | 'confirmed' | 'pending' | 'cancelled'): void {
+    this.bookingFilter = filter;
+    this.applyBookingFilter();
+  }
+
+  applyBookingFilter(): void {
+    if (!this.bookings || !Array.isArray(this.bookings)) {
+      this.filteredBookings = [];
+      return;
+    }
+
+    switch (this.bookingFilter) {
+      case 'confirmed':
+        this.filteredBookings = this.bookings.filter(b => b.status === 'Accepted');
+        break;
+      case 'pending':
+        this.filteredBookings = this.bookings.filter(b => b.status === 'Pending');
+        break;
+      case 'cancelled':
+        this.filteredBookings = this.bookings.filter(b => b.status === 'Rejected' || b.status === 'Cancelled');
+        break;
+      default:
+        this.filteredBookings = [...this.bookings];
     }
   }
 }
