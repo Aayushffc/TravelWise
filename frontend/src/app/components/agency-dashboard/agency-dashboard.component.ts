@@ -38,7 +38,7 @@ interface Testimonial {
   message: string;
 }
 
-type TabType = 'profile' | 'bookings' | 'chat';
+type TabType = 'profile' | 'bookings' | 'payments';
 
 @Component({
   selector: 'app-agency-dashboard',
@@ -50,7 +50,7 @@ type TabType = 'profile' | 'bookings' | 'chat';
 })
 export class AgencyDashboardComponent implements OnInit {
   activeTab: TabType = 'profile';
-  tabs: TabType[] = ['profile', 'bookings', 'chat'];
+  tabs: TabType[] = ['profile', 'bookings', 'payments'];
   isLoading = true;
   profile: any = null;
   bookings: any[] = [];
@@ -58,10 +58,21 @@ export class AgencyDashboardComponent implements OnInit {
   bookingFilter: 'all' | 'confirmed' | 'pending' | 'cancelled' = 'all';
   unreadMessages: number = 0;
   user: any = null;
-  selectedChatId: number | null = null;
+  selectedBooking: any = null;
   chatMessages: any[] = [];
   newMessage: string = '';
   showProfileForm = false;
+
+  // Payment related properties
+  payments: any[] = [];
+  filteredPayments: any[] = [];
+  selectedStatus: string = 'all';
+  isLoadingPayments: boolean = false;
+  totalEarnings: number = 0;
+  completedPayments: number = 0;
+  pendingPayments: number = 0;
+  failedPayments: number = 0;
+
   profileForm = {
     website: '',
     email: '',
@@ -109,7 +120,7 @@ export class AgencyDashboardComponent implements OnInit {
     return booking.status !== 'Rejected' && booking.status !== 'Cancelled';
   }
 
-  readonly availableTabs: TabType[] = ['profile', 'bookings', 'chat'];
+  readonly availableTabs: TabType[] = ['profile', 'bookings', 'payments'];
 
   constructor(
     private agencyProfileService: AgencyProfileService,
@@ -126,6 +137,7 @@ export class AgencyDashboardComponent implements OnInit {
       this.user = await this.authService.getCurrentUser();
       await this.loadProfile();
       await this.loadBookings();
+      await this.loadPayments();
       this.setupChatNotifications();
     } catch (error) {
       console.error('Error initializing dashboard:', error);
@@ -186,6 +198,30 @@ export class AgencyDashboardComponent implements OnInit {
     }
   }
 
+  private async loadPayments() {
+    try {
+      this.isLoadingPayments = true;
+      // Replace with actual API call when available
+      // const response = await firstValueFrom(this.paymentService.getAgencyPayments());
+      // this.payments = response;
+
+      // Temporary mock data
+      this.payments = [];
+      this.filteredPayments = [];
+      this.totalEarnings = 0;
+      this.completedPayments = 0;
+      this.pendingPayments = 0;
+      this.failedPayments = 0;
+
+      this.applyPaymentFilter();
+    } catch (error) {
+      console.error('Error loading payments:', error);
+      this.payments = [];
+    } finally {
+      this.isLoadingPayments = false;
+    }
+  }
+
   private setupChatNotifications() {
     this.chatService.getUnreadMessagesCount().subscribe(count => {
       this.unreadMessages = count;
@@ -223,13 +259,13 @@ export class AgencyDashboardComponent implements OnInit {
   }
 
   async viewChat(id: number) {
-    this.selectedChatId = id;
-    this.activeTab = 'chat';
+    this.selectedBooking = this.bookings.find(b => b.id === id);
+    this.activeTab = 'bookings';
     await this.loadChatMessages(id);
   }
 
   async selectChat(id: number) {
-    this.selectedChatId = id;
+    this.selectedBooking = this.bookings.find(b => b.id === id);
     await this.loadChatMessages(id);
   }
 
@@ -242,17 +278,13 @@ export class AgencyDashboardComponent implements OnInit {
     }
   }
 
-  getSelectedBooking() {
-    return this.bookings.find(b => b.id === this.selectedChatId);
-  }
-
   async sendMessage() {
-    if (!this.newMessage.trim() || !this.selectedChatId) return;
+    if (!this.newMessage.trim() || !this.selectedBooking) return;
 
     try {
-      await this.chatService.sendMessage(this.selectedChatId, this.newMessage);
+      await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
       this.newMessage = '';
-      await this.loadChatMessages(this.selectedChatId);
+      await this.loadChatMessages(this.selectedBooking.id);
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -427,5 +459,64 @@ export class AgencyDashboardComponent implements OnInit {
       default:
         this.filteredBookings = [...this.bookings];
     }
+  }
+
+  getStatusColor(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  getStatusDotColor(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+        return 'bg-green-500';
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  }
+
+  onStatusChange(status: string): void {
+    this.selectedStatus = status;
+    this.applyPaymentFilter();
+  }
+
+  applyPaymentFilter(): void {
+    if (!this.payments || !Array.isArray(this.payments)) {
+      this.filteredPayments = [];
+      return;
+    }
+
+    if (this.selectedStatus === 'all') {
+      this.filteredPayments = [...this.payments];
+    } else {
+      this.filteredPayments = this.payments.filter(p => p.status === this.selectedStatus);
+    }
+  }
+
+  viewDetails(payment: any): void {
+    console.log('View payment details:', payment);
+    // Implement payment details view logic
+  }
+
+  processPayment(payment: any): void {
+    console.log('Process payment:', payment);
+    // Implement payment processing logic
+  }
+
+  refundPayment(payment: any): void {
+    console.log('Refund payment:', payment);
+    // Implement payment refund logic
   }
 }
