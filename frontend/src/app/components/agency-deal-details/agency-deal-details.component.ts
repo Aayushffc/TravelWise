@@ -135,28 +135,31 @@ export class AgencyDealDetailsComponent implements OnInit {
   }
 
   toggleEdit(): void {
-    this.isEditing = !this.isEditing;
-    if (!this.isEditing) {
+    if (this.isEditing) {
+      // If we're canceling edit mode, reset the deal to its original state
       this.loadDeal();
     }
+    this.isEditing = !this.isEditing;
   }
 
   saveDeal(): void {
     if (!this.deal) return;
 
-    // Create an update object with only the changed fields
+    // Send the complete deal object for update
     const updateData = {
-      updatedAt: new Date(),
-      headlines: this.deal.headlines
+      ...this.deal,
+      updatedAt: new Date()
     };
 
     this.isLoading = true;
     this.dealService.updateDeal(Number(this.dealId), updateData).subscribe({
-      next: () => {
+      next: (updatedDeal) => {
+        this.deal = updatedDeal;
         this.successMessage = 'Deal updated successfully!';
         this.isEditing = false;
         this.isLoading = false;
 
+        // Show success message for 3 seconds
         setTimeout(() => {
           this.successMessage = '';
         }, 3000);
@@ -165,7 +168,9 @@ export class AgencyDealDetailsComponent implements OnInit {
         console.error('Error updating deal:', error);
         this.error = 'Failed to update deal. Please try again.';
         this.isLoading = false;
+        this.isEditing = true; // Keep in edit mode if there's an error
 
+        // Show error message for 3 seconds
         setTimeout(() => {
           this.error = '';
         }, 3000);

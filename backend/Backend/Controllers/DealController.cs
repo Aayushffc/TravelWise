@@ -170,36 +170,145 @@ namespace Backend.Controllers
                     return StatusCode(403, "You don't have permission to update this deal");
                 }
 
-                // Validate price if provided
-                if (dealDto.Price.HasValue && dealDto.Price.Value <= 0)
+                // Update only the provided fields
+                if (dealDto.Title != null)
                 {
-                    return BadRequest("Price must be greater than 0");
+                    existingDeal.Title = dealDto.Title;
                 }
-
-                // Validate days and nights if provided
-                if (dealDto.DaysCount.HasValue && dealDto.DaysCount.Value <= 0)
+                if (dealDto.Description != null)
                 {
-                    return BadRequest("Days count must be greater than 0");
+                    existingDeal.Description = dealDto.Description;
                 }
-
-                if (dealDto.NightsCount.HasValue && dealDto.NightsCount.Value <= 0)
+                if (dealDto.LocationId.HasValue)
                 {
-                    return BadRequest("Nights count must be greater than 0");
+                    existingDeal.LocationId = dealDto.LocationId.Value;
+                }
+                if (dealDto.Price.HasValue)
+                {
+                    existingDeal.Price = dealDto.Price.Value;
+                }
+                if (dealDto.DiscountPercentage.HasValue)
+                {
+                    existingDeal.DiscountPercentage = dealDto.DiscountPercentage.Value;
+                }
+                if (dealDto.DaysCount.HasValue)
+                {
+                    existingDeal.DaysCount = dealDto.DaysCount.Value;
+                }
+                if (dealDto.NightsCount.HasValue)
+                {
+                    existingDeal.NightsCount = dealDto.NightsCount.Value;
+                }
+                if (dealDto.PackageType != null)
+                {
+                    existingDeal.PackageType = dealDto.PackageType;
+                }
+                if (dealDto.Headlines != null)
+                {
+                    existingDeal.Headlines = dealDto.Headlines;
+                }
+                if (dealDto.Tags != null)
+                {
+                    existingDeal.Tags = dealDto.Tags;
+                }
+                if (dealDto.Seasons != null)
+                {
+                    existingDeal.Seasons = dealDto.Seasons;
+                }
+                if (dealDto.Languages != null)
+                {
+                    existingDeal.Languages = dealDto.Languages;
+                }
+                if (dealDto.Requirements != null)
+                {
+                    existingDeal.Requirements = dealDto.Requirements;
+                }
+                if (dealDto.Restrictions != null)
+                {
+                    existingDeal.Restrictions = dealDto.Restrictions;
+                }
+                if (dealDto.IsActive.HasValue)
+                {
+                    existingDeal.IsActive = dealDto.IsActive.Value;
+                }
+                if (dealDto.IsInstantBooking.HasValue)
+                {
+                    existingDeal.IsInstantBooking = dealDto.IsInstantBooking.Value;
+                }
+                if (dealDto.IsLastMinuteDeal.HasValue)
+                {
+                    existingDeal.IsLastMinuteDeal = dealDto.IsLastMinuteDeal.Value;
+                }
+                if (dealDto.MinGroupSize.HasValue)
+                {
+                    existingDeal.MinGroupSize = dealDto.MinGroupSize.Value;
+                }
+                if (dealDto.MaxGroupSize.HasValue)
+                {
+                    existingDeal.MaxGroupSize = dealDto.MaxGroupSize.Value;
+                }
+                if (dealDto.DifficultyLevel != null)
+                {
+                    existingDeal.DifficultyLevel = dealDto.DifficultyLevel;
+                }
+                if (dealDto.ValidFrom.HasValue)
+                {
+                    existingDeal.ValidFrom = dealDto.ValidFrom.Value;
+                }
+                if (dealDto.ValidUntil.HasValue)
+                {
+                    existingDeal.ValidUntil = dealDto.ValidUntil.Value;
+                }
+                if (dealDto.MapUrl != null)
+                {
+                    existingDeal.MapUrl = dealDto.MapUrl;
                 }
 
                 // Set updated timestamp
-                dealDto.UpdatedAt = DateTime.UtcNow;
+                existingDeal.UpdatedAt = DateTime.UtcNow;
 
-                var success = await _dbHelper.UpdateDeal(id, dealDto);
+                // Convert to DealUpdateDto
+                var updateDto = new DealUpdateDto
+                {
+                    Title = existingDeal.Title,
+                    Description = existingDeal.Description,
+                    LocationId = existingDeal.LocationId,
+                    Price = existingDeal.Price,
+                    DiscountPercentage = existingDeal.DiscountPercentage,
+                    DaysCount = existingDeal.DaysCount,
+                    NightsCount = existingDeal.NightsCount,
+                    PackageType = existingDeal.PackageType,
+                    Headlines = existingDeal.Headlines,
+                    Tags = existingDeal.Tags,
+                    Seasons = existingDeal.Seasons,
+                    Languages = existingDeal.Languages,
+                    Requirements = existingDeal.Requirements,
+                    Restrictions = existingDeal.Restrictions,
+                    IsActive = existingDeal.IsActive,
+                    IsInstantBooking = existingDeal.IsInstantBooking,
+                    IsLastMinuteDeal = existingDeal.IsLastMinuteDeal,
+                    MinGroupSize = existingDeal.MinGroupSize,
+                    MaxGroupSize = existingDeal.MaxGroupSize,
+                    DifficultyLevel = existingDeal.DifficultyLevel,
+                    ValidFrom = existingDeal.ValidFrom,
+                    ValidUntil = existingDeal.ValidUntil,
+                    MapUrl = existingDeal.MapUrl,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+
+                var success = await _dbHelper.UpdateDeal(id, updateDto);
                 if (!success)
                 {
                     return StatusCode(500, "Failed to update deal");
                 }
 
-                return NoContent();
+                // Return the updated deal
+                var updatedDeal = await _dbHelper.GetDealById(id);
+                return Ok(updatedDeal);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error updating deal {DealId}", id);
                 return StatusCode(500, "An error occurred while updating the deal");
             }
         }

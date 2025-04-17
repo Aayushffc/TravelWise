@@ -53,9 +53,9 @@
   <!-- Deal Content -->
   <div *ngIf="!isLoading && deal" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Title and Booking Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+    <div class="grid grid-cols-1 gap-8 mb-8">
       <!-- Title and Basic Info -->
-      <div class="lg:col-span-3 bg-white rounded-lg shadow-sm p-6">
+      <div class="bg-white rounded-lg shadow-sm p-6">
         <div class="relative">
           <h1 *ngIf="!isEditing" class="text-3xl font-bold text-gray-900">{{ deal.title }}</h1>
           <div *ngIf="isEditing" class="form-group">
@@ -124,27 +124,6 @@
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Booking Component -->
-      <div class="lg:col-span-1">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Book This Deal</h3>
-          <!-- Add your booking form here -->
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Select Date</label>
-              <input type="date" class="form-control w-full mt-1">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Number of People</label>
-              <input type="number" class="form-control w-full mt-1" min="1">
-            </div>
-            <button class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">
-              Book Now
-            </button>
           </div>
         </div>
       </div>

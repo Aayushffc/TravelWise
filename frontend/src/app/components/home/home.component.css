@@ -428,6 +428,25 @@ img {
   border-top: none;
 }
 
+.deals-section .grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .deals-section .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .deals-section .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Location section */
 .locations-section {
   position: relative;

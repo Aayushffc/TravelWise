@@ -43,8 +43,9 @@ export class ChatService {
       }
     });
 
-    this.hubConnection.on('NewMessage', (message: any) => {
-      this.messages.next([...this.messages.value, message]);
+    this.hubConnection.on('ReceiveMessage', (message: any) => {
+      const currentMessages = this.messages.value;
+      this.messages.next([...currentMessages, message]);
     });
 
     this.hubConnection.on('UnreadMessagesCount', (count: number) => {
@@ -77,12 +78,12 @@ export class ChatService {
     return this.messages.asObservable();
   }
 
-  async sendMessage(bookingId: number, message: string) {
+  async sendMessage(bookingId: number, message: string, messageType: string = 'text') {
     if (this.hubConnection.state !== HubConnectionState.Connected) {
       throw new Error('Not connected to chat server');
     }
     try {
-      await this.hubConnection.invoke('SendMessage', bookingId, message);
+      await this.hubConnection.invoke('SendMessage', bookingId, message, messageType);
     } catch (err) {
       console.error('Error while sending message: ' + err);
       throw err;
@@ -94,7 +95,8 @@ export class ChatService {
       throw new Error('Not connected to chat server');
     }
     try {
-      await this.hubConnection.invoke('JoinChat', bookingId);
+      await this.hubConnection.invoke('JoinBookingChat', bookingId);
+      this.messages.next([]);
     } catch (err) {
       console.error('Error while joining chat: ' + err);
       throw err;
@@ -106,7 +108,8 @@ export class ChatService {
       throw new Error('Not connected to chat server');
     }
     try {
-      await this.hubConnection.invoke('LeaveChat', bookingId);
+      await this.hubConnection.invoke('LeaveBookingChat', bookingId);
+      this.messages.next([]);
     } catch (err) {
       console.error('Error while leaving chat: ' + err);
       throw err;
