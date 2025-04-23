@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-booking',
@@ -27,7 +28,7 @@ export class BookingComponent implements OnInit {
   isLoading: boolean = true;
   error: string | null = null;
 
-  constructor(private bookingService: BookingService, private location: Location) {}
+  constructor(private bookingService: BookingService, private location: Location, private authService: AuthService) {}
 
   ngOnInit() {
     this.loadBookings();
@@ -49,6 +50,7 @@ export class BookingComponent implements OnInit {
 
   selectBooking(booking: any) {
     this.selectedBooking = booking;
+    this.bookingService.selectedBooking = booking;
     this.loadChatMessages(booking.id);
   }
 
@@ -66,15 +68,24 @@ export class BookingComponent implements OnInit {
   }
 
   sendMessage() {
-    if (!this.selectedBooking || !this.newMessage.trim()) return;
+    if (!this.selectedBooking || !this.newMessage.trim()) {
+      console.error('No booking selected or empty message');
+      return;
+    }
 
+    console.log('Sending message for booking:', this.selectedBooking.id);
+    console.log('Message content:', this.newMessage);
+
+    this.bookingService.selectedBooking = this.selectedBooking;
     this.bookingService.sendMessage(this.selectedBooking.id, this.newMessage).subscribe({
       next: (response) => {
+        console.log('Message sent successfully:', response);
         this.newMessage = '';
         this.loadChatMessages(this.selectedBooking.id);
       },
       error: (err) => {
-        this.error = 'Failed to send message';
+        console.error('Error sending message:', err);
+        this.error = 'Failed to send message: ' + (err.error?.message || 'Unknown error');
       }
     });
   }

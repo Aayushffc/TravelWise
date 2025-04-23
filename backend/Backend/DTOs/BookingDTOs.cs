@@ -105,6 +105,7 @@ namespace Backend.DTOs
         public string? FileUrl { get; set; }
         public string? FileName { get; set; }
         public long? FileSize { get; set; }
+        public bool IsDeleted { get; set; }
     }
 
     public class UserBookingResponseDTO

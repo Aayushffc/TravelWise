@@ -268,6 +268,7 @@ export class AgencyDashboardComponent implements OnInit {
 
   async viewChat(id: number) {
     this.selectedBooking = this.bookings.find(b => b.id === id);
+    this.bookingService.selectedBooking = this.selectedBooking;
     this.chatService.selectedBooking = this.selectedBooking;
     this.activeTab = 'bookings';
     await this.loadChatMessages(id);
@@ -299,7 +300,7 @@ export class AgencyDashboardComponent implements OnInit {
     }
 
     try {
-      await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
+      await firstValueFrom(this.bookingService.sendMessage(this.selectedBooking.id, this.newMessage));
       console.log('Message sent successfully');
       this.newMessage = '';
       await this.loadChatMessages(this.selectedBooking.id);

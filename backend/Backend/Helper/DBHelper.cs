@@ -1816,15 +1816,22 @@ namespace Backend.Helper
 
                 const string sql =
                     @"
+                    DECLARE @InsertedId TABLE (Id INT);
+                    
                     INSERT INTO ChatMessages (
                         BookingId, SenderId, ReceiverId, Message, SentAt,
-                        MessageType, FileUrl, FileName, FileSize
+                        MessageType, FileUrl, FileName, FileSize, IsRead, IsDeleted
                     )
-                    OUTPUT INSERTED.*
+                    OUTPUT INSERTED.Id INTO @InsertedId
                     VALUES (
                         @BookingId, @SenderId, @ReceiverId, @Message, GETUTCDATE(),
-                        @MessageType, @FileUrl, @FileName, @FileSize
+                        @MessageType, @FileUrl, @FileName, @FileSize, 0, 0
                     );
+
+                    SELECT m.*, u.FullName as SenderName
+                    FROM ChatMessages m
+                    INNER JOIN AspNetUsers u ON m.SenderId = u.Id
+                    WHERE m.Id = (SELECT TOP 1 Id FROM @InsertedId);
 
                     UPDATE Bookings
                     SET LastMessage = @Message,
@@ -1949,32 +1956,43 @@ namespace Backend.Helper
 
         private ChatMessageResponseDTO MapToChatMessageResponseDto(SqlDataReader reader)
         {
-            return new ChatMessageResponseDTO
+            try
             {
-                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                BookingId = reader.GetInt32(reader.GetOrdinal("BookingId")),
-                SenderId = reader.GetString(reader.GetOrdinal("SenderId")),
-                SenderName = reader.GetString(reader.GetOrdinal("SenderName")),
-                ReceiverId = reader.GetString(reader.GetOrdinal("ReceiverId")),
-                Message = reader.GetString(reader.GetOrdinal("Message")),
-                SentAt = reader.GetDateTime(reader.GetOrdinal("SentAt")),
-                ReadAt = reader.IsDBNull(reader.GetOrdinal("ReadAt"))
-                    ? null
-                    : reader.GetDateTime(reader.GetOrdinal("ReadAt")),
-                IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
-                MessageType = reader.IsDBNull(reader.GetOrdinal("MessageType"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("MessageType")),
-                FileUrl = reader.IsDBNull(reader.GetOrdinal("FileUrl"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("FileUrl")),
-                FileName = reader.IsDBNull(reader.GetOrdinal("FileName"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("FileName")),
-                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize"))
-                    ? null
-                    : reader.GetInt64(reader.GetOrdinal("FileSize")),
-            };
+                return new ChatMessageResponseDTO
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    BookingId = reader.GetInt32(reader.GetOrdinal("BookingId")),
+                    SenderId = reader.GetString(reader.GetOrdinal("SenderId")),
+                    SenderName = reader.IsDBNull(reader.GetOrdinal("SenderName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("SenderName")),
+                    ReceiverId = reader.GetString(reader.GetOrdinal("ReceiverId")),
+                    Message = reader.GetString(reader.GetOrdinal("Message")),
+                    SentAt = reader.GetDateTime(reader.GetOrdinal("SentAt")),
+                    ReadAt = reader.IsDBNull(reader.GetOrdinal("ReadAt"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("ReadAt")),
+                    IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
+                    MessageType = reader.IsDBNull(reader.GetOrdinal("MessageType"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("MessageType")),
+                    FileUrl = reader.IsDBNull(reader.GetOrdinal("FileUrl"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("FileUrl")),
+                    FileName = reader.IsDBNull(reader.GetOrdinal("FileName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("FileName")),
+                    FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize"))
+                        ? null
+                        : reader.GetInt64(reader.GetOrdinal("FileSize")),
+                    IsDeleted = reader.GetBoolean(reader.GetOrdinal("IsDeleted"))
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error mapping chat message response: {Message}", ex.Message);
+                throw;
+            }
         }
 
         #endregion
