@@ -1508,7 +1508,20 @@
             <div
               class="h-[500px] overflow-y-auto p-6 space-y-4 messages-container bg-white/50"
             >
-              <div class="chat-messages">
+              <div class="chat-messages" *ngIf="selectedBooking">
+                <!-- Load More Button -->
+                <div
+                  *ngIf="selectedBooking.messages?.length >= 20"
+                  class="text-center mb-4"
+                >
+                  <button
+                    (click)="loadMoreMessages()"
+                    class="px-4 py-2 text-sm text-indigo-600 hover:text-indigo-800 bg-white rounded-lg shadow-sm"
+                  >
+                    Load More Messages
+                  </button>
+                </div>
+
                 <div
                   *ngFor="let message of selectedBooking.messages"
                   class="message-container"
@@ -1523,11 +1536,11 @@
                       <span class="sender-name">{{
                         message.senderId === authService.getCurrentUser()?.id
                           ? "You"
-                          : selectedBooking.userName
+                          : selectedBooking.customerName
                       }}</span>
-                      <span class="message-time">{{
-                        message.sentAt | date : "shortTime"
-                      }}</span>
+                      <div class="message-time text-xs text-gray-500">
+                        {{ message.sentAt | date : "shortTime" : "+0530" }}
+                      </div>
                     </div>
                     <div class="message-content">
                       <p>{{ message.message }}</p>

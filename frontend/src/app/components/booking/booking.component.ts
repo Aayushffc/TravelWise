@@ -37,7 +37,7 @@ export class BookingComponent implements OnInit, OnDestroy {
   private messagesContainer: HTMLElement | null = null;
   private isScrolling = false;
   private scrollPosition = 0;
-  private shouldAutoScroll = true;
+  private isLoadingMore = false;
 
   constructor(
     private bookingService: BookingService,
@@ -61,7 +61,7 @@ export class BookingComponent implements OnInit, OnDestroy {
   }
 
   private handleScroll() {
-    if (!this.messagesContainer || !this.selectedBooking) return;
+    if (!this.messagesContainer || !this.selectedBooking || this.isLoadingMore) return;
 
     const { scrollTop, scrollHeight, clientHeight } = this.messagesContainer;
 
@@ -71,10 +71,6 @@ export class BookingComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Check if we're near the bottom
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
-    this.shouldAutoScroll = isNearBottom;
-
     // Load more messages when reaching the top
     if (scrollTop === 0) {
       this.isScrolling = true;
@@ -83,16 +79,31 @@ export class BookingComponent implements OnInit, OnDestroy {
     }
   }
 
+  private scrollToBottom() {
+    if (this.messagesContainer) {
+      setTimeout(() => {
+        if (this.messagesContainer) {
+          this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        }
+      }, 100);
+    }
+  }
+
   public async loadMoreMessages() {
-    if (this.selectedBooking) {
-      const hasMore = await this.chatService.loadMoreMessages();
-      if (hasMore) {
-        setTimeout(() => {
-          if (this.messagesContainer) {
-            this.messagesContainer.scrollTop = this.scrollPosition;
-          }
-          this.isScrolling = false;
-        }, 100);
+    if (this.selectedBooking && !this.isLoadingMore) {
+      this.isLoadingMore = true;
+      try {
+        const hasMore = await this.chatService.loadMoreMessages();
+        if (hasMore) {
+          setTimeout(() => {
+            if (this.messagesContainer) {
+              this.messagesContainer.scrollTop = this.scrollPosition;
+            }
+            this.isScrolling = false;
+          }, 100);
+        }
+      } finally {
+        this.isLoadingMore = false;
       }
     }
   }
@@ -101,15 +112,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.messageSubscription = this.chatService.messages$.subscribe(messages => {
       if (this.selectedBooking) {
         this.selectedBooking.messages = messages;
-
-        // Scroll to bottom if we should auto-scroll
-        if (this.shouldAutoScroll) {
-          setTimeout(() => {
-            if (this.messagesContainer) {
-              this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-            }
-          }, 100);
-        }
+        this.scrollToBottom();
       }
     });
   }
@@ -143,12 +146,10 @@ export class BookingComponent implements OnInit, OnDestroy {
       this.chatService.resetPagination();
       await this.chatService.joinChat(booking.id);
 
-      // Scroll to bottom after messages are loaded
+      // Wait for messages to load and then scroll
       setTimeout(() => {
-        if (this.messagesContainer) {
-          this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-        }
-      }, 100);
+        this.scrollToBottom();
+      }, 500);
     } catch (error) {
       console.error('Error selecting booking:', error);
       this.connectionError = 'Failed to connect to chat. Please try again.';
@@ -186,6 +187,7 @@ export class BookingComponent implements OnInit, OnDestroy {
       this.connectionError = null;
       await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
       this.newMessage = '';
+      this.scrollToBottom();
     } catch (error) {
       console.error('Error sending message:', error);
       this.connectionError = 'Failed to send message. Please try again.';

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { Observable, firstValueFrom, Subscription } from 'rxjs';
 import { Location } from '@angular/common';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { FormGroup, FormBuilder, FormArray } from '@angular/forms';
 
 interface SocialMediaLink {
   platform: string;
@@ -56,7 +57,7 @@ type TabType = 'profile' | 'bookings' | 'payments';
     ]),
   ],
 })
-export class AgencyDashboardComponent implements OnInit, OnDestroy {
+export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   activeTab: TabType = 'profile';
   tabs: TabType[] = ['profile', 'bookings', 'payments'];
   isLoading = true;
@@ -80,22 +81,8 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
   pendingPayments: number = 0;
   failedPayments: number = 0;
 
-  profileForm = {
-    website: '',
-    email: '',
-    logoUrl: '',
-    coverImageUrl: '',
-    officeHours: '',
-    languages: '',
-    specializations: '',
-    socialMediaLinks: [] as SocialMediaLink[],
-    teamMembers: [] as TeamMember[],
-    certifications: [] as Certification[],
-    awards: [] as Award[],
-    testimonials: [] as Testimonial[],
-    termsAndConditions: '',
-    privacyPolicy: ''
-  };
+  profileForm: FormGroup;
+  isSubmitting = false;
 
   // Local image storage
   localLogoUrl: string | null = null;
@@ -131,6 +118,10 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
   private messageSubscription: Subscription | null = null;
   isConnecting: boolean = false;
   connectionError: string | null = null;
+  private messagesContainer: HTMLElement | null = null;
+  private isScrolling = false;
+  private scrollPosition = 0;
+  private isLoadingMore = false;
 
   constructor(
     private agencyProfileService: AgencyProfileService,
@@ -139,21 +130,159 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private fileUploadService: FileUploadService,
     private router: Router,
-    private location: Location
-  ) {}
+    private location: Location,
+    private formBuilder: FormBuilder
+  ) {
+    this.profileForm = this.formBuilder.group({
+      name: [''],
+      description: [''],
+      address: [''],
+      phone: [''],
+      email: [''],
+      website: [''],
+      logoUrl: [''],
+      coverImageUrl: [''],
+      socialMediaLinks: this.formBuilder.array([]),
+      teamMembers: this.formBuilder.array([]),
+      certifications: this.formBuilder.array([]),
+      awards: this.formBuilder.array([]),
+      testimonials: this.formBuilder.array([])
+    });
+  }
 
-  async ngOnInit() {
+  get socialMediaLinks(): FormArray {
+    return this.profileForm.get('socialMediaLinks') as FormArray;
+  }
+
+  get teamMembers(): FormArray {
+    return this.profileForm.get('teamMembers') as FormArray;
+  }
+
+  get certifications(): FormArray {
+    return this.profileForm.get('certifications') as FormArray;
+  }
+
+  get awards(): FormArray {
+    return this.profileForm.get('awards') as FormArray;
+  }
+
+  get testimonials(): FormArray {
+    return this.profileForm.get('testimonials') as FormArray;
+  }
+
+  ngOnInit() {
+    this.loadProfile();
+    this.loadBookings();
+    this.setupMessageSubscription();
+  }
+
+  ngAfterViewInit() {
+    this.messagesContainer = document.querySelector('.messages-container');
+    if (this.messagesContainer) {
+      this.messagesContainer.addEventListener('scroll', this.handleScroll.bind(this));
+    }
+  }
+
+  private handleScroll() {
+    if (!this.messagesContainer || !this.selectedBooking || this.isLoadingMore) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = this.messagesContainer;
+
+    // Save scroll position when loading more messages
+    if (this.isScrolling) {
+      this.scrollPosition = scrollHeight - this.scrollPosition;
+      return;
+    }
+
+    // Load more messages when reaching the top
+    if (scrollTop === 0) {
+      this.isScrolling = true;
+      this.scrollPosition = scrollHeight;
+      this.loadMoreMessages();
+    }
+  }
+
+  private scrollToBottom() {
+    if (this.messagesContainer) {
+      setTimeout(() => {
+        if (this.messagesContainer) {
+          this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        }
+      }, 100);
+    }
+  }
+
+  public async loadMoreMessages() {
+    if (this.selectedBooking && !this.isLoadingMore) {
+      this.isLoadingMore = true;
+      try {
+        const hasMore = await this.chatService.loadMoreMessages();
+        if (hasMore) {
+          setTimeout(() => {
+            if (this.messagesContainer) {
+              this.messagesContainer.scrollTop = this.scrollPosition;
+            }
+            this.isScrolling = false;
+          }, 100);
+        }
+      } finally {
+        this.isLoadingMore = false;
+      }
+    }
+  }
+
+  private setupMessageSubscription() {
+    this.messageSubscription = this.chatService.messages$.subscribe(messages => {
+      if (this.selectedBooking) {
+        this.selectedBooking.messages = messages;
+        this.scrollToBottom();
+      }
+    });
+  }
+
+  async viewChat(id: number) {
     try {
-      this.user = await this.authService.getCurrentUser();
-      await this.loadProfile();
-      await this.loadBookings();
-      await this.loadPayments();
-      this.setupChatNotifications();
-      this.setupMessageSubscription();
+      this.isConnecting = true;
+      this.connectionError = null;
+
+      if (this.selectedBooking) {
+        await this.chatService.leaveChat(this.selectedBooking.id);
+      }
+
+      this.selectedBooking = this.bookings.find(b => b.id === id);
+      this.bookingService.selectedBooking = this.selectedBooking;
+      this.chatService.selectedBooking = this.selectedBooking;
+      this.chatService.resetPagination();
+      await this.chatService.joinChat(id);
+
+      // Wait for messages to load and then scroll
+      setTimeout(() => {
+        this.scrollToBottom();
+      }, 500);
     } catch (error) {
-      console.error('Error initializing dashboard:', error);
+      console.error('Error selecting booking:', error);
+      this.connectionError = 'Failed to connect to chat. Please try again.';
     } finally {
-      this.isLoading = false;
+      this.isConnecting = false;
+    }
+  }
+
+  async sendMessage() {
+    if (!this.selectedBooking || !this.newMessage.trim()) {
+      return;
+    }
+
+    try {
+      this.isConnecting = true;
+      this.connectionError = null;
+      await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
+      this.newMessage = '';
+      this.scrollToBottom();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      this.connectionError = 'Failed to send message. Please try again.';
+    } finally {
+      this.isConnecting = false;
     }
   }
 
@@ -163,6 +292,9 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
     }
     if (this.selectedBooking) {
       this.chatService.leaveChat(this.selectedBooking.id);
+    }
+    if (this.messagesContainer) {
+      this.messagesContainer.removeEventListener('scroll', this.handleScroll.bind(this));
     }
   }
 
@@ -182,17 +314,23 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
 
   private async loadProfile() {
     try {
+      this.user = await this.authService.getCurrentUser();
       this.profile = await firstValueFrom(this.agencyProfileService.getMyAgencyProfile());
       if (this.profile) {
-        this.profileForm = { ...this.profile };
-      }
-    } catch (error: any) {
-      console.error('Error loading profile:', error);
-      // Check if the error is a 404 (profile not found)
-      if (error.status === 404) {
-        this.profile = null;
+        this.profileForm.patchValue({
+          name: this.profile.name,
+          description: this.profile.description,
+          address: this.profile.address,
+          phone: this.profile.phone,
+          email: this.profile.email,
+          website: this.profile.website,
+          logoUrl: this.profile.logoUrl,
+          coverImageUrl: this.profile.coverImageUrl
+        });
         this.showProfileForm = true;
       }
+    } finally {
+      this.isLoading = false;
     }
   }
 
@@ -248,29 +386,6 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  private setupMessageSubscription() {
-    this.messageSubscription = this.chatService.messages$.subscribe(messages => {
-      if (this.selectedBooking) {
-        // Get existing messages that are not in the new messages array
-        const existingMessages = this.selectedBooking.messages || [];
-        const newMessages = messages.filter(msg =>
-          !existingMessages.some((existing: { id: number | string }) => existing.id === msg.id)
-        );
-
-        // Combine existing and new messages
-        const allMessages = [...existingMessages, ...newMessages];
-
-        // Sort messages by timestamp
-        const sortedMessages = allMessages.sort((a, b) =>
-          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
-        );
-
-        // Update the messages array
-        this.selectedBooking.messages = sortedMessages;
-      }
-    });
-  }
-
   switchTab(tab: TabType): void {
     this.activeTab = tab;
   }
@@ -301,28 +416,6 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async viewChat(id: number) {
-    try {
-      this.isConnecting = true;
-      this.connectionError = null;
-
-      if (this.selectedBooking) {
-        await this.chatService.leaveChat(this.selectedBooking.id);
-      }
-
-      this.selectedBooking = this.bookings.find(b => b.id === id);
-      this.bookingService.selectedBooking = this.selectedBooking;
-      this.chatService.selectedBooking = this.selectedBooking;
-      await this.chatService.joinChat(id);
-      await this.loadChatMessages(id);
-    } catch (error) {
-      console.error('Error selecting booking:', error);
-      this.connectionError = 'Failed to connect to chat. Please try again.';
-    } finally {
-      this.isConnecting = false;
-    }
-  }
-
   async selectChat(id: number) {
     if (this.selectedBooking) {
       await this.chatService.leaveChat(this.selectedBooking.id);
@@ -345,75 +438,58 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async sendMessage() {
-    if (!this.selectedBooking || !this.newMessage.trim()) {
+  private onLogoFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      this.localLogoUrl = URL.createObjectURL(file);
+    }
+  }
+
+  private onCoverFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      this.localCoverUrl = URL.createObjectURL(file);
+    }
+  }
+
+  async submitProfile(): Promise<void> {
+    if (this.profileForm.invalid) {
       return;
     }
 
     try {
-      this.isConnecting = true;
-      this.connectionError = null;
-      await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
-      this.newMessage = '';
-    } catch (error) {
-      console.error('Error sending message:', error);
-      this.connectionError = 'Failed to send message. Please try again.';
-    } finally {
-      this.isConnecting = false;
-    }
-  }
+      this.isSubmitting = true;
+      const formData = new FormData();
+      formData.append('name', this.profileForm.get('name')?.value);
+      formData.append('description', this.profileForm.get('description')?.value);
+      formData.append('address', this.profileForm.get('address')?.value);
+      formData.append('phone', this.profileForm.get('phone')?.value);
+      formData.append('email', this.profileForm.get('email')?.value);
+      formData.append('website', this.profileForm.get('website')?.value);
 
-  async submitProfile() {
-    try {
-      // Upload images if they have changed
-      if (this.localLogoUrl && this.localLogoUrl !== this.profileForm.logoUrl) {
+      if (this.localLogoUrl) {
         const logoFile = await this.dataURLtoFile(this.localLogoUrl, 'logo.png');
-        const uploadResponse = await firstValueFrom(
-          this.fileUploadService.uploadFile(logoFile, 'agency-logos')
-        );
-        this.profileForm.logoUrl = uploadResponse.url;
+        formData.append('logo', logoFile);
       }
 
-      if (this.localCoverUrl && this.localCoverUrl !== this.profileForm.coverImageUrl) {
+      if (this.localCoverUrl) {
         const coverFile = await this.dataURLtoFile(this.localCoverUrl, 'cover.png');
-        const uploadResponse = await firstValueFrom(
-          this.fileUploadService.uploadFile(coverFile, 'agency-covers')
-        );
-        this.profileForm.coverImageUrl = uploadResponse.url;
+        formData.append('coverImage', coverFile);
       }
 
-      if (this.profile) {
-        await firstValueFrom(this.agencyProfileService.updateAgencyProfile(this.profile.id, this.profileForm));
-      } else {
-        await firstValueFrom(this.agencyProfileService.createAgencyProfile(this.profileForm));
+      if (!this.profile?.id) {
+        throw new Error('Profile ID is required');
       }
-      await this.loadProfile();
+
+      await firstValueFrom(this.agencyProfileService.updateAgencyProfile(this.profile.id, formData));
       this.showProfileForm = false;
+      this.loadProfile();
     } catch (error) {
-      console.error('Error submitting profile:', error);
-    }
-  }
-
-  // Image preview methods
-  onLogoFileChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.localLogoUrl = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  onCoverFileChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.localCoverUrl = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      console.error('Error updating profile:', error);
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
@@ -427,13 +503,16 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
   // Social media methods
   addSocialMediaLink() {
     if (this.newSocialMediaLink.platform && this.newSocialMediaLink.url) {
-      this.profileForm.socialMediaLinks.push({ ...this.newSocialMediaLink });
+      this.socialMediaLinks.push(this.formBuilder.group({
+        platform: [this.newSocialMediaLink.platform],
+        url: [this.newSocialMediaLink.url]
+      }));
       this.newSocialMediaLink = { platform: '', url: '' };
     }
   }
 
   removeSocialMediaLink(index: number) {
-    this.profileForm.socialMediaLinks.splice(index, 1);
+    this.socialMediaLinks.removeAt(index);
   }
 
   getSocialMediaIcon(platform: string): string {
@@ -455,46 +534,60 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
 
   addTeamMember() {
     if (this.newTeamMember.name && this.newTeamMember.role) {
-      this.profileForm.teamMembers.push({ ...this.newTeamMember });
+      this.teamMembers.push(this.formBuilder.group({
+        name: [this.newTeamMember.name],
+        role: [this.newTeamMember.role]
+      }));
       this.newTeamMember = { name: '', role: '' };
     }
   }
 
   removeTeamMember(index: number) {
-    this.profileForm.teamMembers.splice(index, 1);
+    this.teamMembers.removeAt(index);
   }
 
   addCertification() {
     if (this.newCertification.name && this.newCertification.provider) {
-      this.profileForm.certifications.push({ ...this.newCertification });
+      this.certifications.push(this.formBuilder.group({
+        name: [this.newCertification.name],
+        provider: [this.newCertification.provider],
+        date: [this.newCertification.date]
+      }));
       this.newCertification = { name: '', provider: '', date: new Date() };
     }
   }
 
   removeCertification(index: number) {
-    this.profileForm.certifications.splice(index, 1);
+    this.certifications.removeAt(index);
   }
 
   addAward() {
     if (this.newAward.title) {
-      this.profileForm.awards.push({ ...this.newAward });
+      this.awards.push(this.formBuilder.group({
+        title: [this.newAward.title],
+        date: [this.newAward.date]
+      }));
       this.newAward = { title: '', date: new Date() };
     }
   }
 
   removeAward(index: number) {
-    this.profileForm.awards.splice(index, 1);
+    this.awards.removeAt(index);
   }
 
   addTestimonial() {
     if (this.newTestimonial.name && this.newTestimonial.message) {
-      this.profileForm.testimonials.push({ ...this.newTestimonial });
+      this.testimonials.push(this.formBuilder.group({
+        name: [this.newTestimonial.name],
+        title: [this.newTestimonial.title],
+        message: [this.newTestimonial.message]
+      }));
       this.newTestimonial = { name: '', title: '', message: '' };
     }
   }
 
   removeTestimonial(index: number) {
-    this.profileForm.testimonials.splice(index, 1);
+    this.testimonials.removeAt(index);
   }
 
   navigateToCreateProfile() {

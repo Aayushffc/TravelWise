@@ -84,10 +84,10 @@ export class ChatService {
 
   private convertToIST(dateString: string): string {
     const date = new Date(dateString);
-    // Add 5 hours and 30 minutes to convert to IST
-    date.setHours(date.getHours() + 5);
-    date.setMinutes(date.getMinutes() + 30);
-    return date.toISOString();
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istDate = new Date(date.getTime() + istOffset);
+    return istDate.toISOString();
   }
 
   private updateDisplayedMessages() {
