@@ -61,8 +61,17 @@ export class BookingComponent implements OnInit, OnDestroy {
   private setupMessageSubscription() {
     this.messageSubscription = this.chatService.messages$.subscribe(messages => {
       if (this.selectedBooking) {
+        // Get existing messages that are not in the new messages array
+        const existingMessages = this.selectedBooking.messages || [];
+        const newMessages = messages.filter(msg =>
+          !existingMessages.some((existing: { id: number | string }) => existing.id === msg.id)
+        );
+
+        // Combine existing and new messages
+        const allMessages = [...existingMessages, ...newMessages];
+
         // Sort messages by timestamp
-        const sortedMessages = [...messages].sort((a, b) =>
+        const sortedMessages = allMessages.sort((a, b) =>
           new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
         );
 

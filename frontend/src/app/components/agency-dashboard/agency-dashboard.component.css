@@ -601,3 +601,123 @@
 .booking-filter-card.ring-red-500:hover {
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+/* Chat Message Styles */
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.message-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 80%;
+}
+
+.message-container.sent {
+  align-self: flex-end;
+}
+
+.message-container.received {
+  align-self: flex-start;
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-container.sent .message {
+  background-color: #e0e7ff;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.message-container.received .message {
+  background-color: #f3f4f6;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.sender-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.message-content {
+  font-size: 0.875rem;
+  color: #1f2937;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .message-container {
+    max-width: 85%;
+  }
+}
+
+/* Status Badge Styles */
+.status-badge-large {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.status-badge-large:hover {
+  transform: translateY(-1px);
+}
+
+/* Message Input Styles */
+.messages-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Animations */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-message {
+  animation: messageSlideIn 0.3s ease-out;
+}

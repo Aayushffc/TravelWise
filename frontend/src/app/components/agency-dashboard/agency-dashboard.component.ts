@@ -67,7 +67,6 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
   unreadMessages: number = 0;
   user: any = null;
   selectedBooking: any = null;
-  chatMessages: any[] = [];
   newMessage: string = '';
   showProfileForm = false;
 
@@ -130,12 +129,14 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
 
   readonly availableTabs: TabType[] = ['profile', 'bookings', 'payments'];
   private messageSubscription: Subscription | null = null;
+  isConnecting: boolean = false;
+  connectionError: string | null = null;
 
   constructor(
     private agencyProfileService: AgencyProfileService,
     private bookingService: BookingService,
     private chatService: ChatService,
-    private authService: AuthService,
+    public authService: AuthService,
     private fileUploadService: FileUploadService,
     private router: Router,
     private location: Location
@@ -250,7 +251,22 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
   private setupMessageSubscription() {
     this.messageSubscription = this.chatService.messages$.subscribe(messages => {
       if (this.selectedBooking) {
-        this.selectedBooking.messages = messages;
+        // Get existing messages that are not in the new messages array
+        const existingMessages = this.selectedBooking.messages || [];
+        const newMessages = messages.filter(msg =>
+          !existingMessages.some((existing: { id: number | string }) => existing.id === msg.id)
+        );
+
+        // Combine existing and new messages
+        const allMessages = [...existingMessages, ...newMessages];
+
+        // Sort messages by timestamp
+        const sortedMessages = allMessages.sort((a, b) =>
+          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+        );
+
+        // Update the messages array
+        this.selectedBooking.messages = sortedMessages;
       }
     });
   }
@@ -286,16 +302,25 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
   }
 
   async viewChat(id: number) {
-    if (this.selectedBooking) {
-      await this.chatService.leaveChat(this.selectedBooking.id);
-    }
+    try {
+      this.isConnecting = true;
+      this.connectionError = null;
 
-    this.selectedBooking = this.bookings.find(b => b.id === id);
-    this.bookingService.selectedBooking = this.selectedBooking;
-    this.chatService.selectedBooking = this.selectedBooking;
-    this.activeTab = 'bookings';
-    await this.chatService.joinChat(id);
-    await this.loadChatMessages(id);
+      if (this.selectedBooking) {
+        await this.chatService.leaveChat(this.selectedBooking.id);
+      }
+
+      this.selectedBooking = this.bookings.find(b => b.id === id);
+      this.bookingService.selectedBooking = this.selectedBooking;
+      this.chatService.selectedBooking = this.selectedBooking;
+      await this.chatService.joinChat(id);
+      await this.loadChatMessages(id);
+    } catch (error) {
+      console.error('Error selecting booking:', error);
+      this.connectionError = 'Failed to connect to chat. Please try again.';
+    } finally {
+      this.isConnecting = false;
+    }
   }
 
   async selectChat(id: number) {
@@ -308,25 +333,33 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy {
     await this.loadChatMessages(id);
   }
 
-  private async loadChatMessages(id: number) {
+  async loadChatMessages(bookingId: number) {
     try {
-      this.chatMessages = await firstValueFrom(this.bookingService.getChatMessages(id));
+      const messages = await firstValueFrom(this.bookingService.getChatMessages(bookingId));
+      if (this.selectedBooking) {
+        this.selectedBooking.messages = messages;
+      }
     } catch (error) {
       console.error('Error loading chat messages:', error);
+      this.connectionError = 'Failed to load chat messages';
     }
   }
 
   async sendMessage() {
-    if (!this.newMessage.trim() || !this.selectedBooking) {
-      console.error('No message or booking selected');
+    if (!this.selectedBooking || !this.newMessage.trim()) {
       return;
     }
 
     try {
+      this.isConnecting = true;
+      this.connectionError = null;
       await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
       this.newMessage = '';
     } catch (error) {
       console.error('Error sending message:', error);
+      this.connectionError = 'Failed to send message. Please try again.';
+    } finally {
+      this.isConnecting = false;
     }
   }
 
