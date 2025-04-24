@@ -1,40 +1,69 @@
-<div class="min-h-screen bg-gray-100 flex items-center justify-center">
-   <!-- 🔵 Blurred Background Image -->
-   <div class="absolute inset-0 bg-cover bg-center bg-no-repeat blur-[10px]  z-0" style="background-image: url('loginBackground.png');"></div>
-  <div class="grid grid-cols-1 md:grid-cols-2 justify-center z-10">
-    <div class="hidden md:flex  bg-cover bg-center rounded-l-lg items-start justify-center" >
-      <img src="RegisterPage.jpg" alt="Register Page Image" class="w-[500px] h-full  object-cover rounded-l-lg">
+<div
+  class="h-screen bg-gray-100 flex items-center justify-center overflow-hidden"
+>
+  <!-- 🔵 Blurred Background Image -->
+  <div class="absolute bottom-0 left-0 right-0 z-0 blur-[5px]">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1440 320"
+      class="w-full"
+    >
+      <path
+        fill="rgba(162, 217, 255, 5)"
+        fill-opacity="1"
+        d="M0,32L120,74.7C240,117,480,203,720,224C960,245,1200,203,1320,181.3L1440,160L1440,320L1320,320C1200,320,960,320,720,320C480,320,240,320,120,320L0,320Z"
+      ></path>
+    </svg>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 justify-center z-10 h-full">
+    <div
+      class="hidden md:flex bg-cover bg-center rounded-l-lg items-start justify-center h-full"
+    >
+      <img
+        src="RegisterPage.jpg"
+        alt="Register Page Image"
+        class="w-[500px] h-full object-cover rounded-l-lg"
+      />
     </div>
-    <div class="max-w-md w-full space-y-8 p-8 bg-white rounded-r-lg shadow-lg">
-      <div class="text-center">
-        <h2 class="text-3xl font-bold text-gray-900">Create your account</h2>
-        <p class="mt-2 text-sm text-gray-600">Step {{ currentStep }} of 2</p>
-      </div>
-  
-      <!-- Google Sign Up Button -->
-      <div class="mt-4 text-center">
-        <div id="google-signup-btn" class="w-full flex justify-center items-center min-h-[42px]"></div>
-      </div>
-  
-      <!-- Divider -->
-      <div class="relative my-6">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300"></div>
+    <div
+      class="max-w-md w-full p-8 bg-white rounded-r-lg shadow-lg flex flex-col"
+    >
+      <div class="flex-shrink-0">
+        <div class="text-center">
+          <h2 class="text-3xl font-bold text-gray-900">Create your account</h2>
+          <p class="mt-2 text-sm text-gray-600">Step {{ currentStep }} of 2</p>
         </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white text-gray-500">
-            Or sign up with
-          </span>
+
+        <!-- Google Sign Up Button -->
+        <div class="mt-4 text-center">
+          <div
+            id="google-signup-btn"
+            class="w-full flex justify-center items-center min-h-[42px]"
+          ></div>
+        </div>
+
+        <!-- Divider -->
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500"> Or sign up with </span>
+          </div>
         </div>
       </div>
-      
+
       <!-- Step 1: Basic Information -->
-      <div *ngIf="currentStep === 1" class="mt-6">
-        <form (ngSubmit)="nextStep()">
+      <div *ngIf="currentStep === 1" class="flex-1 overflow-y-auto">
+        <form (ngSubmit)="nextStep()" class="space-y-4">
           <!-- Name Fields (First and Last Name in same row) -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
+              <label
+                for="firstName"
+                class="block text-sm font-medium text-gray-700"
+                >First Name</label
+              >
               <input
                 type="text"
                 id="firstName"
@@ -42,10 +71,14 @@
                 [(ngModel)]="firstName"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 required
-              >
+              />
             </div>
             <div>
-              <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+              <label
+                for="lastName"
+                class="block text-sm font-medium text-gray-700"
+                >Last Name</label
+              >
               <input
                 type="text"
                 id="lastName"
@@ -53,12 +86,14 @@
                 [(ngModel)]="lastName"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 required
-              >
+              />
             </div>
           </div>
-  
-          <div class="mt-4">
-            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700"
+              >Email</label
+            >
             <input
               type="email"
               id="email"
@@ -66,11 +101,15 @@
               [(ngModel)]="email"
               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               required
-            >
+            />
           </div>
-  
-          <div class="mt-4">
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+
+          <div>
+            <label
+              for="password"
+              class="block text-sm font-medium text-gray-700"
+              >Password</label
+            >
             <input
               type="password"
               id="password"
@@ -79,27 +118,39 @@
               (ngModelChange)="checkPasswordStrength()"
               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               required
-            >
-  
+            />
+
             <!-- Updated password requirements checklist -->
             <div class="mt-2 flex flex-wrap gap-2 text-xs">
               <div
                 *ngFor="let req of passwordRequirementItems"
                 class="flex items-center px-2 py-1 rounded-full"
-                [class]="passwordRequirements[req.key] ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'"
+                [class]="
+                  passwordRequirements[req.key]
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-gray-50 text-gray-500'
+                "
               >
                 <i
                   class="text-xs mr-1"
-                  [class]="passwordRequirements[req.key] ? 'fas fa-check' : 'fas fa-circle'"
+                  [class]="
+                    passwordRequirements[req.key]
+                      ? 'fas fa-check'
+                      : 'fas fa-circle'
+                  "
                   [style.fontSize]="'0.7rem'"
                 ></i>
                 {{ req.text }}
               </div>
             </div>
           </div>
-  
-          <div class="mt-4">
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+
+          <div>
+            <label
+              for="confirmPassword"
+              class="block text-sm font-medium text-gray-700"
+              >Confirm Password</label
+            >
             <input
               type="password"
               id="confirmPassword"
@@ -107,27 +158,24 @@
               [(ngModel)]="confirmPassword"
               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               required
-            >
+            />
           </div>
-  
-          <div *ngIf="errorMessage" class="mt-4 text-red-500 text-sm">{{ errorMessage }}</div>
-  
-          <div class="mt-6">
-            <button
-              type="submit"
-              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Next
-            </button>
+
+          <div *ngIf="errorMessage" class="text-red-500 text-sm">
+            {{ errorMessage }}
           </div>
         </form>
       </div>
-  
+
       <!-- Step 2: Username -->
-      <div *ngIf="currentStep === 2" class="mt-6">
-        <form (ngSubmit)="register()">
+      <div *ngIf="currentStep === 2" class="flex-1 overflow-y-auto">
+        <form (ngSubmit)="register()" class="space-y-4">
           <div>
-            <label for="userName" class="block text-sm font-medium text-gray-700">Username</label>
+            <label
+              for="userName"
+              class="block text-sm font-medium text-gray-700"
+              >Username</label
+            >
             <input
               type="text"
               id="userName"
@@ -135,46 +183,78 @@
               [(ngModel)]="userName"
               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               required
-            >
+            />
           </div>
-  
-          <div *ngIf="errorMessage" class="mt-4 text-red-500 text-sm">{{ errorMessage }}</div>
-  
-          <div class="mt-6">
-            <button
-              type="submit"
-              [disabled]="isLoading"
-              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <span *ngIf="isLoading" class="mr-2">
-                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </span>
-              Register
-            </button>
-          </div>
-  
-          <div class="mt-4 text-center">
-            <button
-              type="button"
-              (click)="currentStep = 1"
-              class="text-sm text-indigo-600 hover:text-indigo-500"
-            >
-              Back to Step 1
-            </button>
+
+          <div *ngIf="errorMessage" class="text-red-500 text-sm">
+            {{ errorMessage }}
           </div>
         </form>
       </div>
-  
-      <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
-          Already have an account?
-          <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500">
-            Sign in
-          </a>
-        </p>
+
+      <div class="flex-shrink-0 mt-6">
+        <button
+          *ngIf="currentStep === 1"
+          type="submit"
+          (click)="nextStep()"
+          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Next
+        </button>
+
+        <button
+          *ngIf="currentStep === 2"
+          type="submit"
+          (click)="register()"
+          [disabled]="isLoading"
+          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <span *ngIf="isLoading" class="mr-2">
+            <svg
+              class="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </span>
+          Register
+        </button>
+
+        <div *ngIf="currentStep === 2" class="mt-4 text-center">
+          <button
+            type="button"
+            (click)="currentStep = 1"
+            class="text-sm text-indigo-600 hover:text-indigo-500"
+          >
+            Back to Step 1
+          </button>
+        </div>
+
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            Already have an account?
+            <a
+              href="/login"
+              class="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Sign in
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   </div>
