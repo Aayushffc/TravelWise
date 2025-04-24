@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -7,7 +7,7 @@ import { BookingService } from '../../services/booking.service';
 import { ChatService } from '../../services/chat.service';
 import { AuthService } from '../../services/auth.service';
 import { FileUploadService } from '../../services/file-upload.service';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, Subscription } from 'rxjs';
 import { Location } from '@angular/common';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
@@ -56,7 +56,7 @@ type TabType = 'profile' | 'bookings' | 'payments';
     ]),
   ],
 })
-export class AgencyDashboardComponent implements OnInit {
+export class AgencyDashboardComponent implements OnInit, OnDestroy {
   activeTab: TabType = 'profile';
   tabs: TabType[] = ['profile', 'bookings', 'payments'];
   isLoading = true;
@@ -129,6 +129,7 @@ export class AgencyDashboardComponent implements OnInit {
   }
 
   readonly availableTabs: TabType[] = ['profile', 'bookings', 'payments'];
+  private messageSubscription: Subscription | null = null;
 
   constructor(
     private agencyProfileService: AgencyProfileService,
@@ -147,10 +148,20 @@ export class AgencyDashboardComponent implements OnInit {
       await this.loadBookings();
       await this.loadPayments();
       this.setupChatNotifications();
+      this.setupMessageSubscription();
     } catch (error) {
       console.error('Error initializing dashboard:', error);
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.messageSubscription) {
+      this.messageSubscription.unsubscribe();
+    }
+    if (this.selectedBooking) {
+      this.chatService.leaveChat(this.selectedBooking.id);
     }
   }
 
@@ -236,6 +247,14 @@ export class AgencyDashboardComponent implements OnInit {
     });
   }
 
+  private setupMessageSubscription() {
+    this.messageSubscription = this.chatService.messages$.subscribe(messages => {
+      if (this.selectedBooking) {
+        this.selectedBooking.messages = messages;
+      }
+    });
+  }
+
   switchTab(tab: TabType): void {
     this.activeTab = tab;
   }
@@ -267,43 +286,45 @@ export class AgencyDashboardComponent implements OnInit {
   }
 
   async viewChat(id: number) {
+    if (this.selectedBooking) {
+      await this.chatService.leaveChat(this.selectedBooking.id);
+    }
+
     this.selectedBooking = this.bookings.find(b => b.id === id);
     this.bookingService.selectedBooking = this.selectedBooking;
     this.chatService.selectedBooking = this.selectedBooking;
     this.activeTab = 'bookings';
+    await this.chatService.joinChat(id);
     await this.loadChatMessages(id);
   }
 
   async selectChat(id: number) {
+    if (this.selectedBooking) {
+      await this.chatService.leaveChat(this.selectedBooking.id);
+    }
+
     this.selectedBooking = this.bookings.find(b => b.id === id);
+    await this.chatService.joinChat(id);
     await this.loadChatMessages(id);
   }
 
   private async loadChatMessages(id: number) {
     try {
       this.chatMessages = await firstValueFrom(this.bookingService.getChatMessages(id));
-      await this.chatService.joinChat(id);
     } catch (error) {
       console.error('Error loading chat messages:', error);
     }
   }
 
   async sendMessage() {
-    console.log('Attempting to send message:', {
-      message: this.newMessage,
-      selectedBooking: this.selectedBooking
-    });
-
     if (!this.newMessage.trim() || !this.selectedBooking) {
       console.error('No message or booking selected');
       return;
     }
 
     try {
-      await firstValueFrom(this.bookingService.sendMessage(this.selectedBooking.id, this.newMessage));
-      console.log('Message sent successfully');
+      await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
       this.newMessage = '';
-      await this.loadChatMessages(this.selectedBooking.id);
     } catch (error) {
       console.error('Error sending message:', error);
     }

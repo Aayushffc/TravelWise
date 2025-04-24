@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
-import { environment } from '../../environments/environment';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
 @Injectable({
@@ -9,20 +9,14 @@ import { AuthService } from './auth.service';
 })
 export class ChatService {
   private hubConnection: HubConnection;
-  private unreadMessagesCount = new BehaviorSubject<number>(0);
-  private messages = new BehaviorSubject<any[]>([]);
-  private isConnecting = false;
+  private messagesSubject = new BehaviorSubject<any[]>([]);
+  public messages$ = this.messagesSubject.asObservable();
   public selectedBooking: any = null;
+  private isConnecting = false;
 
   constructor(private authService: AuthService) {
-    const apiUrl = environment.apiUrl.replace('http://', '').replace('https://', '');
-    const protocol = environment.apiUrl.startsWith('https') ? 'wss' : 'ws';
-    const chatUrl = `${protocol}://${apiUrl}/chat`;
-
-    console.log('ChatService: Initializing with URL:', chatUrl);
-
     this.hubConnection = new HubConnectionBuilder()
-      .withUrl(chatUrl, {
+      .withUrl(`${environment.apiUrl}/chatHub`, {
         accessTokenFactory: () => {
           const token = this.authService.getToken();
           if (!token) {
@@ -34,12 +28,9 @@ export class ChatService {
       .withAutomaticReconnect({
         nextRetryDelayInMilliseconds: (retryContext) => {
           if (retryContext.previousRetryCount === 0) {
-            console.log('ChatService: Attempting immediate retry');
-            return 0;
+            return 0; // Immediate retry on first attempt
           }
-          const delay = Math.min(1000 * Math.pow(2, retryContext.previousRetryCount - 1), 30000);
-          console.log(`ChatService: Next retry in ${delay}ms`);
-          return delay;
+          return Math.min(1000 * Math.pow(2, retryContext.previousRetryCount - 1), 30000);
         }
       })
       .build();
@@ -50,152 +41,146 @@ export class ChatService {
 
   private setupConnectionHandlers() {
     this.hubConnection.onreconnecting((error) => {
-      console.log('ChatService: SignalR reconnecting...', error);
+      console.log('SignalR reconnecting...', error);
       this.isConnecting = true;
     });
 
     this.hubConnection.onreconnected((connectionId) => {
-      console.log('ChatService: SignalR reconnected with ID:', connectionId);
+      console.log('SignalR reconnected with ID:', connectionId);
       this.isConnecting = false;
     });
 
     this.hubConnection.onclose((error) => {
-      console.log('ChatService: SignalR connection closed', error);
+      console.log('SignalR connection closed', error);
       this.isConnecting = false;
       if (error) {
-        console.error('ChatService: Connection closed due to error:', error);
+        console.error('Connection closed due to error:', error);
         setTimeout(() => this.startConnection(), 5000);
       }
     });
 
-    this.hubConnection.on('ReceiveMessage', (message: any) => {
-      console.log('ChatService: Received message:', message);
-      const currentMessages = this.messages.value;
-      this.messages.next([...currentMessages, message]);
+    this.hubConnection.on('ReceiveMessage', (message) => {
+      console.log('Received message:', message);
+      const currentMessages = this.messagesSubject.value;
+      this.messagesSubject.next([...currentMessages, message]);
     });
 
-    this.hubConnection.on('UnreadMessagesCount', (count: number) => {
-      console.log('ChatService: Updated unread count:', count);
-      this.unreadMessagesCount.next(count);
+    this.hubConnection.on('BookingAccepted', (data) => {
+      console.log('Booking accepted:', data);
+    });
+
+    this.hubConnection.on('BookingRejected', (data) => {
+      console.log('Booking rejected:', data);
+    });
+
+    this.hubConnection.on('BookingCancelled', (data) => {
+      console.log('Booking cancelled:', data);
+    });
+
+    this.hubConnection.on('BookingCompleted', (data) => {
+      console.log('Booking completed:', data);
     });
   }
 
   private async startConnection() {
     if (this.isConnecting || this.hubConnection.state === HubConnectionState.Connected) {
-      console.log('ChatService: Connection already in progress or connected');
+      console.log('Connection already in progress or connected');
       return;
     }
 
     this.isConnecting = true;
     try {
-      console.log('ChatService: Starting SignalR connection...');
+      console.log('Starting SignalR connection...');
       await this.hubConnection.start();
-      console.log('ChatService: SignalR Connected, State:', this.hubConnection.state);
+      console.log('SignalR Connected, State:', this.hubConnection.state);
       this.isConnecting = false;
     } catch (err) {
-      console.error('ChatService: Error while starting connection:', err);
+      console.error('Error while starting connection:', err);
       this.isConnecting = false;
-      // Rely on automatic reconnection
+      throw err;
     }
   }
 
   private async ensureConnection(): Promise<void> {
-    const currentState = this.hubConnection.state;
-    console.log('ChatService: Current connection state:', currentState);
-
-    if (currentState === HubConnectionState.Connected) {
+    const state = this.hubConnection.state as HubConnectionState;
+    if (state === HubConnectionState.Connected) {
       return;
     }
 
-    if (currentState === HubConnectionState.Disconnected || currentState === HubConnectionState.Disconnecting) {
-      console.log('ChatService: Connection is disconnected, attempting to reconnect...');
+    if (state === HubConnectionState.Disconnected) {
       await this.startConnection();
+    }
 
-      let attempts = 0;
-      const maxAttempts = 5;
-      while (attempts < maxAttempts) {
-        console.log(`ChatService: Connection attempt ${attempts + 1}/${maxAttempts}`);
-        const state = this.hubConnection.state;
-        if (state === HubConnectionState.Connected) {
-          console.log('ChatService: Connection established');
-          return;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        attempts++;
-        if (attempts < maxAttempts && ![HubConnectionState.Connected, HubConnectionState.Connecting].includes(state)) {
-          console.log('ChatService: Retrying connection...');
-          await this.startConnection();
-        }
+    let attempts = 0;
+    const maxAttempts = 5;
+    while (attempts < maxAttempts) {
+      if ((this.hubConnection.state as HubConnectionState) === HubConnectionState.Connected) {
+        return;
       }
-
-      throw new Error('Failed to establish connection after multiple attempts');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
     }
+
+    throw new Error('Failed to establish connection after multiple attempts');
   }
 
-  getUnreadMessagesCount(): Observable<number> {
-    return this.unreadMessagesCount.asObservable();
-  }
-
-  getMessages(): Observable<any[]> {
-    return this.messages.asObservable();
-  }
-
-  async sendMessage(bookingId: number, message: string, messageType: string = 'text', fileUrl?: string, fileName?: string, fileSize?: number) {
-    console.log('ChatService: Attempting to send message:', {
-      bookingId,
-      message,
-      messageType,
-      fileUrl,
-      fileName,
-      fileSize,
-      connectionState: this.hubConnection.state
-    });
-
+  public async joinChat(bookingId: number) {
     try {
       await this.ensureConnection();
-      await this.hubConnection.invoke('SendMessage', bookingId, message, messageType, fileUrl, fileName, fileSize);
-      console.log('ChatService: Message sent successfully');
-    } catch (err) {
-      console.error('ChatService: Error while sending message:', err);
-      throw err;
-    }
-  }
-
-  async joinChat(bookingId: number) {
-    try {
-      await this.ensureConnection();
-      console.log('ChatService: Joining chat for booking:', bookingId);
       await this.hubConnection.invoke('JoinBookingChat', bookingId);
-      this.messages.next([]);
-      console.log('ChatService: Successfully joined chat');
+      this.messagesSubject.next([]);
     } catch (err) {
-      console.error('ChatService: Error while joining chat:', err);
+      console.error('Error joining chat:', err);
       throw err;
     }
   }
 
-  async leaveChat(bookingId: number) {
+  public async leaveChat(bookingId: number) {
     try {
       await this.ensureConnection();
-      console.log('ChatService: Leaving chat for booking:', bookingId);
       await this.hubConnection.invoke('LeaveBookingChat', bookingId);
-      this.messages.next([]);
-      console.log('ChatService: Successfully left chat');
+      this.messagesSubject.next([]);
     } catch (err) {
-      console.error('ChatService: Error while leaving chat:', err);
+      console.error('Error leaving chat:', err);
       throw err;
     }
   }
 
-  async markMessageAsRead(messageId: number) {
+  public async sendMessage(bookingId: number, message: string, messageType?: string, fileUrl?: string, fileName?: string, fileSize?: number) {
     try {
       await this.ensureConnection();
-      console.log('ChatService: Marking message as read:', messageId);
-      await this.hubConnection.invoke('MarkMessageAsRead', messageId);
-      console.log('ChatService: Message marked as read');
+
+      // Create a temporary message object
+      const tempMessage = {
+        id: Date.now(), // Temporary ID
+        bookingId,
+        message,
+        messageType,
+        fileUrl,
+        fileName,
+        fileSize,
+        senderId: this.authService.getCurrentUser()?.id,
+        sentAt: new Date().toISOString(),
+        isTemporary: true
+      };
+
+      // Add the message to the local messages array immediately
+      const currentMessages = this.messagesSubject.value;
+      this.messagesSubject.next([...currentMessages, tempMessage]);
+
+      // Send the message to the server
+      await this.hubConnection.invoke('SendMessage', bookingId, message, messageType, fileUrl, fileName, fileSize);
     } catch (err) {
-      console.error('ChatService: Error while marking message as read:', err);
+      console.error('Error sending message:', err);
       throw err;
     }
+  }
+
+  public getUnreadMessagesCount(): Observable<number> {
+    return new Observable<number>(observer => {
+      this.hubConnection.on('UnreadMessagesCount', (count) => {
+        observer.next(count);
+      });
+    });
   }
 }

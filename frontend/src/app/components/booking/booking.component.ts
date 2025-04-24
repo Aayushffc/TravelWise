@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BookingService } from '../../services/booking.service';
+import { ChatService } from '../../services/chat.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { AuthService } from '../../services/auth.service';
+import { Subscription } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-booking',
@@ -21,17 +24,52 @@ import { AuthService } from '../../services/auth.service';
     ])
   ]
 })
-export class BookingComponent implements OnInit {
+export class BookingComponent implements OnInit, OnDestroy {
   bookings: any[] = [];
   selectedBooking: any = null;
   newMessage: string = '';
   isLoading: boolean = true;
   error: string | null = null;
+  private messageSubscription: Subscription | null = null;
+  isConnecting: boolean = false;
+  connectionError: string | null = null;
+  public authService: AuthService;
 
-  constructor(private bookingService: BookingService, private location: Location, private authService: AuthService) {}
+  constructor(
+    private bookingService: BookingService,
+    private chatService: ChatService,
+    private location: Location,
+    authService: AuthService
+  ) {
+    this.authService = authService;
+  }
 
   ngOnInit() {
     this.loadBookings();
+    this.setupMessageSubscription();
+  }
+
+  ngOnDestroy() {
+    if (this.messageSubscription) {
+      this.messageSubscription.unsubscribe();
+    }
+    if (this.selectedBooking) {
+      this.chatService.leaveChat(this.selectedBooking.id);
+    }
+  }
+
+  private setupMessageSubscription() {
+    this.messageSubscription = this.chatService.messages$.subscribe(messages => {
+      if (this.selectedBooking) {
+        // Sort messages by timestamp
+        const sortedMessages = [...messages].sort((a, b) =>
+          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+        );
+
+        // Update the messages array
+        this.selectedBooking.messages = sortedMessages;
+      }
+    });
   }
 
   loadBookings() {
@@ -48,46 +86,56 @@ export class BookingComponent implements OnInit {
     });
   }
 
-  selectBooking(booking: any) {
-    this.selectedBooking = booking;
-    this.bookingService.selectedBooking = booking;
-    this.loadChatMessages(booking.id);
-  }
+  async selectBooking(booking: any) {
+    try {
+      this.isConnecting = true;
+      this.connectionError = null;
 
-  loadChatMessages(bookingId: number) {
-    this.bookingService.getChatMessages(bookingId).subscribe({
-      next: (messages) => {
-        if (this.selectedBooking) {
-          this.selectedBooking.messages = messages;
-        }
-      },
-      error: (err) => {
-        this.error = 'Failed to load chat messages';
+      if (this.selectedBooking) {
+        await this.chatService.leaveChat(this.selectedBooking.id);
       }
-    });
+
+      this.selectedBooking = booking;
+      this.bookingService.selectedBooking = booking;
+      this.chatService.selectedBooking = booking;
+      await this.chatService.joinChat(booking.id);
+      await this.loadChatMessages(booking.id);
+    } catch (error) {
+      console.error('Error selecting booking:', error);
+      this.connectionError = 'Failed to connect to chat. Please try again.';
+    } finally {
+      this.isConnecting = false;
+    }
   }
 
-  sendMessage() {
+  async loadChatMessages(bookingId: number) {
+    try {
+      const messages = await firstValueFrom(this.bookingService.getChatMessages(bookingId));
+      if (this.selectedBooking) {
+        this.selectedBooking.messages = messages;
+      }
+    } catch (error) {
+      console.error('Error loading chat messages:', error);
+      this.error = 'Failed to load chat messages';
+    }
+  }
+
+  async sendMessage() {
     if (!this.selectedBooking || !this.newMessage.trim()) {
-      console.error('No booking selected or empty message');
       return;
     }
 
-    console.log('Sending message for booking:', this.selectedBooking.id);
-    console.log('Message content:', this.newMessage);
-
-    this.bookingService.selectedBooking = this.selectedBooking;
-    this.bookingService.sendMessage(this.selectedBooking.id, this.newMessage).subscribe({
-      next: (response) => {
-        console.log('Message sent successfully:', response);
-        this.newMessage = '';
-        this.loadChatMessages(this.selectedBooking.id);
-      },
-      error: (err) => {
-        console.error('Error sending message:', err);
-        this.error = 'Failed to send message: ' + (err.error?.message || 'Unknown error');
-      }
-    });
+    try {
+      this.isConnecting = true;
+      this.connectionError = null;
+      await this.chatService.sendMessage(this.selectedBooking.id, this.newMessage);
+      this.newMessage = '';
+    } catch (error) {
+      console.error('Error sending message:', error);
+      this.connectionError = 'Failed to send message. Please try again.';
+    } finally {
+      this.isConnecting = false;
+    }
   }
 
   getStatusColor(status: string): string {

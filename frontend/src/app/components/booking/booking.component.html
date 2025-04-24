@@ -180,13 +180,19 @@
 
           <!-- Messages Container -->
           <div class="h-[500px] overflow-y-auto p-6 space-y-4 messages-container bg-white/50">
-            <div *ngFor="let message of selectedBooking.messages"
-                 [class.justify-end]="message.senderId === selectedBooking.userId"
-                 class="flex animate-message">
-              <div [class]="'message-bubble max-w-[70%] rounded-2xl p-4 ' +
-                           (message.senderId === selectedBooking.userId ? 'bg-indigo-50/95 ml-auto' : 'bg-gray-50/95')">
-                <p class="text-sm text-gray-800">{{ message.message }}</p>
-                <p class="text-xs text-gray-400 mt-1">{{ message.sentAt | date:'shortTime' }}</p>
+            <div class="chat-messages" *ngIf="selectedBooking">
+              <div *ngFor="let message of selectedBooking.messages"
+                   class="message-container"
+                   [ngClass]="{'sent': message.senderId === authService.getCurrentUser()?.id, 'received': message.senderId !== authService.getCurrentUser()?.id}">
+                <div class="message">
+                  <div class="message-header">
+                    <span class="sender-name">{{ message.senderId === authService.getCurrentUser()?.id ? 'You' : selectedBooking.agencyName }}</span>
+                    <span class="message-time">{{ message.sentAt | date:'shortTime' }}</span>
+                  </div>
+                  <div class="message-content">
+                    <p>{{ message.message }}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -209,7 +215,7 @@
                      placeholder="Type your message..."
                      class="flex-1 rounded-xl border-gray-200 bg-white/95 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
               <button type="submit"
-                      class="send-button inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600/95 hover:bg-indigo-700/95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                      class="send-button inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
@@ -219,5 +225,40 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="chat-container" *ngIf="selectedBooking">
+  <div class="chat-header">
+    <h3>Chat with {{ selectedBooking.agencyName }}</h3>
+    <div class="connection-status" [ngClass]="{'connecting': isConnecting, 'error': connectionError}">
+      <span *ngIf="isConnecting">Connecting...</span>
+      <span *ngIf="connectionError" class="error-message">{{ connectionError }}</span>
+    </div>
+  </div>
+
+  <div class="chat-messages">
+    <div *ngFor="let message of selectedBooking.messages" class="message" [ngClass]="{'sent': message.senderId === authService.getCurrentUser()?.id}">
+      <div class="message-content">
+        <p>{{ message.message }}</p>
+        <span class="message-time">{{ message.sentAt | date:'short' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input">
+    <input
+      type="text"
+      [(ngModel)]="newMessage"
+      (keyup.enter)="sendMessage()"
+      placeholder="Type your message..."
+      [disabled]="isConnecting"
+    >
+    <button
+      (click)="sendMessage()"
+      [disabled]="!newMessage.trim() || isConnecting"
+    >
+      Send
+    </button>
   </div>
 </div>

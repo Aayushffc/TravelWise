@@ -43,12 +43,7 @@ builder.Services.AddScoped<IDBHelper, DBHelper>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 // SignalR Configuration
-builder.Services.AddSignalR(options =>
-{
-    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
-    options.MaximumReceiveMessageSize = 102400; // 100 KB
-    options.StreamBufferCapacity = 10;
-});
+builder.Services.AddSignalR();
 
 // CORS Configuration with fallback
 var allowedOriginsRaw =
@@ -206,7 +201,7 @@ app.UseAuthorization();
 app.UseSession();
 
 // Configure SignalR endpoints
-app.MapHub<ChatHub>("/hubs/chat");
+app.MapHub<ChatHub>("/chatHub");
 
 app.MapControllers();
 
