@@ -34,6 +34,10 @@ export class BookingComponent implements OnInit, OnDestroy {
   isConnecting: boolean = false;
   connectionError: string | null = null;
   public authService: AuthService;
+  private messagesContainer: HTMLElement | null = null;
+  private isScrolling = false;
+  private scrollPosition = 0;
+  private shouldAutoScroll = true;
 
   constructor(
     private bookingService: BookingService,
@@ -49,34 +53,63 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.setupMessageSubscription();
   }
 
-  ngOnDestroy() {
-    if (this.messageSubscription) {
-      this.messageSubscription.unsubscribe();
+  ngAfterViewInit() {
+    this.messagesContainer = document.querySelector('.messages-container');
+    if (this.messagesContainer) {
+      this.messagesContainer.addEventListener('scroll', this.handleScroll.bind(this));
     }
+  }
+
+  private handleScroll() {
+    if (!this.messagesContainer || !this.selectedBooking) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = this.messagesContainer;
+
+    // Save scroll position when loading more messages
+    if (this.isScrolling) {
+      this.scrollPosition = scrollHeight - this.scrollPosition;
+      return;
+    }
+
+    // Check if we're near the bottom
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+    this.shouldAutoScroll = isNearBottom;
+
+    // Load more messages when reaching the top
+    if (scrollTop === 0) {
+      this.isScrolling = true;
+      this.scrollPosition = scrollHeight;
+      this.loadMoreMessages();
+    }
+  }
+
+  public async loadMoreMessages() {
     if (this.selectedBooking) {
-      this.chatService.leaveChat(this.selectedBooking.id);
+      const hasMore = await this.chatService.loadMoreMessages();
+      if (hasMore) {
+        setTimeout(() => {
+          if (this.messagesContainer) {
+            this.messagesContainer.scrollTop = this.scrollPosition;
+          }
+          this.isScrolling = false;
+        }, 100);
+      }
     }
   }
 
   private setupMessageSubscription() {
     this.messageSubscription = this.chatService.messages$.subscribe(messages => {
       if (this.selectedBooking) {
-        // Get existing messages that are not in the new messages array
-        const existingMessages = this.selectedBooking.messages || [];
-        const newMessages = messages.filter(msg =>
-          !existingMessages.some((existing: { id: number | string }) => existing.id === msg.id)
-        );
+        this.selectedBooking.messages = messages;
 
-        // Combine existing and new messages
-        const allMessages = [...existingMessages, ...newMessages];
-
-        // Sort messages by timestamp
-        const sortedMessages = allMessages.sort((a, b) =>
-          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
-        );
-
-        // Update the messages array
-        this.selectedBooking.messages = sortedMessages;
+        // Scroll to bottom if we should auto-scroll
+        if (this.shouldAutoScroll) {
+          setTimeout(() => {
+            if (this.messagesContainer) {
+              this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+          }, 100);
+        }
       }
     });
   }
@@ -107,8 +140,15 @@ export class BookingComponent implements OnInit, OnDestroy {
       this.selectedBooking = booking;
       this.bookingService.selectedBooking = booking;
       this.chatService.selectedBooking = booking;
+      this.chatService.resetPagination();
       await this.chatService.joinChat(booking.id);
-      await this.loadChatMessages(booking.id);
+
+      // Scroll to bottom after messages are loaded
+      setTimeout(() => {
+        if (this.messagesContainer) {
+          this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        }
+      }, 100);
     } catch (error) {
       console.error('Error selecting booking:', error);
       this.connectionError = 'Failed to connect to chat. Please try again.';
@@ -122,6 +162,13 @@ export class BookingComponent implements OnInit, OnDestroy {
       const messages = await firstValueFrom(this.bookingService.getChatMessages(bookingId));
       if (this.selectedBooking) {
         this.selectedBooking.messages = messages;
+
+        // Scroll to bottom after messages are loaded
+        setTimeout(() => {
+          if (this.messagesContainer) {
+            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+          }
+        }, 100);
       }
     } catch (error) {
       console.error('Error loading chat messages:', error);
@@ -194,5 +241,17 @@ export class BookingComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.location.back();
+  }
+
+  ngOnDestroy() {
+    if (this.messageSubscription) {
+      this.messageSubscription.unsubscribe();
+    }
+    if (this.selectedBooking) {
+      this.chatService.leaveChat(this.selectedBooking.id);
+    }
+    if (this.messagesContainer) {
+      this.messagesContainer.removeEventListener('scroll', this.handleScroll.bind(this));
+    }
   }
 }
