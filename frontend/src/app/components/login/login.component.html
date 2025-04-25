@@ -1,65 +1,139 @@
-<div class="min-h-screen bg-gray-100 flex items-center justify-center p-10">
-
+<div
+  class="min-h-screen bg-gray-100 flex items-center justify-center p-4 md:p-10"
+>
   <!-- 🔵 Blurred Background Image -->
-  <div class="absolute inset-0 bg-cover bg-center bg-no-repeat blur-[10px]  z-0" style="background-image: url('loginBackground.png');"></div>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 justify-center z-10">
-    <div class="hidden md:flex w-[25rem] h-[30rem] bg-cover bg-center rounded-l-lg items-start justify-center" 
-      style="background-image: url('login.jpg');">
-        <!-- Logo -->
-        <div class="flex-shrink-0 flex flex-col gap-3 items-center mt-10">
-          <div class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-            </svg>
-            <h1 class="text-2xl font-bold text-white">TravelWise</h1>
-          </div>
-          <p class="text-white flex-bold">Depending On The Vibe You Want</p>
+  <div
+    class="absolute inset-0 bg-cover bg-center bg-no-repeat blur-[10px] z-0"
+    style="background-image: url('loginBackground.png')"
+  ></div>
+
+  <div
+    class="grid grid-cols-1 md:grid-cols-2 justify-center z-10 w-full max-w-4xl"
+  >
+    <div
+      class="hidden md:flex bg-cover bg-center rounded-l-lg items-start justify-center p-8"
+      style="background-image: url('login.jpg')"
+    >
+      <!-- Logo -->
+      <div class="flex-shrink-0 flex flex-col gap-3 items-center">
+        <div class="flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8 text-white mr-2"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <h1 class="text-xl md:text-2xl font-bold text-white">TravelWise</h1>
         </div>
+        <p class="text-white text-sm md:text-base text-center">
+          Depending On The Vibe You Want
+        </p>
+      </div>
     </div>
 
-    <div class="max-w-md w-full space-y-8 p-8 bg-white rounded-r-lg shadow-lg">
+    <div
+      class="w-full space-y-6 md:space-y-8 p-6 md:p-8 bg-white rounded-lg md:rounded-l-none md:rounded-r-lg shadow-lg"
+    >
       <div class="text-center">
-        <h2 class="text-3xl font-bold text-gray-900">Sign in to your account</h2>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+          Sign in to your account
+        </h2>
       </div>
 
       <!-- Google Sign Up Button -->
       <div class="mt-4 text-center">
-        <div id="google-btn" class="w-full flex justify-center items-center min-h-[42px]"></div>
+        <div
+          id="google-btn"
+          class="w-full flex justify-center items-center min-h-[42px]"
+        ></div>
       </div>
 
       <!-- Error Message -->
-      <div *ngIf="errorMessage" class="mt-4 text-center text-sm text-red-600">
+      <div
+        *ngIf="errorMessage"
+        class="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm"
+      >
         {{ errorMessage }}
       </div>
 
       <!-- Email/Password Form -->
-      <form class="mt-8 space-y-6" (ngSubmit)="login()">
+      <form class="mt-6 md:mt-8 space-y-4 md:space-y-6" (ngSubmit)="login()">
         <div class="rounded-md space-y-4">
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-            <input id="email" name="email" type="email" [(ngModel)]="email" required
-              class="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Email address">
+            <label for="email" class="block text-sm font-medium text-gray-700"
+              >Email</label
+            >
+            <input
+              id="email"
+              name="email"
+              type="email"
+              [(ngModel)]="email"
+              required
+              class="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Email address"
+            />
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-            <input id="password" name="password" type="password" [(ngModel)]="password" required
-              class="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Password">
+            <label
+              for="password"
+              class="block text-sm font-medium text-gray-700"
+              >Password</label
+            >
+            <input
+              id="password"
+              name="password"
+              type="password"
+              [(ngModel)]="password"
+              required
+              class="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Password"
+            />
             <div class="text-right mt-1">
-              <a routerLink="/forgot-password" class="text-sm text-indigo-600 hover:text-indigo-500">
+              <a
+                routerLink="/forgot-password"
+                class="text-sm text-indigo-600 hover:text-indigo-500"
+              >
                 Forgot your password?
               </a>
             </div>
           </div>
         </div>
 
-        <div>
-          <button type="submit" [disabled]="isLoading"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
-            <span *ngIf="isLoading">Loading...</span>
+        <div class="pt-2">
+          <button
+            type="submit"
+            [disabled]="isLoading"
+            class="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition duration-150"
+          >
+            <span *ngIf="isLoading" class="mr-2">
+              <svg
+                class="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </span>
             <span *ngIf="!isLoading">Sign in</span>
           </button>
         </div>
@@ -68,7 +142,10 @@
       <div class="text-center">
         <p class="text-sm text-gray-600">
           Don't have an account?
-          <a routerLink="/register" class="font-medium text-indigo-600 hover:text-indigo-500">
+          <a
+            routerLink="/register"
+            class="font-medium text-indigo-600 hover:text-indigo-500"
+          >
             Register here
           </a>
         </p>
