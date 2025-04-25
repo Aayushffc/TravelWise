@@ -22,6 +22,7 @@ import { SearchComponent } from './components/search/search.component';
 import { AgencyDashboardComponent } from './components/agency-dashboard/agency-dashboard.component';
 import { BookingComponent } from './components/booking/booking.component';
 import { CreateEditProfileComponent } from './components/agency-profile/create-edit-profile.component';
+import { SupportComponent } from './components/support/support.component';
 
 export const routes: Routes = [
   {
@@ -122,6 +123,12 @@ export const routes: Routes = [
     path: 'faq',
     component: FAQComponent,
     title: 'FAQ - TravelWise'
+  },
+  {
+    path: 'support',
+    component: SupportComponent,
+    canActivate: [AuthGuard],
+    title: 'Support - TravelWise'
   },
   {
     path: 'agency/agency-deal-details/:id',

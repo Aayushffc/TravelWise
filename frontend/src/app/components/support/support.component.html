@@ -1,0 +1,274 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header with Navigation -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto py-4 px-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <button
+            (click)="goBack()"
+            class="btn flex items-center mr-4 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+          </button>
+          <h1
+            class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text"
+          >
+            Support Center
+          </h1>
+        </div>
+        <!-- Navigation Tabs -->
+        <div class="flex space-x-2">
+          <button
+            (click)="activeTab = 'faq'"
+            [class]="
+              'px-6 py-2 rounded-lg transition-all duration-300 ' +
+              (activeTab === 'faq'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100')
+            "
+          >
+            FAQs
+          </button>
+          <button
+            (click)="activeTab = 'tickets'"
+            [class]="
+              'px-6 py-2 rounded-lg transition-all duration-300 ' +
+              (activeTab === 'tickets'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100')
+            "
+          >
+            Support Tickets
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- FAQ Section -->
+    <div *ngIf="activeTab === 'faq'" class="space-y-8" @fadeSlide>
+      <!-- Search Bar -->
+      <div class="max-w-4xl mx-auto">
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="searchFAQs()"
+            placeholder="Search FAQs..."
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+          />
+          <button
+            (click)="searchFAQs()"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors duration-200"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- FAQ List -->
+      <div class="max-w-4xl mx-auto space-y-4">
+        <!-- No FAQs Message -->
+        <div *ngIf="!isLoading && faqs.length === 0" class="text-center py-12">
+          <div class="bg-white p-8 rounded-lg shadow-sm">
+            <svg
+              class="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">
+              No FAQs Found
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              There are currently no FAQs available. Please try searching with
+              different keywords or check back later.
+            </p>
+          </div>
+        </div>
+
+        <!-- FAQ Items -->
+        <div
+          *ngFor="let faq of faqs"
+          class="faq-item bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
+        >
+          <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+              {{ faq.question }}
+            </h3>
+            <p class="text-gray-600">{{ faq.answer }}</p>
+            <div class="mt-4 flex items-center text-sm text-gray-500">
+              <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">
+                {{ faq.category }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support Tickets Section -->
+    <div *ngIf="activeTab === 'tickets'" class="space-y-8" @fadeSlide>
+      <!-- New Ticket Button - Only show when there are tickets or form is open -->
+      <div
+        *ngIf="tickets.length > 0 || showNewTicketForm"
+        class="max-w-4xl mx-auto text-right"
+      >
+        <button
+          (click)="showNewTicketForm = !showNewTicketForm"
+          class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+        >
+          {{ showNewTicketForm ? "Cancel" : "Create New Ticket" }}
+        </button>
+      </div>
+
+      <!-- New Ticket Form -->
+      <div
+        *ngIf="showNewTicketForm"
+        class="form-container max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-sm"
+      >
+        <div class="space-y-4">
+          <input
+            type="text"
+            [(ngModel)]="newTicket.name"
+            placeholder="Your Name"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+          />
+          <input
+            type="email"
+            [(ngModel)]="newTicket.email"
+            placeholder="Your Email"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+          />
+          <input
+            type="text"
+            [(ngModel)]="newTicket.problemTitle"
+            placeholder="Problem Title"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+          />
+          <textarea
+            [(ngModel)]="newTicket.problemDescription"
+            placeholder="Describe your problem..."
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+            rows="4"
+          ></textarea>
+          <button
+            (click)="submitTicket()"
+            [disabled]="!validateTicket() || isLoading"
+            class="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ isLoading ? "Submitting..." : "Submit Ticket" }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Tickets List -->
+      <div class="max-w-4xl mx-auto space-y-4">
+        <!-- No Tickets Message -->
+        <div
+          *ngIf="!isLoading && tickets.length === 0 && !showNewTicketForm"
+          class="text-center py-12"
+        >
+          <div class="bg-white p-8 rounded-lg shadow-sm">
+            <svg
+              class="mx-auto h-16 w-16 text-indigo-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              />
+            </svg>
+            <h3 class="mt-4 text-xl font-medium text-gray-900">
+              No Support Tickets
+            </h3>
+            <p class="mt-2 text-sm text-gray-500">
+              You haven't created any support tickets yet. If you need
+              assistance, feel free to create a new ticket.
+            </p>
+            <div class="mt-6">
+              <button
+                (click)="showNewTicketForm = true"
+                class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Create New Ticket
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ticket Items -->
+        <div
+          *ngFor="let ticket of tickets"
+          class="ticket-item bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
+        >
+          <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">
+                {{ ticket.problemTitle }}
+              </h3>
+              <span
+                [class]="
+                  'status-badge px-3 py-1 rounded-full text-sm font-medium ' +
+                  getStatusColor(ticket.status)
+                "
+              >
+                {{ ticket.status }}
+              </span>
+            </div>
+            <p class="text-gray-600 mb-4">{{ ticket.problemDescription }}</p>
+            <div class="text-sm text-gray-500">
+              <p>Created: {{ ticket.createdAt | date : "medium" }}</p>
+              <p *ngIf="ticket.adminResponse" class="mt-2">
+                <span class="font-medium">Admin Response:</span>
+                {{ ticket.adminResponse }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
