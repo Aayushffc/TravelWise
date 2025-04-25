@@ -49,6 +49,17 @@ export class HomeComponent implements OnInit {
   userRole: string = '';
   @ViewChild('profileMenuTrigger') profileMenuTrigger!: ElementRef;
 
+  // Animated placeholder properties
+  placeholderText: string = 'Search for destination';
+  private placeholderIndex: number = 0;
+  private isDeleting: boolean = false;
+  private typingSpeed: number = 150; // Slower speed for smoother animation
+  private destinations: string[] = ['destination', 'Locations', 'Dubai', 'Kashmir', 'Bali', 'Paris'];
+  private typingInterval: any;
+  currentText: string = '';
+  private baseText: string = 'Search for ';
+  isFocused: boolean = false;
+
   popularDestinations: Destination[] = [
     { id: '1', name: 'DUBAI', slug: 'dubai', imageUrl: 'assets/destinations/dubai.jpg' },
     { id: '2', name: 'SINGAPORE', slug: 'singapore', imageUrl: 'assets/destinations/singapore.jpg' },
@@ -74,6 +85,45 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.checkAuthAndLoadData();
+    this.startPlaceholderAnimation();
+  }
+
+  ngOnDestroy(): void {
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
+    }
+  }
+
+  private startPlaceholderAnimation(): void {
+    this.typingInterval = setInterval(() => {
+      const currentDestination = this.destinations[this.placeholderIndex];
+
+      if (this.isDeleting) {
+        // Delete text
+        this.currentText = this.currentText.slice(0, -1);
+
+        if (this.currentText.length === 0) {
+          this.isDeleting = false;
+          this.placeholderIndex = (this.placeholderIndex + 1) % this.destinations.length;
+          // Add a small delay before starting to type the next word
+          setTimeout(() => {
+            this.currentText = '';
+          }, 500);
+        }
+      } else {
+        // Add text
+        if (this.currentText.length < currentDestination.length) {
+          this.currentText = currentDestination.slice(0, this.currentText.length + 1);
+        } else {
+          // Pause before starting to delete
+          setTimeout(() => {
+            this.isDeleting = true;
+          }, 2000);
+        }
+      }
+
+      this.cdr.detectChanges();
+    }, this.typingSpeed);
   }
 
   checkAuthAndLoadData(): void {
@@ -260,5 +310,13 @@ export class HomeComponent implements OnInit {
       this.newsletterEmail = ''; // Reset the form
       // Show success message to user
     }
+  }
+
+  onFocus(): void {
+    this.isFocused = true;
+  }
+
+  onBlur(): void {
+    this.isFocused = false;
   }
 }

@@ -1,9 +1,13 @@
 <div class="home-container">
   <!-- Email verification banner -->
-  <div *ngIf="!isEmailVerified && isAuthenticated" class="bg-yellow-100 border-yellow-400 border-b px-4 py-2">
+  <div
+    *ngIf="!isEmailVerified && isAuthenticated"
+    class="bg-yellow-100 border-yellow-400 border-b px-4 py-2"
+  >
     <div class="container mx-auto flex justify-between items-center">
       <p class="text-yellow-700">
-        Your email is not verified. Please verify your email to access all features.
+        Your email is not verified. Please verify your email to access all
+        features.
       </p>
       <button
         class="px-4 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded hover:shadow-md transition transform hover:-translate-y-0.5"
@@ -21,10 +25,23 @@
         <!-- Logo -->
         <div class="flex-shrink-0 flex items-center">
           <div class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-8 w-8 text-indigo-600 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                clip-rule="evenodd"
+              />
             </svg>
-            <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">TravelWise</h1>
+            <h1
+              class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text"
+            >
+              TravelWise
+            </h1>
           </div>
         </div>
 
@@ -34,16 +51,36 @@
             <input
               type="text"
               [(ngModel)]="searchTerm"
-              placeholder="Search for destinations, deals, or experiences..."
-              class="w-full py-2.5 px-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 shadow-sm group-hover:shadow-md"
               (keyup.enter)="search()"
+              (focus)="onFocus()"
+              (blur)="onBlur()"
+              class="w-full py-2.5 px-4 text-gray-900 border-2 border-gray-200 rounded-full focus:outline-none focus:ring-0 transition-all duration-300 shadow-sm group-hover:shadow-md"
+            />
+            <div
+              class="absolute inset-y-0 left-4 flex items-center pointer-events-none transition-opacity duration-200"
+              [class.opacity-0]="searchTerm || isFocused"
             >
+              <span class="text-gray-500">Search for</span>
+              <span class="changing-text ml-1">{{ currentText }}</span>
+            </div>
             <button
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-indigo-600 text-white p-2 rounded-full transition-all duration-300 hover:bg-indigo-700 hover:shadow-md"
+              type="button"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-2 rounded-full transition-all duration-300 hover:from-indigo-700 hover:to-purple-700 hover:shadow-md"
               (click)="search()"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </button>
           </div>
@@ -64,7 +101,9 @@
               </div>
               <!-- Name and Role -->
               <div class="hidden md:block">
-                <div class="text-sm font-medium text-gray-700">{{ userName }}</div>
+                <div class="text-sm font-medium text-gray-700">
+                  {{ userName }}
+                </div>
                 <div class="text-xs text-gray-500">{{ userRole }}</div>
               </div>
               <!-- Arrow Icon -->
@@ -75,7 +114,12 @@
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
 
@@ -96,19 +140,34 @@
               <div class="profile-menu">
                 <a routerLink="/home/profile" class="profile-menu-item">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
                   </svg>
                   Profile
                 </a>
                 <a routerLink="/bookings" class="profile-menu-item">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                   Bookings
                 </a>
                 <a routerLink="/support" class="profile-menu-item">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   Support
                 </a>
@@ -118,29 +177,54 @@
                   <div class="profile-menu-divider"></div>
                   <a routerLink="/agency-dashboard" class="profile-menu-item">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
                     </svg>
                     Agency Dashboard
                   </a>
-                  <a routerLink="/agency/manage-deals" class="profile-menu-item">
+                  <a
+                    routerLink="/agency/manage-deals"
+                    class="profile-menu-item"
+                  >
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                      />
                     </svg>
                     Manage Deals
                   </a>
                 </ng-container>
 
                 <div class="profile-menu-divider"></div>
-                <button (click)="logout()" class="profile-menu-item logout w-full text-left">
+                <button
+                  (click)="logout()"
+                  class="profile-menu-item logout w-full text-left"
+                >
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
                   </svg>
                   Logout
                 </button>
               </div>
             </div>
           </div>
-          <button *ngIf="!userName" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow hover:shadow-md transition transform hover:-translate-y-0.5" routerLink="/login">
+          <button
+            *ngIf="!userName"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow hover:shadow-md transition transform hover:-translate-y-0.5"
+            routerLink="/login"
+          >
             Login
           </button>
         </div>
@@ -150,7 +234,9 @@
 
   <!-- Loading Spinner -->
   <div *ngIf="isLoading" class="flex justify-center items-center py-12">
-    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"
+    ></div>
   </div>
 
   <!-- Main Content -->
@@ -165,12 +251,26 @@
             class="arrow-left scroll-arrow"
             aria-label="Scroll locations left"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-indigo-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
-          <div id="locations-container" class="flex space-x-4 overflow-x-auto pb-3 scrollbar-hide scroll-smooth">
+          <div
+            id="locations-container"
+            class="flex space-x-4 overflow-x-auto pb-3 scrollbar-hide scroll-smooth"
+          >
             <div
               *ngFor="let location of locations"
               class="flex-shrink-0 w-40 location-card cursor-pointer shadow-md"
@@ -179,23 +279,32 @@
               <!-- Location Image with Overlay -->
               <div class="relative h-36 w-full location-image-container">
                 <img
-                  [src]="location.imageUrl || 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'"
+                  [src]="
+                    location.imageUrl ||
+                    'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'
+                  "
                   [alt]="location.name"
                   class="location-image"
                   loading="lazy"
-                >
+                />
                 <!-- Gradient Overlay -->
                 <div class="location-overlay absolute inset-0"></div>
 
                 <!-- Popular/New Badge - Top Right -->
-                <span class="location-badge absolute top-2 right-2 z-10"
-                  [ngClass]="location.isPopular ? 'badge-popular' : 'badge-new'">
-                  {{location.isPopular ? 'Popular' : 'New'}}
+                <span
+                  class="location-badge absolute top-2 right-2 z-10"
+                  [ngClass]="location.isPopular ? 'badge-popular' : 'badge-new'"
+                >
+                  {{ location.isPopular ? "Popular" : "New" }}
                 </span>
 
                 <!-- Location Name (on image) -->
-                <div class="absolute bottom-0 left-0 right-0 p-3 text-white z-10">
-                  <h3 class="location-name text-base font-bold">{{ location.name }}</h3>
+                <div
+                  class="absolute bottom-0 left-0 right-0 p-3 text-white z-10"
+                >
+                  <h3 class="location-name text-base font-bold">
+                    {{ location.name }}
+                  </h3>
                 </div>
               </div>
             </div>
@@ -207,8 +316,19 @@
             class="arrow-right scroll-arrow bg-white shadow-md hover:shadow-lg"
             aria-label="Scroll locations right"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 text-indigo-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
@@ -223,10 +343,24 @@
       <div class="container mx-auto px-6">
         <div *ngFor="let location of locations; let i = index" class="mb-16">
           <!-- Only show locations with deals -->
-          <ng-container *ngIf="locationDeals[location.id] && locationDeals[location.id].length > 0">
+          <ng-container
+            *ngIf="
+              locationDeals[location.id] &&
+              locationDeals[location.id].length > 0
+            "
+          >
             <div class="flex justify-between items-center mb-6">
-              <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
-                <span class="inline-block w-2 h-2 rounded-full mr-2" [ngClass]="{'bg-purple-600': i % 3 === 0, 'bg-blue-600': i % 3 === 1, 'bg-teal-600': i % 3 === 2}"></span>
+              <h2
+                class="text-2xl font-semibold text-gray-800 flex items-center"
+              >
+                <span
+                  class="inline-block w-2 h-2 rounded-full mr-2"
+                  [ngClass]="{
+                    'bg-purple-600': i % 3 === 0,
+                    'bg-blue-600': i % 3 === 1,
+                    'bg-teal-600': i % 3 === 2
+                  }"
+                ></span>
                 {{ location.name }} Deals
               </h2>
               <a
@@ -234,8 +368,17 @@
                 (click)="viewLocation(location.id)"
               >
                 See all
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 ml-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
               </a>
             </div>
@@ -243,9 +386,10 @@
             <!-- Deals for this location -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <app-deal-card
-                *ngFor="let deal of locationDeals[location.id] | slice:0:3"
+                *ngFor="let deal of locationDeals[location.id] | slice : 0 : 3"
                 [deal]="deal"
-                (click)="viewDeal(deal.id)">
+                (click)="viewDeal(deal.id)"
+              >
               </app-deal-card>
             </div>
           </ng-container>
@@ -262,21 +406,65 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-3 gap-y-6 lg:w-1/2">
           <!-- About TravelWise -->
           <div>
-            <h3 class="text-white text-sm font-medium mb-2">ABOUT TRAVELWISE</h3>
+            <h3 class="text-white text-sm font-medium mb-2">
+              ABOUT TRAVELWISE
+            </h3>
             <ul class="space-y-1.5 text-xs">
-              <li><a href="/about" class="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="/careers" class="hover:text-white transition-colors">We Are Hiring</a></li>
-              <li><a href="/reviews" class="hover:text-white transition-colors">TravelWise Reviews</a></li>
-              <li><a href="/terms" class="hover:text-white transition-colors">Terms & Conditions</a></li>
-              <li><a href="/privacy" class="hover:text-white transition-colors">Privacy Policies</a></li>
-              <li><a href="/copyright" class="hover:text-white transition-colors">Copyright Policies</a></li>
-              <li><a href="/support" class="hover:text-white transition-colors">Support</a></li>
-              <li><a href="/fraud-warning" class="text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 text-xs">
-                Beware of Frauds
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </a></li>
+              <li>
+                <a href="/about" class="hover:text-white transition-colors"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a href="/careers" class="hover:text-white transition-colors"
+                  >We Are Hiring</a
+                >
+              </li>
+              <li>
+                <a href="/reviews" class="hover:text-white transition-colors"
+                  >TravelWise Reviews</a
+                >
+              </li>
+              <li>
+                <a href="/terms" class="hover:text-white transition-colors"
+                  >Terms & Conditions</a
+                >
+              </li>
+              <li>
+                <a href="/privacy" class="hover:text-white transition-colors"
+                  >Privacy Policies</a
+                >
+              </li>
+              <li>
+                <a href="/copyright" class="hover:text-white transition-colors"
+                  >Copyright Policies</a
+                >
+              </li>
+              <li>
+                <a href="/support" class="hover:text-white transition-colors"
+                  >Support</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/fraud-warning"
+                  class="text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 text-xs"
+                >
+                  Beware of Frauds
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -284,13 +472,29 @@
           <div>
             <h3 class="text-white text-sm font-medium mb-2">FOR SUPPLIERS</h3>
             <ul class="space-y-1.5 text-xs">
-              <li><a href="/list-activities" class="hover:text-white transition-colors">List Your Activities</a></li>
+              <li>
+                <a
+                  href="/list-activities"
+                  class="hover:text-white transition-colors"
+                  >List Your Activities</a
+                >
+              </li>
             </ul>
 
             <h3 class="text-white text-sm font-medium mb-2 mt-4">FOR BRANDS</h3>
             <ul class="space-y-1.5 text-xs">
-              <li><a href="/partner" class="hover:text-white transition-colors">Partner With Us</a></li>
-              <li><a href="/destination-marketing" class="hover:text-white transition-colors">Destination Marketing</a></li>
+              <li>
+                <a href="/partner" class="hover:text-white transition-colors"
+                  >Partner With Us</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/destination-marketing"
+                  class="hover:text-white transition-colors"
+                  >Destination Marketing</a
+                >
+              </li>
             </ul>
           </div>
 
@@ -298,7 +502,13 @@
           <div>
             <h3 class="text-white text-sm font-medium mb-2">FOR TRAVELLERS</h3>
             <ul class="space-y-1.5 text-xs">
-              <li><a href="/gift-an-experience" class="hover:text-white transition-colors">Gift an Experience</a></li>
+              <li>
+                <a
+                  href="/gift-an-experience"
+                  class="hover:text-white transition-colors"
+                  >Gift an Experience</a
+                >
+              </li>
             </ul>
           </div>
         </div>
@@ -309,20 +519,37 @@
         <!-- Travel Destinations Section -->
         <div class="mt-8 lg:mt-0 lg:w-1/2">
           <div class="flex items-start gap-4 justify-end">
-            <div class="writing-vertical-lr transform rotate-180 text-white text-sm font-medium tracking-wider">
+            <div
+              class="writing-vertical-lr transform rotate-180 text-white text-sm font-medium tracking-wider"
+            >
               TRAVEL DESTINATIONS
             </div>
             <div class="grid grid-cols-3 gap-1 w-[360px]">
-              <a *ngFor="let location of locations.slice(0, 9)"
-                 (click)="viewLocation(location.id)"
-                 class="group cursor-pointer">
-                <div class="relative rounded-sm overflow-hidden" style="padding-top: 60%;">
-                  <img [src]="location.imageUrl || 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'"
-                       [alt]="location.name"
-                       class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300">
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-all"></div>
+              <a
+                *ngFor="let location of locations.slice(0, 9)"
+                (click)="viewLocation(location.id)"
+                class="group cursor-pointer"
+              >
+                <div
+                  class="relative rounded-sm overflow-hidden"
+                  style="padding-top: 60%"
+                >
+                  <img
+                    [src]="
+                      location.imageUrl ||
+                      'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'
+                    "
+                    [alt]="location.name"
+                    class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-all"
+                  ></div>
                   <div class="absolute bottom-1 left-1.5 right-1.5">
-                    <span class="text-white text-base font-medium line-clamp-1">{{location.name}}</span>
+                    <span
+                      class="text-white text-base font-medium line-clamp-1"
+                      >{{ location.name }}</span
+                    >
                   </div>
                 </div>
               </a>
@@ -334,8 +561,12 @@
       <!-- Newsletter Section -->
       <div class="mt-8 border-t border-gray-800 pt-6">
         <div class="max-w-lg mx-auto text-center">
-          <h3 class="text-white text-sm font-medium mb-2">Subscribe to Our Newsletter</h3>
-          <p class="text-gray-400 text-xs mb-4">Stay updated with our latest travel deals and destination guides.</p>
+          <h3 class="text-white text-sm font-medium mb-2">
+            Subscribe to Our Newsletter
+          </h3>
+          <p class="text-gray-400 text-xs mb-4">
+            Stay updated with our latest travel deals and destination guides.
+          </p>
           <form class="flex gap-2" (ngSubmit)="subscribeNewsletter()">
             <input
               type="email"
@@ -344,7 +575,7 @@
               placeholder="Enter your email"
               class="flex-1 px-3 py-1.5 rounded-sm bg-gray-800/50 border border-gray-700/50 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:bg-gray-800"
               required
-            >
+            />
             <button
               type="submit"
               class="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-sm hover:bg-indigo-700 transition-colors"

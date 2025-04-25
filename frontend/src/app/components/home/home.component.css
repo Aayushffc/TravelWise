@@ -482,3 +482,76 @@ img {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
+
+/* Typing animation styles */
+input[type="text"]::placeholder {
+  color: #9CA3AF;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus::placeholder {
+  color: #6B7280;
+}
+
+/* Search bar styling */
+input[type="text"] {
+  transition: all 0.3s ease;
+  position: relative;
+  background: white;
+  border: 2px solid #E5E7EB;
+}
+
+input[type="text"]:hover {
+  border-color: #C7D2FE;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1),
+              0 0 0 6px rgba(79, 70, 229, 0.05);
+  background: white;
+}
+
+/* Static text styling */
+.text-gray-500 {
+  color: #6B7280;
+  font-weight: 400;
+}
+
+/* Changing text styling */
+.changing-text {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+/* Search button styling */
+button[type="button"] {
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+}
+
+button[type="button"]:hover {
+  background: linear-gradient(135deg, #4338CA, #6D28D9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+}
+
+/* Cursor animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+input[type="text"]::after {
+  content: '|';
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 1s infinite;
+  color: #4B5563;
+}
