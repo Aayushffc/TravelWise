@@ -48,13 +48,6 @@ export class ResetPasswordComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Log the request data to help debug
-    console.log('Sending reset password request:', {
-      email: this.email,
-      token: this.token,
-      newPassword: this.newPassword
-    });
-
     this.http.post(`${environment.apiUrl}/api/auth/reset-password`, {
       email: this.email,
       token: this.token,

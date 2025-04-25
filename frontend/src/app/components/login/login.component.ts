@@ -63,7 +63,6 @@ export class LoginComponent implements AfterViewInit {
             // Get user role and then navigate (uses token saved within googleLogin)
             this.authService.getUserRole().subscribe({
               next: (role) => {
-                console.log('User role:', role);
                 // Navigate to home and force reload
                 this.router.navigateByUrl('/home', { skipLocationChange: true }).then(() => {
                   window.location.href = '/home';

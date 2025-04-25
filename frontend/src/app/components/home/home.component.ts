@@ -49,16 +49,14 @@ export class HomeComponent implements OnInit {
   userRole: string = '';
   @ViewChild('profileMenuTrigger') profileMenuTrigger!: ElementRef;
 
-  // Animated placeholder properties
-  placeholderText: string = 'Search for destination';
+  // Animated text properties
+  currentText: string = '';
+  isFocused: boolean = false;
   private placeholderIndex: number = 0;
   private isDeleting: boolean = false;
-  private typingSpeed: number = 150; // Slower speed for smoother animation
+  private typingSpeed: number = 150;
   private destinations: string[] = ['destination', 'Locations', 'Dubai', 'Kashmir', 'Bali', 'Paris'];
   private typingInterval: any;
-  currentText: string = '';
-  private baseText: string = 'Search for ';
-  isFocused: boolean = false;
 
   popularDestinations: Destination[] = [
     { id: '1', name: 'DUBAI', slug: 'dubai', imageUrl: 'assets/destinations/dubai.jpg' },
@@ -94,28 +92,32 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  onFocus(): void {
+    this.isFocused = true;
+  }
+
+  onBlur(): void {
+    this.isFocused = false;
+  }
+
   private startPlaceholderAnimation(): void {
     this.typingInterval = setInterval(() => {
       const currentDestination = this.destinations[this.placeholderIndex];
 
       if (this.isDeleting) {
-        // Delete text
         this.currentText = this.currentText.slice(0, -1);
 
         if (this.currentText.length === 0) {
           this.isDeleting = false;
           this.placeholderIndex = (this.placeholderIndex + 1) % this.destinations.length;
-          // Add a small delay before starting to type the next word
           setTimeout(() => {
             this.currentText = '';
           }, 500);
         }
       } else {
-        // Add text
         if (this.currentText.length < currentDestination.length) {
           this.currentText = currentDestination.slice(0, this.currentText.length + 1);
         } else {
-          // Pause before starting to delete
           setTimeout(() => {
             this.isDeleting = true;
           }, 2000);
@@ -139,7 +141,6 @@ export class HomeComponent implements OnInit {
 
   loadUserInfo(): void {
     const user = this.authService.getCurrentUser();
-    console.log('Current user from auth service:', user);
 
     if (user) {
       // Handle the user data based on the response structure
@@ -147,7 +148,6 @@ export class HomeComponent implements OnInit {
 
       if (user.firstName) {
         userName = user.firstName;
-        console.log('Using firstName:', userName);
       }
       // If no firstName, use fullName if available
       else if (user.fullName) {
@@ -182,7 +182,6 @@ export class HomeComponent implements OnInit {
         next: (data) => {
           this.userRole = data.role;
           this.isEmailVerified = data.profile.emailConfirmed;
-          console.log('User role and profile updated:', { role: this.userRole, emailVerified: this.isEmailVerified });
           this.cdr.detectChanges();
         },
         error: (error) => {
@@ -310,13 +309,5 @@ export class HomeComponent implements OnInit {
       this.newsletterEmail = ''; // Reset the form
       // Show success message to user
     }
-  }
-
-  onFocus(): void {
-    this.isFocused = true;
-  }
-
-  onBlur(): void {
-    this.isFocused = false;
   }
 }
