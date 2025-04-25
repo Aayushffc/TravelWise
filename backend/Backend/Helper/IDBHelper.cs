@@ -95,5 +95,18 @@ namespace Backend.Helper
         Task<bool> UpdateAgencyOnlineStatus(string userId, bool isOnline);
         Task<bool> UpdateAgencyLastActive(string userId);
         Task<bool> IncrementAgencyStats(string userId, string statType);
+
+        // FAQ Operations
+        Task<IEnumerable<FAQResponseDTO>> GetFAQs();
+        Task<IEnumerable<FAQResponseDTO>> SearchFAQs(string query);
+        Task<FAQResponseDTO> CreateFAQ(FAQCreateDTO faq);
+        Task<FAQResponseDTO> UpdateFAQ(int id, FAQUpdateDTO faq);
+
+        // Support Ticket Operations
+        Task<IEnumerable<SupportTicketResponseDTO>> GetSupportTickets(string? status = null);
+        Task<SupportTicketResponseDTO> GetSupportTicketById(int id);
+        Task<SupportTicketResponseDTO> CreateSupportTicket(SupportTicketCreateDTO ticket);
+        Task<SupportTicketResponseDTO> UpdateSupportTicket(int id, SupportTicketUpdateDTO ticket);
+        Task<bool> UpdateSupportTicketStatus(int id, string status);
     }
 }

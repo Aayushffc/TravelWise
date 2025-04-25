@@ -299,7 +299,7 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   goBack() {
-    this.location.back();
+    this.router.navigate(['/home']);
   }
 
   async toggleOnlineStatus() {

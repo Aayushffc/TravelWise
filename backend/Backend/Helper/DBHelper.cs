@@ -1985,7 +1985,7 @@ namespace Backend.Helper
                     FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize"))
                         ? null
                         : reader.GetInt64(reader.GetOrdinal("FileSize")),
-                    IsDeleted = reader.GetBoolean(reader.GetOrdinal("IsDeleted"))
+                    IsDeleted = reader.GetBoolean(reader.GetOrdinal("IsDeleted")),
                 };
             }
             catch (Exception ex)
@@ -2875,6 +2875,369 @@ namespace Backend.Helper
             command.Parameters.AddWithValue("@UserId", deal.UserId);
             command.Parameters.AddWithValue("@CreatedAt", deal.CreatedAt);
             command.Parameters.AddWithValue("@UpdatedAt", deal.UpdatedAt);
+        }
+
+        #endregion
+
+        #region FAQ Operations
+
+        public async Task<IEnumerable<FAQResponseDTO>> GetFAQs()
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT Id, Question, Answer, OrderIndex, Category, IsActive, CreatedAt, UpdatedAt
+                    FROM FAQs
+                    WHERE IsActive = 1
+                    ORDER BY OrderIndex ASC, CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                var faqs = new List<FAQResponseDTO>();
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    faqs.Add(MapToFAQResponseDto(reader));
+                }
+
+                return faqs;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting FAQs");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<FAQResponseDTO>> SearchFAQs(string query)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT Id, Question, Answer, OrderIndex, Category, IsActive, CreatedAt, UpdatedAt
+                    FROM FAQs
+                    WHERE IsActive = 1 
+                    AND (Question LIKE @Query OR Answer LIKE @Query OR Category LIKE @Query)
+                    ORDER BY OrderIndex ASC, CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Query", $"%{query}%");
+                var faqs = new List<FAQResponseDTO>();
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    faqs.Add(MapToFAQResponseDto(reader));
+                }
+
+                return faqs;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching FAQs");
+                throw;
+            }
+        }
+
+        public async Task<FAQResponseDTO> CreateFAQ(FAQCreateDTO faq)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    INSERT INTO FAQs (Question, Category, OrderIndex, IsActive, CreatedAt)
+                    OUTPUT INSERTED.*
+                    VALUES (@Question, @Category, 
+                           (SELECT ISNULL(MAX(OrderIndex), 0) + 1 FROM FAQs), 
+                           1, GETUTCDATE())";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Question", faq.Question);
+                command.Parameters.AddWithValue("@Category", (object)faq.Category ?? DBNull.Value);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToFAQResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating FAQ");
+                throw;
+            }
+        }
+
+        public async Task<FAQResponseDTO> UpdateFAQ(int id, FAQUpdateDTO faq)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE FAQs
+                    SET Answer = @Answer,
+                        OrderIndex = @OrderIndex,
+                        IsActive = @IsActive,
+                        UpdatedAt = GETUTCDATE()
+                    OUTPUT INSERTED.*
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@Answer", faq.Answer);
+                command.Parameters.AddWithValue("@OrderIndex", faq.OrderIndex);
+                command.Parameters.AddWithValue("@IsActive", faq.IsActive);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToFAQResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating FAQ");
+                throw;
+            }
+        }
+
+        private FAQResponseDTO MapToFAQResponseDto(SqlDataReader reader)
+        {
+            return new FAQResponseDTO
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                Question = reader.GetString(reader.GetOrdinal("Question")),
+                Answer = reader.IsDBNull(reader.GetOrdinal("Answer"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Answer")),
+                OrderIndex = reader.GetInt32(reader.GetOrdinal("OrderIndex")),
+                Category = reader.IsDBNull(reader.GetOrdinal("Category"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Category")),
+                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+            };
+        }
+
+        #endregion
+
+        #region Support Ticket Operations
+
+        public async Task<IEnumerable<SupportTicketResponseDTO>> GetSupportTickets(
+            string? status = null
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    SELECT Id, Name, Email, ProblemTitle, ProblemDescription, 
+                           Status, AdminResponse, CreatedAt, UpdatedAt, ResolvedAt
+                    FROM SupportTickets
+                    WHERE (@Status IS NULL OR Status = @Status)
+                    ORDER BY CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Status", (object)status ?? DBNull.Value);
+                var tickets = new List<SupportTicketResponseDTO>();
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    tickets.Add(MapToSupportTicketResponseDto(reader));
+                }
+
+                return tickets;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting support tickets");
+                throw;
+            }
+        }
+
+        public async Task<SupportTicketResponseDTO> GetSupportTicketById(int id)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT Id, Name, Email, ProblemTitle, ProblemDescription, 
+                           Status, AdminResponse, CreatedAt, UpdatedAt, ResolvedAt
+                    FROM SupportTickets
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToSupportTicketResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting support ticket");
+                throw;
+            }
+        }
+
+        public async Task<SupportTicketResponseDTO> CreateSupportTicket(
+            SupportTicketCreateDTO ticket
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    INSERT INTO SupportTickets (Name, Email, ProblemTitle, ProblemDescription, 
+                                              Status, CreatedAt)
+                    OUTPUT INSERTED.*
+                    VALUES (@Name, @Email, @ProblemTitle, @ProblemDescription, 
+                           'Open', GETUTCDATE())";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Name", ticket.Name);
+                command.Parameters.AddWithValue("@Email", ticket.Email);
+                command.Parameters.AddWithValue("@ProblemTitle", ticket.ProblemTitle);
+                command.Parameters.AddWithValue("@ProblemDescription", ticket.ProblemDescription);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToSupportTicketResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating support ticket");
+                throw;
+            }
+        }
+
+        public async Task<SupportTicketResponseDTO> UpdateSupportTicket(
+            int id,
+            SupportTicketUpdateDTO ticket
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE SupportTickets
+                    SET AdminResponse = @AdminResponse,
+                        Status = 'Resolved',
+                        UpdatedAt = GETUTCDATE(),
+                        ResolvedAt = GETUTCDATE()
+                    OUTPUT INSERTED.*
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@AdminResponse", ticket.AdminResponse);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToSupportTicketResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating support ticket");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateSupportTicketStatus(int id, string status)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    UPDATE SupportTickets
+                    SET Status = @Status,
+                        UpdatedAt = GETUTCDATE(),
+                        ResolvedAt = CASE WHEN @Status = 'Resolved' THEN GETUTCDATE() ELSE ResolvedAt END
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@Status", status);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating support ticket status");
+                throw;
+            }
+        }
+
+        private SupportTicketResponseDTO MapToSupportTicketResponseDto(SqlDataReader reader)
+        {
+            return new SupportTicketResponseDTO
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                Name = reader.GetString(reader.GetOrdinal("Name")),
+                Email = reader.GetString(reader.GetOrdinal("Email")),
+                ProblemTitle = reader.GetString(reader.GetOrdinal("ProblemTitle")),
+                ProblemDescription = reader.GetString(reader.GetOrdinal("ProblemDescription")),
+                Status = reader.GetString(reader.GetOrdinal("Status")),
+                AdminResponse = reader.IsDBNull(reader.GetOrdinal("AdminResponse"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("AdminResponse")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                ResolvedAt = reader.IsDBNull(reader.GetOrdinal("ResolvedAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("ResolvedAt")),
+            };
         }
 
         #endregion
