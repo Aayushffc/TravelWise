@@ -84,10 +84,10 @@ export class ChatService {
 
   private convertToIST(dateString: string): string {
     const date = new Date(dateString);
-    // Convert to IST (UTC+5:30)
-    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
-    const istDate = new Date(date.getTime() + istOffset);
-    return istDate.toISOString();
+    // Add 5 hours and 30 minutes to convert to IST
+    date.setHours(date.getHours() + 5);
+    date.setMinutes(date.getMinutes() + 30);
+    return date.toISOString();
   }
 
   private updateDisplayedMessages() {
@@ -223,11 +223,7 @@ export class ChatService {
     try {
       await this.ensureConnection();
 
-      // Create a temporary message object with current time in IST
-      const now = new Date();
-      now.setHours(now.getHours() + 5);
-      now.setMinutes(now.getMinutes() + 30);
-
+      // Create a temporary message object with current time (no IST conversion needed)
       const tempMessage = {
         id: Date.now(), // Temporary ID
         bookingId,
@@ -237,7 +233,7 @@ export class ChatService {
         fileName,
         fileSize,
         senderId: this.authService.getCurrentUser()?.id,
-        sentAt: now.toISOString(),
+        sentAt: new Date().toISOString(), // Use local time directly
         isTemporary: true
       };
 
