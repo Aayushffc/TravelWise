@@ -26,6 +26,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class BookingComponent implements OnInit, OnDestroy {
   bookings: any[] = [];
+  filteredBookings: any[] = [];
   selectedBooking: any = null;
   newMessage: string = '';
   isLoading: boolean = true;
@@ -38,6 +39,7 @@ export class BookingComponent implements OnInit, OnDestroy {
   private isScrolling = false;
   private scrollPosition = 0;
   private isLoadingMore = false;
+  activeFilter: string = 'all'; // 'all', 'pending', 'Accepted', 'rejected'
 
   constructor(
     private bookingService: BookingService,
@@ -122,6 +124,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.bookingService.getUserBookings().subscribe({
       next: (response) => {
         this.bookings = response;
+        this.filterBookings();
         this.isLoading = false;
       },
       error: (err) => {
@@ -129,6 +132,24 @@ export class BookingComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  filterBookings(status: string = this.activeFilter) {
+    this.activeFilter = status;
+    if (status === 'all') {
+      this.filteredBookings = this.bookings;
+    } else {
+      this.filteredBookings = this.bookings.filter(booking =>
+        booking.status.toLowerCase() === status.toLowerCase()
+      );
+    }
+  }
+
+  getFilterCount(status: string): number {
+    if (status === 'all') return this.bookings.length;
+    return this.bookings.filter(booking =>
+      booking.status.toLowerCase() === status.toLowerCase()
+    ).length;
   }
 
   async selectBooking(booking: any) {

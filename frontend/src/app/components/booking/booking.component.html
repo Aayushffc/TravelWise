@@ -51,13 +51,65 @@
       <span>{{ error }}</span>
     </div>
 
+    <!-- Filter Buttons -->
+    <div
+      class="flex flex-wrap gap-2 mb-6"
+      *ngIf="!isLoading && bookings.length > 0"
+    >
+      <button
+        (click)="filterBookings('all')"
+        [class]="
+          'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
+          (activeFilter === 'all'
+            ? 'bg-indigo-600 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+        "
+      >
+        All ({{ getFilterCount("all") }})
+      </button>
+      <button
+        (click)="filterBookings('Pending')"
+        [class]="
+          'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
+          (activeFilter === 'Pending'
+            ? 'bg-yellow-100 text-yellow-800'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+        "
+      >
+        Pending ({{ getFilterCount("Pending") }})
+      </button>
+      <button
+        (click)="filterBookings('Accepted')"
+        [class]="
+          'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
+          (activeFilter === 'Accepted'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+        "
+      >
+        Accepted ({{ getFilterCount("Accepted") }})
+      </button>
+      <button
+        (click)="filterBookings('Rejected')"
+        [class]="
+          'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
+          (activeFilter === 'Rejected'
+            ? 'bg-red-100 text-red-800'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+        "
+      >
+        Rejected ({{ getFilterCount("Rejected") }})
+      </button>
+    </div>
+
     <!-- Bookings Grid View -->
     <div
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
       @fadeSlide
+      *ngIf="filteredBookings.length > 0"
     >
       <div
-        *ngFor="let booking of bookings"
+        *ngFor="let booking of filteredBookings"
         class="booking-card-large cursor-pointer"
         (click)="selectBooking(booking)"
       >
@@ -274,6 +326,55 @@
               }}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Bookings Found Message -->
+    <div
+      *ngIf="!isLoading && filteredBookings.length === 0"
+      class="flex flex-col items-center justify-center py-12"
+      @fadeSlide
+    >
+      <div class="text-center max-w-md">
+        <svg
+          class="mx-auto h-12 w-12 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">No Deals Found</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          There are no deals available at the moment. Inquire about deals and
+          they will show up here.
+        </p>
+        <div class="mt-6">
+          <button
+            (click)="goBack()"
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg
+              class="-ml-1 mr-2 h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Go Back
+          </button>
         </div>
       </div>
     </div>
