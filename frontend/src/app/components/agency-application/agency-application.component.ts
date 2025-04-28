@@ -58,6 +58,7 @@ export class AgencyApplicationComponent implements OnInit {
   };
   isLoading = false;
   message: Message | null = null;
+  showApplicationForm = false;
 
   constructor(
     private router: Router,
@@ -105,9 +106,12 @@ export class AgencyApplicationComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error: Error) => {
-        console.error('Error loading application:', error);
+        if (error.message && !error.message.includes('404')) {
+          console.error('Error loading application:', error);
+          this.showMessage('error', 'Failed to load application data');
+        }
+        this.application = null;
         this.isLoading = false;
-        this.showMessage('error', 'Failed to load application data');
       }
     });
   }
@@ -122,6 +126,7 @@ export class AgencyApplicationComponent implements OnInit {
       next: (response: any) => {
         this.isLoading = false;
         this.showMessage('success', 'Application submitted successfully');
+        this.showApplicationForm = false;
         this.loadApplication(); // Reload the application to get the updated status
       },
       error: (error: Error) => {
