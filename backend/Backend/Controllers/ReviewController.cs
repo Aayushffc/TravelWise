@@ -1,0 +1,121 @@
+using Backend.DTOs;
+using Backend.Models.Auth;
+using Backend.Models.Product;
+using Backend.Helper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+
+namespace Backend.Controllers
+{
+    [Route("api/reviews")]
+    [ApiController]
+    [Authorize]
+    public class ReviewController : ControllerBase
+    {
+        private readonly DBHelper _dbHelper;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<ReviewController> _logger;
+
+        public ReviewController(
+            DBHelper dbHelper,
+            UserManager<ApplicationUser> userManager,
+            ILogger<ReviewController> logger
+        )
+        {
+            _dbHelper = dbHelper;
+            _userManager = userManager;
+            _logger = logger;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateReview([FromBody] CreateReviewDTO model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(new { message = "Invalid review data", errors = ModelState.Values.SelectMany(v => v.Errors) });
+
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                var result = await _dbHelper.CreateReview(model, user.Id);
+                if (!result)
+                    return BadRequest(new { message = "Failed to create review" });
+
+                return Ok(new { message = "Review created successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating review");
+                return StatusCode(500, new { message = "An error occurred while creating the review" });
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateReview(int id, [FromBody] UpdateReviewDTO model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(new { message = "Invalid review data", errors = ModelState.Values.SelectMany(v => v.Errors) });
+
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                var result = await _dbHelper.UpdateReview(id, model, user.Id);
+                if (!result)
+                    return BadRequest(new { message = "Failed to update review" });
+
+                return Ok(new { message = "Review updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating review");
+                return StatusCode(500, new { message = "An error occurred while updating the review" });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteReview(int id)
+        {
+            try
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                var result = await _dbHelper.DeleteReview(id, user.Id);
+                if (!result)
+                    return BadRequest(new { message = "Failed to delete review" });
+
+                return Ok(new { message = "Review deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting review");
+                return StatusCode(500, new { message = "An error occurred while deleting the review" });
+            }
+        }
+
+        [HttpGet("deal/{dealId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetDealReviews(int dealId)
+        {
+            try
+            {
+                var reviews = await _dbHelper.GetDealReviews(dealId);
+                return Ok(reviews);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting deal reviews");
+                return StatusCode(500, new { message = "An error occurred while getting the reviews" });
+            }
+        }
+    }
+}

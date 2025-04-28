@@ -3241,5 +3241,277 @@ namespace Backend.Helper
         }
 
         #endregion
+
+        #region Review Operations
+
+        public async Task<bool> CreateReview(CreateReviewDTO model, string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    DECLARE @DealUserId NVARCHAR(450);
+                    DECLARE @ReviewId INT;
+
+                    -- Get the deal's user ID (agency ID)
+                    SELECT @DealUserId = UserId
+                    FROM Deals
+                    WHERE Id = @DealId;
+
+                    IF @DealUserId IS NULL
+                        RETURN 0;
+
+                    -- Check if user has already reviewed this deal
+                    IF EXISTS (
+                        SELECT 1 FROM Reviews 
+                        WHERE DealId = @DealId AND UserId = @UserId AND IsActive = 1
+                    )
+                        RETURN 0;
+
+                    -- Insert the review
+                    INSERT INTO Reviews (
+                        DealId, UserId, AgencyId, Text, Photos, Rating, CreatedAt, UpdatedAt, IsActive
+                    )
+                    OUTPUT INSERTED.Id INTO @ReviewId
+                    VALUES (
+                        @DealId, @UserId, @DealUserId, @Text, @Photos, @Rating, GETUTCDATE(), GETUTCDATE(), 1
+                    );
+
+                    -- Update deal rating
+                    UPDATE Deals
+                    SET Rating = (
+                        SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
+                        FROM Reviews
+                        WHERE DealId = @DealId AND IsActive = 1
+                    )
+                    WHERE Id = @DealId;
+
+                    -- Update agency rating and total reviews
+                    UPDATE AgencyProfiles
+                    SET Rating = (
+                        SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
+                        FROM Reviews r
+                        INNER JOIN Deals d ON r.DealId = d.Id
+                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                    ),
+                    TotalReviews = (
+                        SELECT COUNT(*)
+                        FROM Reviews r
+                        INNER JOIN Deals d ON r.DealId = d.Id
+                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                    )
+                    WHERE UserId = @DealUserId;
+
+                    RETURN 1;";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@DealId", model.DealId);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@Text", (object)model.Text ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Photos", (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Rating", model.Rating);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating review");
+                return false;
+            }
+        }
+
+        public async Task<IEnumerable<ReviewResponseDTO>> GetDealReviews(int dealId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT r.Id, r.DealId, r.UserId, r.AgencyId, u.UserName, u.PhotoUrl as UserPhoto,
+                           r.Text, r.Photos, r.Rating, r.CreatedAt, r.UpdatedAt
+                    FROM Reviews r
+                    INNER JOIN AspNetUsers u ON r.UserId = u.Id
+                    WHERE r.DealId = @DealId AND r.IsActive = 1
+                    ORDER BY r.CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@DealId", dealId);
+
+                var reviews = new List<ReviewResponseDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    reviews.Add(new ReviewResponseDTO
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        DealId = reader.GetInt32(reader.GetOrdinal("DealId")),
+                        UserId = reader.GetString(reader.GetOrdinal("UserId")),
+                        AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
+                        UserName = reader.GetString(reader.GetOrdinal("UserName")),
+                        UserPhoto = reader.IsDBNull(reader.GetOrdinal("UserPhoto"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("UserPhoto")),
+                        Text = reader.IsDBNull(reader.GetOrdinal("Text"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("Text")),
+                        Photos = reader.IsDBNull(reader.GetOrdinal("Photos"))
+                            ? null
+                            : JsonSerializer.Deserialize<List<string>>(reader.GetString(reader.GetOrdinal("Photos"))),
+                        Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                            ? null
+                            : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                    });
+                }
+
+                return reviews;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting deal reviews");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateReview(int id, UpdateReviewDTO model, string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    DECLARE @DealId INT;
+                    DECLARE @DealUserId NVARCHAR(450);
+
+                    -- Get the deal ID and user ID
+                    SELECT @DealId = r.DealId, @DealUserId = d.UserId
+                    FROM Reviews r
+                    INNER JOIN Deals d ON r.DealId = d.Id
+                    WHERE r.Id = @Id AND r.UserId = @UserId AND r.IsActive = 1;
+
+                    IF @DealId IS NULL
+                        RETURN 0;
+
+                    -- Update the review
+                    UPDATE Reviews
+                    SET Text = ISNULL(@Text, Text),
+                        Photos = ISNULL(@Photos, Photos),
+                        Rating = ISNULL(@Rating, Rating),
+                        UpdatedAt = GETUTCDATE()
+                    WHERE Id = @Id AND UserId = @UserId;
+
+                    -- Update deal rating
+                    UPDATE Deals
+                    SET Rating = (
+                        SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
+                        FROM Reviews
+                        WHERE DealId = @DealId AND IsActive = 1
+                    )
+                    WHERE Id = @DealId;
+
+                    -- Update agency rating
+                    UPDATE AgencyProfiles
+                    SET Rating = (
+                        SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
+                        FROM Reviews r
+                        INNER JOIN Deals d ON r.DealId = d.Id
+                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                    )
+                    WHERE UserId = @DealUserId;
+
+                    RETURN 1;";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@Text", (object)model.Text ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Photos", (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Rating", (object)model.Rating ?? DBNull.Value);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating review");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteReview(int id, string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    DECLARE @DealId INT;
+                    DECLARE @DealUserId NVARCHAR(450);
+
+                    -- Get the deal ID and user ID
+                    SELECT @DealId = r.DealId, @DealUserId = d.UserId
+                    FROM Reviews r
+                    INNER JOIN Deals d ON r.DealId = d.Id
+                    WHERE r.Id = @Id AND r.UserId = @UserId AND r.IsActive = 1;
+
+                    IF @DealId IS NULL
+                        RETURN 0;
+
+                    -- Soft delete the review
+                    UPDATE Reviews
+                    SET IsActive = 0,
+                        UpdatedAt = GETUTCDATE()
+                    WHERE Id = @Id AND UserId = @UserId;
+
+                    -- Update deal rating
+                    UPDATE Deals
+                    SET Rating = (
+                        SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
+                        FROM Reviews
+                        WHERE DealId = @DealId AND IsActive = 1
+                    )
+                    WHERE Id = @DealId;
+
+                    -- Update agency rating and total reviews
+                    UPDATE AgencyProfiles
+                    SET Rating = (
+                        SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
+                        FROM Reviews r
+                        INNER JOIN Deals d ON r.DealId = d.Id
+                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                    ),
+                    TotalReviews = (
+                        SELECT COUNT(*)
+                        FROM Reviews r
+                        INNER JOIN Deals d ON r.DealId = d.Id
+                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                    )
+                    WHERE UserId = @DealUserId;
+
+                    RETURN 1;";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting review");
+                return false;
+            }
+        }
+
+        #endregion
     }
 }

@@ -108,5 +108,11 @@ namespace Backend.Helper
         Task<SupportTicketResponseDTO> CreateSupportTicket(SupportTicketCreateDTO ticket);
         Task<SupportTicketResponseDTO> UpdateSupportTicket(int id, SupportTicketUpdateDTO ticket);
         Task<bool> UpdateSupportTicketStatus(int id, string status);
+
+        // Review Operations
+        Task<bool> CreateReview(CreateReviewDTO model, string userId);
+        Task<bool> UpdateReview(int id, UpdateReviewDTO model, string userId);
+        Task<bool> DeleteReview(int id, string userId);
+        Task<IEnumerable<ReviewResponseDTO>> GetDealReviews(int dealId);
     }
 }
