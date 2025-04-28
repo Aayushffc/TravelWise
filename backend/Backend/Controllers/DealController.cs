@@ -170,99 +170,76 @@ namespace Backend.Controllers
                     return StatusCode(403, "You don't have permission to update this deal");
                 }
 
-                // Update only the provided fields
-                if (dealDto.Title != null)
+                // Update all properties from the DTO
+                existingDeal.Title = dealDto.Title ?? existingDeal.Title;
+                existingDeal.Description = dealDto.Description ?? existingDeal.Description;
+                existingDeal.LocationId = dealDto.LocationId ?? existingDeal.LocationId;
+                existingDeal.Price = dealDto.Price ?? existingDeal.Price;
+                existingDeal.DiscountPercentage =
+                    dealDto.DiscountPercentage ?? existingDeal.DiscountPercentage;
+                existingDeal.DiscountedPrice =
+                    dealDto.DiscountedPrice ?? existingDeal.DiscountedPrice;
+                existingDeal.DaysCount = dealDto.DaysCount ?? existingDeal.DaysCount;
+                existingDeal.NightsCount = dealDto.NightsCount ?? existingDeal.NightsCount;
+                existingDeal.PackageType = dealDto.PackageType ?? existingDeal.PackageType;
+                existingDeal.Headlines = dealDto.Headlines ?? existingDeal.Headlines;
+                existingDeal.Tags = dealDto.Tags ?? existingDeal.Tags;
+                existingDeal.Seasons = dealDto.Seasons ?? existingDeal.Seasons;
+                existingDeal.Languages = dealDto.Languages ?? existingDeal.Languages;
+                existingDeal.Requirements = dealDto.Requirements ?? existingDeal.Requirements;
+                existingDeal.Restrictions = dealDto.Restrictions ?? existingDeal.Restrictions;
+                existingDeal.IsActive = dealDto.IsActive ?? existingDeal.IsActive;
+                existingDeal.IsInstantBooking =
+                    dealDto.IsInstantBooking ?? existingDeal.IsInstantBooking;
+                existingDeal.IsLastMinuteDeal =
+                    dealDto.IsLastMinuteDeal ?? existingDeal.IsLastMinuteDeal;
+                existingDeal.MinGroupSize = dealDto.MinGroupSize ?? existingDeal.MinGroupSize;
+                existingDeal.MaxGroupSize = dealDto.MaxGroupSize ?? existingDeal.MaxGroupSize;
+                existingDeal.DifficultyLevel =
+                    dealDto.DifficultyLevel ?? existingDeal.DifficultyLevel;
+                existingDeal.ValidFrom = dealDto.ValidFrom ?? existingDeal.ValidFrom;
+                existingDeal.ValidUntil = dealDto.ValidUntil ?? existingDeal.ValidUntil;
+                existingDeal.MapUrl = dealDto.MapUrl ?? existingDeal.MapUrl;
+
+                // Update nested objects and arrays
+                if (dealDto.PackageOptions != null)
                 {
-                    existingDeal.Title = dealDto.Title;
+                    existingDeal.PackageOptions = dealDto.PackageOptions;
                 }
-                if (dealDto.Description != null)
+                if (dealDto.Itinerary != null)
                 {
-                    existingDeal.Description = dealDto.Description;
+                    existingDeal.Itinerary = dealDto.Itinerary;
                 }
-                if (dealDto.LocationId.HasValue)
+                if (dealDto.Policies != null)
                 {
-                    existingDeal.LocationId = dealDto.LocationId.Value;
+                    existingDeal.Policies = dealDto.Policies;
                 }
-                if (dealDto.Price.HasValue)
+                if (dealDto.Photos != null)
                 {
-                    existingDeal.Price = dealDto.Price.Value;
+                    existingDeal.Photos = dealDto.Photos;
                 }
-                if (dealDto.DiscountPercentage.HasValue)
-                {
-                    existingDeal.DiscountPercentage = dealDto.DiscountPercentage.Value;
-                }
-                if (dealDto.DaysCount.HasValue)
-                {
-                    existingDeal.DaysCount = dealDto.DaysCount.Value;
-                }
-                if (dealDto.NightsCount.HasValue)
-                {
-                    existingDeal.NightsCount = dealDto.NightsCount.Value;
-                }
-                if (dealDto.PackageType != null)
-                {
-                    existingDeal.PackageType = dealDto.PackageType;
-                }
-                if (dealDto.Headlines != null)
-                {
-                    existingDeal.Headlines = dealDto.Headlines;
-                }
-                if (dealDto.Tags != null)
-                {
-                    existingDeal.Tags = dealDto.Tags;
-                }
-                if (dealDto.Seasons != null)
-                {
-                    existingDeal.Seasons = dealDto.Seasons;
-                }
-                if (dealDto.Languages != null)
-                {
-                    existingDeal.Languages = dealDto.Languages;
-                }
-                if (dealDto.Requirements != null)
-                {
-                    existingDeal.Requirements = dealDto.Requirements;
-                }
-                if (dealDto.Restrictions != null)
-                {
-                    existingDeal.Restrictions = dealDto.Restrictions;
-                }
-                if (dealDto.IsActive.HasValue)
-                {
-                    existingDeal.IsActive = dealDto.IsActive.Value;
-                }
-                if (dealDto.IsInstantBooking.HasValue)
-                {
-                    existingDeal.IsInstantBooking = dealDto.IsInstantBooking.Value;
-                }
-                if (dealDto.IsLastMinuteDeal.HasValue)
-                {
-                    existingDeal.IsLastMinuteDeal = dealDto.IsLastMinuteDeal.Value;
-                }
-                if (dealDto.MinGroupSize.HasValue)
-                {
-                    existingDeal.MinGroupSize = dealDto.MinGroupSize.Value;
-                }
-                if (dealDto.MaxGroupSize.HasValue)
-                {
-                    existingDeal.MaxGroupSize = dealDto.MaxGroupSize.Value;
-                }
-                if (dealDto.DifficultyLevel != null)
-                {
-                    existingDeal.DifficultyLevel = dealDto.DifficultyLevel;
-                }
-                if (dealDto.ValidFrom.HasValue)
-                {
-                    existingDeal.ValidFrom = dealDto.ValidFrom.Value;
-                }
-                if (dealDto.ValidUntil.HasValue)
-                {
-                    existingDeal.ValidUntil = dealDto.ValidUntil.Value;
-                }
-                if (dealDto.MapUrl != null)
-                {
-                    existingDeal.MapUrl = dealDto.MapUrl;
-                }
+
+                // Update features
+                existingDeal.ElderlyFriendly =
+                    dealDto.ElderlyFriendly ?? existingDeal.ElderlyFriendly;
+                existingDeal.InternetIncluded =
+                    dealDto.InternetIncluded ?? existingDeal.InternetIncluded;
+                existingDeal.TravelIncluded = dealDto.TravelIncluded ?? existingDeal.TravelIncluded;
+                existingDeal.MealsIncluded = dealDto.MealsIncluded ?? existingDeal.MealsIncluded;
+                existingDeal.SightseeingIncluded =
+                    dealDto.SightseeingIncluded ?? existingDeal.SightseeingIncluded;
+                existingDeal.StayIncluded = dealDto.StayIncluded ?? existingDeal.StayIncluded;
+                existingDeal.AirTransfer = dealDto.AirTransfer ?? existingDeal.AirTransfer;
+                existingDeal.RoadTransfer = dealDto.RoadTransfer ?? existingDeal.RoadTransfer;
+                existingDeal.TrainTransfer = dealDto.TrainTransfer ?? existingDeal.TrainTransfer;
+                existingDeal.TravelCostIncluded =
+                    dealDto.TravelCostIncluded ?? existingDeal.TravelCostIncluded;
+                existingDeal.GuideIncluded = dealDto.GuideIncluded ?? existingDeal.GuideIncluded;
+                existingDeal.PhotographyIncluded =
+                    dealDto.PhotographyIncluded ?? existingDeal.PhotographyIncluded;
+                existingDeal.InsuranceIncluded =
+                    dealDto.InsuranceIncluded ?? existingDeal.InsuranceIncluded;
+                existingDeal.VisaIncluded = dealDto.VisaIncluded ?? existingDeal.VisaIncluded;
 
                 // Set updated timestamp
                 existingDeal.UpdatedAt = DateTime.UtcNow;
@@ -275,6 +252,7 @@ namespace Backend.Controllers
                     LocationId = existingDeal.LocationId,
                     Price = existingDeal.Price,
                     DiscountPercentage = existingDeal.DiscountPercentage,
+                    DiscountedPrice = existingDeal.DiscountedPrice,
                     DaysCount = existingDeal.DaysCount,
                     NightsCount = existingDeal.NightsCount,
                     PackageType = existingDeal.PackageType,
@@ -293,6 +271,24 @@ namespace Backend.Controllers
                     ValidFrom = existingDeal.ValidFrom,
                     ValidUntil = existingDeal.ValidUntil,
                     MapUrl = existingDeal.MapUrl,
+                    PackageOptions = existingDeal.PackageOptions,
+                    Itinerary = existingDeal.Itinerary,
+                    Policies = existingDeal.Policies,
+                    Photos = existingDeal.Photos,
+                    ElderlyFriendly = existingDeal.ElderlyFriendly,
+                    InternetIncluded = existingDeal.InternetIncluded,
+                    TravelIncluded = existingDeal.TravelIncluded,
+                    MealsIncluded = existingDeal.MealsIncluded,
+                    SightseeingIncluded = existingDeal.SightseeingIncluded,
+                    StayIncluded = existingDeal.StayIncluded,
+                    AirTransfer = existingDeal.AirTransfer,
+                    RoadTransfer = existingDeal.RoadTransfer,
+                    TrainTransfer = existingDeal.TrainTransfer,
+                    TravelCostIncluded = existingDeal.TravelCostIncluded,
+                    GuideIncluded = existingDeal.GuideIncluded,
+                    PhotographyIncluded = existingDeal.PhotographyIncluded,
+                    InsuranceIncluded = existingDeal.InsuranceIncluded,
+                    VisaIncluded = existingDeal.VisaIncluded,
                     UpdatedAt = DateTime.UtcNow,
                 };
 

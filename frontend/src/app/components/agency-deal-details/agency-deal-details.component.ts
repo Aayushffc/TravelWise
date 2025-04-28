@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { DealResponseDto, ItineraryDay, PackageOption, Policy } from '../../models/deal.model';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { LocationService } from '../../services/location.service';
+import { FileUploadService } from '../../services/file-upload.service';
 
 @Component({
   selector: 'app-agency-deal-details',
@@ -50,7 +51,8 @@ export class AgencyDealDetailsComponent implements OnInit {
     private dealService: DealService,
     private location: Location,
     private authService: AuthService,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private fileUploadService: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -88,6 +90,7 @@ export class AgencyDealDetailsComponent implements OnInit {
           this.deal.restrictions = this.deal.restrictions || [];
           this.deal.packageOptions = this.deal.packageOptions || [];
           this.deal.policies = this.deal.policies || [];
+          this.deal.itinerary = this.deal.itinerary || [];
 
           // Load location details if we have a locationId
           if (this.deal.locationId) {
@@ -142,8 +145,39 @@ export class AgencyDealDetailsComponent implements OnInit {
     this.isEditing = !this.isEditing;
   }
 
+  updateDiscountedPrice(): void {
+    if (!this.deal) return;
+    if (this.deal.price && this.deal.discountPercentage) {
+      this.deal.discountedPrice = this.deal.price * (1 - this.deal.discountPercentage / 100);
+    } else {
+      this.deal.discountedPrice = this.deal.price;
+    }
+  }
+
+  onPriceChange(): void {
+    this.updateDiscountedPrice();
+  }
+
+  onDiscountChange(): void {
+    this.updateDiscountedPrice();
+  }
+
   saveDeal(): void {
     if (!this.deal) return;
+
+    // Ensure all arrays are initialized
+    this.deal.photos = this.deal.photos || [];
+    this.deal.tags = this.deal.tags || [];
+    this.deal.seasons = this.deal.seasons || [];
+    this.deal.languages = this.deal.languages || [];
+    this.deal.requirements = this.deal.requirements || [];
+    this.deal.restrictions = this.deal.restrictions || [];
+    this.deal.packageOptions = this.deal.packageOptions || [];
+    this.deal.policies = this.deal.policies || [];
+    this.deal.itinerary = this.deal.itinerary || [];
+
+    // Calculate discounted price before saving
+    this.updateDiscountedPrice();
 
     // Send the complete deal object for update
     const updateData = {
@@ -221,24 +255,48 @@ export class AgencyDealDetailsComponent implements OnInit {
       this.deal.photos = [];
     }
 
+    // Upload each file
     imageFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e: ProgressEvent<FileReader>) => {
-        if (e.target?.result && this.deal) {
-          this.deal.photos?.push(e.target.result as string);
+      this.fileUploadService.uploadFile(file, 'deals').subscribe({
+        next: (response) => {
+          if (this.deal) {
+            this.deal.photos?.push(response.url);
+          }
+        },
+        error: (error) => {
+          console.error('Error uploading file:', error);
+          this.error = 'Failed to upload image. Please try again.';
+          setTimeout(() => {
+            this.error = '';
+          }, 3000);
         }
-      };
-      reader.readAsDataURL(file);
+      });
     });
   }
 
   removePhoto(index: number): void {
-    if (this.deal?.photos) {
-      this.deal.photos = this.deal.photos.filter((_, i) => i !== index);
-      if (this.currentImageIndex >= this.deal.photos.length) {
-        this.currentImageIndex = Math.max(0, this.deal.photos.length - 1);
+    if (!this.deal?.photos) return;
+
+    const photoUrl = this.deal.photos[index];
+    // Extract the key from the URL
+    const key = photoUrl.split('/').pop();
+    if (!key) return;
+
+    this.fileUploadService.deleteFile(photoUrl).subscribe({
+      next: () => {
+        this.deal?.photos?.splice(index, 1);
+        if (this.currentImageIndex >= (this.deal?.photos?.length || 0)) {
+          this.currentImageIndex = Math.max(0, (this.deal?.photos?.length || 1) - 1);
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting file:', error);
+        this.error = 'Failed to delete image. Please try again.';
+        setTimeout(() => {
+          this.error = '';
+        }, 3000);
       }
-    }
+    });
   }
 
   calculateDiscountPercentage(): number {
@@ -498,14 +556,6 @@ export class AgencyDealDetailsComponent implements OnInit {
       this.currentImageIndex = event.currentIndex;
     } else if (this.currentImageIndex === event.currentIndex) {
       this.currentImageIndex = event.previousIndex;
-    }
-  }
-
-  // Update price calculation
-  updateDiscountedPrice(): void {
-    if (!this.deal) return;
-    if (this.deal.price && this.deal.discountPercentage) {
-      this.deal.discountedPrice = this.deal.price * (1 - this.deal.discountPercentage / 100);
     }
   }
 
