@@ -12,6 +12,7 @@ import { BookingService, CreateBookingDTO } from '../../services/booking.service
 import { firstValueFrom } from 'rxjs';
 import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { SearchCountryField, CountryISO, PhoneNumberFormat } from 'ngx-intl-tel-input';
+import { ReviewComponent } from '../review/review.component';
 
 // Use DealResponseDto directly instead of custom Deal interface
 type Deal = DealResponseDto;
@@ -49,7 +50,7 @@ interface EnquiryForm {
 @Component({
   selector: 'app-deal-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgxIntlTelInputModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgxIntlTelInputModule, ReviewComponent],
   templateUrl: './deal-details.component.html',
   styleUrls: ['./deal-details.component.css']
 })

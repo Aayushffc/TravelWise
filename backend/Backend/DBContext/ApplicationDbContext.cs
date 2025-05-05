@@ -19,6 +19,7 @@ namespace Backend.DBContext
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<SupportTicket> SupportTickets { get; set; }
+        public DbSet<Review> Reviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

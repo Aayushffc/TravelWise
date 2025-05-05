@@ -15,12 +15,12 @@ namespace Backend.Controllers
     [Authorize]
     public class ReviewController : ControllerBase
     {
-        private readonly DBHelper _dbHelper;
+        private readonly IDBHelper _dbHelper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<ReviewController> _logger;
 
         public ReviewController(
-            DBHelper dbHelper,
+            IDBHelper dbHelper,
             UserManager<ApplicationUser> userManager,
             ILogger<ReviewController> logger
         )
@@ -44,14 +44,14 @@ namespace Backend.Controllers
 
                 var result = await _dbHelper.CreateReview(model, user.Id);
                 if (!result)
-                    return BadRequest(new { message = "Failed to create review" });
+                    return BadRequest(new { message = "Failed to create review. Please check if you have already reviewed this deal." });
 
                 return Ok(new { message = "Review created successfully" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating review");
-                return StatusCode(500, new { message = "An error occurred while creating the review" });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 

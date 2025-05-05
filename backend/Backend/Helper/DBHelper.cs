@@ -3254,58 +3254,70 @@ namespace Backend.Helper
                 const string sql =
                     @"
                     DECLARE @DealUserId NVARCHAR(450);
-                    DECLARE @ReviewId INT;
+                    DECLARE @Success BIT = 0;
 
-                    -- Get the deal's user ID (agency ID)
-                    SELECT @DealUserId = UserId
-                    FROM Deals
-                    WHERE Id = @DealId;
+                    -- Get the deal's user ID (agency ID) and verify it exists
+                    SELECT @DealUserId = d.UserId
+                    FROM Deals d
+                    INNER JOIN AspNetUsers u ON d.UserId = u.Id
+                    WHERE d.Id = @DealId;
 
-                    IF @DealUserId IS NULL
-                        RETURN 0;
+                    IF @DealUserId IS NOT NULL
+                    BEGIN
+                        -- Check if user has already reviewed this deal
+                        IF NOT EXISTS (
+                            SELECT 1 FROM Reviews 
+                            WHERE DealId = @DealId AND UserId = @UserId AND IsActive = 1
+                        )
+                        BEGIN
+                            -- Insert the review
+                            INSERT INTO Reviews (
+                                DealId, UserId, AgencyId, Text, Photos, Rating, CreatedAt, UpdatedAt, IsActive
+                            )
+                            VALUES (
+                                @DealId, @UserId, @DealUserId, @Text, @Photos, @Rating, GETUTCDATE(), GETUTCDATE(), 1
+                            );
 
-                    -- Check if user has already reviewed this deal
-                    IF EXISTS (
-                        SELECT 1 FROM Reviews 
-                        WHERE DealId = @DealId AND UserId = @UserId AND IsActive = 1
-                    )
-                        RETURN 0;
+                            -- Update deal rating
+                            UPDATE Deals
+                            SET Rating = ISNULL((
+                                SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
+                                FROM Reviews
+                                WHERE DealId = @DealId AND IsActive = 1
+                            ), 0)
+                            WHERE Id = @DealId;
 
-                    -- Insert the review
-                    INSERT INTO Reviews (
-                        DealId, UserId, AgencyId, Text, Photos, Rating, CreatedAt, UpdatedAt, IsActive
-                    )
-                    OUTPUT INSERTED.Id INTO @ReviewId
-                    VALUES (
-                        @DealId, @UserId, @DealUserId, @Text, @Photos, @Rating, GETUTCDATE(), GETUTCDATE(), 1
-                    );
+                            -- Update agency rating and total reviews
+                            UPDATE AgencyProfiles
+                            SET Rating = ISNULL((
+                                SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
+                                FROM Reviews r
+                                INNER JOIN Deals d ON r.DealId = d.Id
+                                WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                            ), 0),
+                            TotalReviews = (
+                                SELECT COUNT(*)
+                                FROM Reviews r
+                                INNER JOIN Deals d ON r.DealId = d.Id
+                                WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                            )
+                            WHERE UserId = @DealUserId;
 
-                    -- Update deal rating
-                    UPDATE Deals
-                    SET Rating = (
-                        SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
-                        FROM Reviews
-                        WHERE DealId = @DealId AND IsActive = 1
-                    )
-                    WHERE Id = @DealId;
+                            SET @Success = 1;
+                        END
+                        ELSE
+                        BEGIN
+                            -- User has already reviewed this deal
+                            RAISERROR('You have already reviewed this deal', 16, 1);
+                        END
+                    END
+                    ELSE
+                    BEGIN
+                        -- Deal not found or agency doesn't exist
+                        RAISERROR('Deal or agency not found', 16, 1);
+                    END
 
-                    -- Update agency rating and total reviews
-                    UPDATE AgencyProfiles
-                    SET Rating = (
-                        SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
-                        FROM Reviews r
-                        INNER JOIN Deals d ON r.DealId = d.Id
-                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
-                    ),
-                    TotalReviews = (
-                        SELECT COUNT(*)
-                        FROM Reviews r
-                        INNER JOIN Deals d ON r.DealId = d.Id
-                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
-                    )
-                    WHERE UserId = @DealUserId;
-
-                    RETURN 1;";
+                    SELECT @Success as Success;";
 
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@DealId", model.DealId);
@@ -3314,12 +3326,18 @@ namespace Backend.Helper
                 command.Parameters.AddWithValue("@Photos", (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value);
                 command.Parameters.AddWithValue("@Rating", model.Rating);
 
-                return await command.ExecuteNonQueryAsync() > 0;
+                var result = await command.ExecuteScalarAsync();
+                return Convert.ToBoolean(result);
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "SQL error creating review");
+                throw new Exception(ex.Message);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating review");
-                return false;
+                throw new Exception(ex.Message);
             }
         }
 
@@ -3332,7 +3350,7 @@ namespace Backend.Helper
 
                 const string sql =
                     @"
-                    SELECT r.Id, r.DealId, r.UserId, r.AgencyId, u.UserName, u.PhotoUrl as UserPhoto,
+                    SELECT r.Id, r.DealId, r.UserId, r.AgencyId, u.UserName,
                            r.Text, r.Photos, r.Rating, r.CreatedAt, r.UpdatedAt
                     FROM Reviews r
                     INNER JOIN AspNetUsers u ON r.UserId = u.Id
@@ -3353,9 +3371,6 @@ namespace Backend.Helper
                         UserId = reader.GetString(reader.GetOrdinal("UserId")),
                         AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
                         UserName = reader.GetString(reader.GetOrdinal("UserName")),
-                        UserPhoto = reader.IsDBNull(reader.GetOrdinal("UserPhoto"))
-                            ? null
-                            : reader.GetString(reader.GetOrdinal("UserPhoto")),
                         Text = reader.IsDBNull(reader.GetOrdinal("Text"))
                             ? null
                             : reader.GetString(reader.GetOrdinal("Text")),

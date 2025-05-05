@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 import { catchError, tap, map } from 'rxjs/operators';
 
-interface RegisterData {
+export interface RegisterData {
   firstName: string;
   lastName: string;
   email: string;
@@ -13,12 +13,12 @@ interface RegisterData {
   userName: string;
 }
 
-interface LoginData {
+export interface LoginData {
   email: string;
   password: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   id: string;
   token: string;
   email: string;
@@ -30,7 +30,7 @@ interface AuthResponse {
   roles?: string[];
 }
 
-interface EmailVerificationData {
+export interface EmailVerificationData {
   email: string;
   verificationCode: string;
 }

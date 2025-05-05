@@ -1,0 +1,290 @@
+<div class="max-w-4xl mx-auto p-6 space-y-8">
+  <h3 class="text-2xl font-bold text-gray-800 mb-6">Reviews</h3>
+
+  <!-- Review Form -->
+  <div
+    *ngIf="currentUser"
+    class="bg-white rounded-2xl shadow-sm overflow-hidden"
+    @fadeIn
+  >
+    <div class="p-6 sm:p-8">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Write a Review</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          Share your experience with this deal
+        </p>
+      </div>
+
+      <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- Rating -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Rating</label>
+          <div class="flex items-center space-x-1" (mouseleave)="onStarLeave()">
+            <button
+              *ngFor="let star of [1, 2, 3, 4, 5]"
+              type="button"
+              (click)="setRating(star)"
+              (mouseenter)="onStarHover(star)"
+              class="focus:outline-none"
+            >
+              <svg
+                class="h-8 w-8 transition-colors"
+                [class.text-yellow-400]="
+                  star <= (hoveredRating || selectedRating)
+                "
+                [class.text-gray-300]="star > (hoveredRating || selectedRating)"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Review Text -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700"
+            >Your Review</label
+          >
+          <textarea
+            formControlName="text"
+            rows="4"
+            class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder="Share your experience (minimum 10 characters)"
+          ></textarea>
+          <div
+            *ngIf="
+              reviewForm.get('text')?.invalid && reviewForm.get('text')?.touched
+            "
+            class="text-sm text-red-600"
+          >
+            <span *ngIf="reviewForm.get('text')?.errors?.['required']"
+              >Review text is required</span
+            >
+            <span *ngIf="reviewForm.get('text')?.errors?.['minlength']"
+              >Review must be at least 10 characters</span
+            >
+          </div>
+        </div>
+
+        <!-- Photo Upload -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700"
+            >Add Photos (Optional)</label
+          >
+          <div
+            class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg"
+          >
+            <div class="space-y-1 text-center">
+              <svg
+                class="mx-auto h-12 w-12 text-gray-400"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 48 48"
+              >
+                <path
+                  d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="flex text-sm text-gray-600">
+                <label
+                  class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                >
+                  <span>Upload photos</span>
+                  <input
+                    type="file"
+                    class="sr-only"
+                    (change)="onFileSelected($event)"
+                    multiple
+                    accept="image/*"
+                  />
+                </label>
+                <p class="pl-1">or drag and drop</p>
+              </div>
+              <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo Preview -->
+        <div
+          *ngIf="previewUrls.length > 0"
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+        >
+          <div
+            *ngFor="let url of previewUrls; let i = index"
+            class="relative group"
+          >
+            <img
+              [src]="url"
+              alt="Preview"
+              class="w-full h-32 object-cover rounded-lg"
+            />
+            <button
+              type="button"
+              (click)="removeImage(i)"
+              class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="rounded-md bg-red-50 p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg
+                class="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            [disabled]="reviewForm.invalid || isSubmitting"
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg
+              *ngIf="isSubmitting"
+              class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            {{ isSubmitting ? "Submitting..." : "Submit Review" }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Login Prompt -->
+  <div
+    *ngIf="!currentUser"
+    class="bg-white rounded-2xl shadow-sm overflow-hidden p-6 text-center"
+  >
+    <p class="text-gray-600">
+      Please
+      <a
+        routerLink="/login"
+        class="text-indigo-600 hover:text-indigo-500 font-medium"
+        >login</a
+      >
+      to leave a review.
+    </p>
+  </div>
+
+  <!-- Reviews List -->
+  <div class="space-y-6">
+    <div
+      *ngFor="let review of reviews"
+      class="bg-white rounded-2xl shadow-sm overflow-hidden"
+      @fadeIn
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-3">
+            <img
+              [src]="review.user.photoUrl"
+              [alt]="review.user.name"
+              class="h-10 w-10 rounded-full object-cover"
+            />
+            <div>
+              <p class="font-medium text-gray-900">{{ review.user.name }}</p>
+              <p class="text-sm text-gray-500">
+                {{ review.createdAt | date : "mediumDate" }}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span *ngFor="let star of [1, 2, 3, 4, 5]" class="text-yellow-400">
+              <svg
+                class="h-5 w-5"
+                [class.fill-current]="star <= review.rating"
+                [class.stroke-current]="star > review.rating"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                />
+              </svg>
+            </span>
+          </div>
+        </div>
+        <p class="text-gray-700 mb-4">{{ review.text }}</p>
+        <div
+          *ngIf="review.photos && review.photos.length > 0"
+          class="grid grid-cols-2 sm:grid-cols-3 gap-4"
+        >
+          <img
+            *ngFor="let photo of review.photos"
+            [src]="photo"
+            alt="Review photo"
+            class="w-full h-32 object-cover rounded-lg"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div
+      *ngIf="reviews.length === 0"
+      class="bg-white rounded-2xl shadow-sm overflow-hidden p-6 text-center"
+    >
+      <p class="text-gray-600">
+        No reviews yet. Be the first to review this deal!
+      </p>
+    </div>
+  </div>
+</div>
