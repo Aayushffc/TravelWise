@@ -17,11 +17,22 @@
   <!-- Main Content -->
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <!-- Error Message -->
-    <div *ngIf="errorMessage" class="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
+    <div
+      *ngIf="errorMessage"
+      class="mb-4 bg-red-50 border-l-4 border-red-400 p-4"
+    >
       <div class="flex">
         <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          <svg
+            class="h-5 w-5 text-red-400"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
           </svg>
         </div>
         <div class="ml-3">
@@ -35,7 +46,9 @@
       <div class="border-b border-gray-200">
         <nav class="-mb-px flex space-x-8 px-6">
           <button
-            [class]="activeTab === 'agencies' ? activeTabClass : inactiveTabClass"
+            [class]="
+              activeTab === 'agencies' ? activeTabClass : inactiveTabClass
+            "
             (click)="setActiveTab('agencies')"
           >
             Agency Applications
@@ -47,7 +60,9 @@
             FAQ Management
           </button>
           <button
-            [class]="activeTab === 'locations' ? activeTabClass : inactiveTabClass"
+            [class]="
+              activeTab === 'locations' ? activeTabClass : inactiveTabClass
+            "
             (click)="setActiveTab('locations')"
           >
             Location Management
@@ -58,34 +73,49 @@
 
     <!-- Loading State -->
     <div *ngIf="isLoading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
+      ></div>
     </div>
 
     <!-- Agency Applications Tab -->
-    <div *ngIf="activeTab === 'agencies' && !isLoading" class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div
+      *ngIf="activeTab === 'agencies' && !isLoading"
+      class="bg-white shadow overflow-hidden sm:rounded-lg"
+    >
       <div class="px-4 py-5 sm:px-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">Agency Applications</h3>
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+          Agency Applications
+        </h3>
       </div>
       <div class="border-t border-gray-200">
         <ul class="divide-y divide-gray-200">
           <li *ngFor="let application of agencyApplications" class="px-6 py-4">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-medium text-gray-900">{{application.agencyName}}</h3>
-                <p class="text-sm text-gray-500">{{application.userName}}</p>
-                <p class="text-sm text-gray-500">{{application.userEmail}}</p>
-                <p class="text-sm text-gray-500">Submitted: {{application.createdAt | date:'medium'}}</p>
+                <h3 class="text-lg font-medium text-gray-900">
+                  {{ application.agencyName }}
+                </h3>
+                <p class="text-sm text-gray-500">{{ application.userName }}</p>
+                <p class="text-sm text-gray-500">{{ application.userEmail }}</p>
+                <p class="text-sm text-gray-500">
+                  Submitted: {{ application.createdAt | date : "medium" }}
+                </p>
               </div>
               <div class="flex space-x-2">
                 <button
-                  *ngIf="!application.isApproved && !application.rejectionReason"
+                  *ngIf="
+                    !application.isApproved && !application.rejectionReason
+                  "
                   (click)="approveAgency(application.id)"
                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   Approve
                 </button>
                 <button
-                  *ngIf="!application.isApproved && !application.rejectionReason"
+                  *ngIf="
+                    !application.isApproved && !application.rejectionReason
+                  "
                   (click)="openRejectDialog(application.id)"
                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
@@ -111,33 +141,53 @@
     </div>
 
     <!-- FAQ Management Tab -->
-    <div *ngIf="activeTab === 'faqs' && !isLoading" class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div
+      *ngIf="activeTab === 'faqs' && !isLoading"
+      class="bg-white shadow overflow-hidden sm:rounded-lg"
+    >
       <div class="px-4 py-5 sm:px-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">FAQ Management</h3>
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+          FAQ Management
+        </h3>
       </div>
       <div class="border-t border-gray-200">
         <ul class="divide-y divide-gray-200">
           <li *ngFor="let faq of faqs" class="px-6 py-4">
             <div class="flex items-center justify-between">
               <div class="flex-1">
-                <h3 class="text-lg font-medium text-gray-900">{{faq.question}}</h3>
-                <p class="mt-1 text-sm text-gray-500">{{faq.answer}}</p>
+                <h3 class="text-lg font-medium text-gray-900">
+                  {{ faq.question }}
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">{{ faq.answer }}</p>
                 <div class="mt-2 flex items-center space-x-2">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [class]="faq.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{faq.isActive ? 'Active' : 'Inactive'}}
+                  <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [class]="
+                      faq.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    "
+                  >
+                    {{ faq.isActive ? "Active" : "Inactive" }}
                   </span>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    {{faq.category}}
+                  <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                  >
+                    {{ faq.category }}
                   </span>
                 </div>
               </div>
               <div class="ml-4">
                 <button
                   (click)="toggleFAQStatus(faq.id)"
-                  [class]="faq.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+                  [class]="
+                    faq.isActive
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : 'bg-green-600 hover:bg-green-700'
+                  "
                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  {{faq.isActive ? 'Deactivate' : 'Activate'}}
+                  {{ faq.isActive ? "Deactivate" : "Activate" }}
                 </button>
               </div>
             </div>
@@ -152,20 +202,51 @@
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!isLoading && ((activeTab === 'agencies' && agencyApplications.length === 0) || (activeTab === 'faqs' && faqs.length === 0))" class="text-center py-12">
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    <div
+      *ngIf="
+        !isLoading &&
+        ((activeTab === 'agencies' && agencyApplications.length === 0) ||
+          (activeTab === 'faqs' && faqs.length === 0))
+      "
+      class="text-center py-12"
+    >
+      <svg
+        class="mx-auto h-12 w-12 text-gray-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
       </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900">No {{activeTab === 'agencies' ? 'applications' : 'FAQs'}} found</h3>
-      <p class="mt-1 text-sm text-gray-500">Get started by creating a new {{activeTab === 'agencies' ? 'application' : 'FAQ'}}.</p>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">
+        No {{ activeTab === "agencies" ? "applications" : "FAQs" }} found
+      </h3>
+      <p class="mt-1 text-sm text-gray-500">
+        Get started by creating a new
+        {{ activeTab === "agencies" ? "application" : "FAQ" }}.
+      </p>
     </div>
 
     <!-- Reject Dialog -->
-    <div *ngIf="rejectDialogOpen" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div
+      *ngIf="rejectDialogOpen"
+      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
+    >
       <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Application</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Reject Application
+        </h3>
         <div class="mb-4">
-          <label for="rejectionReason" class="block text-sm font-medium text-gray-700">Rejection Reason</label>
+          <label
+            for="rejectionReason"
+            class="block text-sm font-medium text-gray-700"
+            >Rejection Reason</label
+          >
           <textarea
             id="rejectionReason"
             [(ngModel)]="rejectionReason"
@@ -175,10 +256,12 @@
           ></textarea>
           <div class="mt-1 text-sm text-gray-500">
             <p *ngIf="rejectionReason.length < 10" class="text-red-500">
-              Reason must be at least 10 characters long (currently {{rejectionReason.length}})
+              Reason must be at least 10 characters long (currently
+              {{ rejectionReason.length }})
             </p>
             <p *ngIf="rejectionReason.length > 500" class="text-red-500">
-              Reason cannot exceed 500 characters (currently {{rejectionReason.length}})
+              Reason cannot exceed 500 characters (currently
+              {{ rejectionReason.length }})
             </p>
           </div>
         </div>

@@ -3323,7 +3323,10 @@ namespace Backend.Helper
                 command.Parameters.AddWithValue("@DealId", model.DealId);
                 command.Parameters.AddWithValue("@UserId", userId);
                 command.Parameters.AddWithValue("@Text", (object)model.Text ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Photos", (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@Photos",
+                    (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value
+                );
                 command.Parameters.AddWithValue("@Rating", model.Rating);
 
                 var result = await command.ExecuteScalarAsync();
@@ -3364,25 +3367,29 @@ namespace Backend.Helper
                 using var reader = await command.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    reviews.Add(new ReviewResponseDTO
-                    {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                        DealId = reader.GetInt32(reader.GetOrdinal("DealId")),
-                        UserId = reader.GetString(reader.GetOrdinal("UserId")),
-                        AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
-                        UserName = reader.GetString(reader.GetOrdinal("UserName")),
-                        Text = reader.IsDBNull(reader.GetOrdinal("Text"))
-                            ? null
-                            : reader.GetString(reader.GetOrdinal("Text")),
-                        Photos = reader.IsDBNull(reader.GetOrdinal("Photos"))
-                            ? null
-                            : JsonSerializer.Deserialize<List<string>>(reader.GetString(reader.GetOrdinal("Photos"))),
-                        Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
-                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                        UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
-                            ? null
-                            : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
-                    });
+                    reviews.Add(
+                        new ReviewResponseDTO
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            DealId = reader.GetInt32(reader.GetOrdinal("DealId")),
+                            UserId = reader.GetString(reader.GetOrdinal("UserId")),
+                            AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
+                            UserName = reader.GetString(reader.GetOrdinal("UserName")),
+                            Text = reader.IsDBNull(reader.GetOrdinal("Text"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("Text")),
+                            Photos = reader.IsDBNull(reader.GetOrdinal("Photos"))
+                                ? null
+                                : JsonSerializer.Deserialize<List<string>>(
+                                    reader.GetString(reader.GetOrdinal("Photos"))
+                                ),
+                            Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                                ? null
+                                : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                        }
+                    );
                 }
 
                 return reviews;
@@ -3448,7 +3455,10 @@ namespace Backend.Helper
                 command.Parameters.AddWithValue("@Id", id);
                 command.Parameters.AddWithValue("@UserId", userId);
                 command.Parameters.AddWithValue("@Text", (object)model.Text ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Photos", (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@Photos",
+                    (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value
+                );
                 command.Parameters.AddWithValue("@Rating", (object)model.Rating ?? DBNull.Value);
 
                 return await command.ExecuteNonQueryAsync() > 0;

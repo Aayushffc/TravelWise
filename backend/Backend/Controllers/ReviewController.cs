@@ -1,12 +1,12 @@
+using System.Text.Json;
 using Backend.DTOs;
+using Backend.Helper;
 using Backend.Models.Auth;
 using Backend.Models.Product;
-using Backend.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Backend.Controllers
 {
@@ -36,7 +36,13 @@ namespace Backend.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(new { message = "Invalid review data", errors = ModelState.Values.SelectMany(v => v.Errors) });
+                    return BadRequest(
+                        new
+                        {
+                            message = "Invalid review data",
+                            errors = ModelState.Values.SelectMany(v => v.Errors),
+                        }
+                    );
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
@@ -44,7 +50,12 @@ namespace Backend.Controllers
 
                 var result = await _dbHelper.CreateReview(model, user.Id);
                 if (!result)
-                    return BadRequest(new { message = "Failed to create review. Please check if you have already reviewed this deal." });
+                    return BadRequest(
+                        new
+                        {
+                            message = "Failed to create review. Please check if you have already reviewed this deal.",
+                        }
+                    );
 
                 return Ok(new { message = "Review created successfully" });
             }
@@ -61,7 +72,13 @@ namespace Backend.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(new { message = "Invalid review data", errors = ModelState.Values.SelectMany(v => v.Errors) });
+                    return BadRequest(
+                        new
+                        {
+                            message = "Invalid review data",
+                            errors = ModelState.Values.SelectMany(v => v.Errors),
+                        }
+                    );
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
@@ -76,7 +93,10 @@ namespace Backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating review");
-                return StatusCode(500, new { message = "An error occurred while updating the review" });
+                return StatusCode(
+                    500,
+                    new { message = "An error occurred while updating the review" }
+                );
             }
         }
 
@@ -98,7 +118,10 @@ namespace Backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting review");
-                return StatusCode(500, new { message = "An error occurred while deleting the review" });
+                return StatusCode(
+                    500,
+                    new { message = "An error occurred while deleting the review" }
+                );
             }
         }
 
@@ -114,7 +137,10 @@ namespace Backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting deal reviews");
-                return StatusCode(500, new { message = "An error occurred while getting the reviews" });
+                return StatusCode(
+                    500,
+                    new { message = "An error occurred while getting the reviews" }
+                );
             }
         }
     }

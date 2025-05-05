@@ -1,25 +1,37 @@
 <!-- Elegant Glass Morphism Card with Premium Hover Effects -->
-<div class="card-container relative overflow-hidden"
-     [ngClass]="{'border-green-300 bg-green-50/30': deal.isActive === true, 'border-gray-300 bg-gray-50/30': deal.isActive === false}"
-     (click)="onCardClick()">
+<div
+  class="card-container relative overflow-hidden"
+  [ngClass]="{
+    'border-green-300 bg-green-50/30': deal.isActive === true,
+    'border-gray-300 bg-gray-50/30': deal.isActive === false
+  }"
+  (click)="onCardClick()"
+>
   <!-- Image Section with Premium Effects - Only this section has backdrop blur -->
-  <div class="image-container relative h-48 w-full overflow-hidden backdrop-blur-sm bg-white/30">
+  <div
+    class="image-container relative h-48 w-full overflow-hidden backdrop-blur-sm bg-white/30"
+  >
     <img
       [src]="deal.photos?.[0] || 'assets/placeholder.jpg'"
       [alt]="deal.title"
       class="w-full h-full object-cover"
-    >
+    />
     <!-- Elegant Gradient Overlay -->
     <div class="gradient-overlay"></div>
 
     <!-- Title inside image -->
     <div class="absolute bottom-3 left-3 right-3 z-10">
-      <h3 class="text-white font-medium text-lg line-clamp-1 text-shadow">{{deal.title}}</h3>
+      <h3 class="text-white font-medium text-lg line-clamp-1 text-shadow">
+        {{ deal.title }}
+      </h3>
     </div>
 
     <!-- Activity Status Indicator (subtle dot, not a full badge) -->
     <div class="absolute top-4 right-4">
-      <span class="status-dot" [ngClass]="deal.isActive ? 'active' : 'inactive'"></span>
+      <span
+        class="status-dot"
+        [ngClass]="deal.isActive ? 'active' : 'inactive'"
+      ></span>
     </div>
   </div>
 
@@ -27,36 +39,83 @@
   <div class="p-3 glass-content relative z-10 bg-white">
     <!-- Price Tag moved to content section -->
     <div class="price-tag mb-3">
-      <span class="text-white font-bold text-lg">${{deal.discountedPrice || deal.price}}</span>
-      <span *ngIf="deal.discountedPrice" class="text-xs text-gray-300 line-through ml-2">${{deal.price}}</span>
+      <span class="text-white font-bold text-lg"
+        >${{ deal.discountedPrice || deal.price }}</span
+      >
+      <span
+        *ngIf="deal.discountedPrice"
+        class="text-xs text-gray-300 line-through ml-2"
+        >${{ deal.price }}</span
+      >
     </div>
 
     <!-- Key Information with Hover Highlights -->
     <div class="flex flex-col space-y-2 mb-3">
       <!-- Location -->
-      <div class="flex items-center text-sm text-gray-600 info-item glass-item py-1">
-        <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      <div
+        class="flex items-center text-sm text-gray-600 info-item glass-item py-1"
+      >
+        <svg
+          class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+          />
         </svg>
-        <span class="line-clamp-1">{{getLocationName()}}</span>
+        <span class="line-clamp-1">{{ getLocationName() }}</span>
       </div>
 
       <div class="flex justify-between">
         <!-- Duration -->
-        <div class="flex items-center text-sm text-gray-600 info-item glass-item py-1 flex-1 mr-2">
-          <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <div
+          class="flex items-center text-sm text-gray-600 info-item glass-item py-1 flex-1 mr-2"
+        >
+          <svg
+            class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
           </svg>
-          <span>{{deal.daysCount}}D/{{deal.nightsCount}}N</span>
+          <span>{{ deal.daysCount }}D/{{ deal.nightsCount }}N</span>
         </div>
 
         <!-- Package Type -->
-        <div class="flex items-center text-sm text-gray-600 info-item glass-item py-1 flex-1">
-          <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        <div
+          class="flex items-center text-sm text-gray-600 info-item glass-item py-1 flex-1"
+        >
+          <svg
+            class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+            />
           </svg>
-          <span class="line-clamp-1">{{deal.packageType || 'Standard'}}</span>
+          <span class="line-clamp-1">{{ deal.packageType || "Standard" }}</span>
         </div>
       </div>
     </div>
@@ -69,13 +128,35 @@
         [ngClass]="deal.isActive ? 'active-btn' : 'inactive-btn'"
         [title]="deal.isActive ? 'Deactivate this deal' : 'Activate this deal'"
       >
-        <svg *ngIf="deal.isActive" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          *ngIf="deal.isActive"
+          class="w-4 h-4 mr-1"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
-        <svg *ngIf="!deal.isActive" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          *ngIf="!deal.isActive"
+          class="w-4 h-4 mr-1"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
-        {{deal.isActive ? 'Deactivate' : 'Activate'}}
+        {{ deal.isActive ? "Deactivate" : "Activate" }}
       </button>
 
       <button
@@ -83,8 +164,18 @@
         class="glass-btn flex-1 delete-btn py-1 hover:cursor-pointer transition-all duration-300"
         title="Delete this deal"
       >
-        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        <svg
+          class="w-4 h-4 mr-1"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
         </svg>
         Delete
       </button>
@@ -94,6 +185,6 @@
 
 <style>
   .text-shadow {
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   }
 </style>

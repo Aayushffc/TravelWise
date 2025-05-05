@@ -8,29 +8,54 @@
           (click)="goBack()"
           class="flex items-center mr-4 text-gray-600 hover:text-gray-900 transition-colors duration-200 hover:cursor-pointer"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
-    </button>
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">Manage Deals</h1>
+        </button>
+        <h1
+          class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text"
+        >
+          Manage Deals
+        </h1>
       </div>
     </div>
   </header>
 
   <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-  <!-- Stats Cards -->
+    <!-- Stats Cards -->
     <div class="mb-6 grid grid-cols-3 gap-3">
       <!-- Total Deals -->
       <div class="stats-card">
         <div class="flex items-center">
           <div class="rounded-full bg-indigo-100 p-3 mr-4">
-            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+            <svg
+              class="w-6 h-6 text-indigo-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
+              />
             </svg>
-            </div>
+          </div>
           <div>
             <p class="text-sm text-gray-500 font-medium">Total Deals</p>
-            <p class="text-2xl font-bold text-gray-800">{{stats.total}}</p>
+            <p class="text-2xl font-bold text-gray-800">{{ stats.total }}</p>
           </div>
         </div>
       </div>
@@ -39,13 +64,23 @@
       <div class="stats-card">
         <div class="flex items-center">
           <div class="rounded-full bg-green-100 p-3 mr-4">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
-            </div>
+          </div>
           <div>
             <p class="text-sm text-gray-500 font-medium">Active Deals</p>
-            <p class="text-2xl font-bold text-gray-800">{{stats.active}}</p>
+            <p class="text-2xl font-bold text-gray-800">{{ stats.active }}</p>
           </div>
         </div>
       </div>
@@ -54,70 +89,153 @@
       <div class="stats-card">
         <div class="flex items-center">
           <div class="rounded-full bg-red-100 p-3 mr-4">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              class="w-6 h-6 text-red-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
-            </div>
+          </div>
           <div>
             <p class="text-sm text-gray-500 font-medium">Inactive Deals</p>
-            <p class="text-2xl font-bold text-gray-800">{{stats.inactive}}</p>
+            <p class="text-2xl font-bold text-gray-800">{{ stats.inactive }}</p>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="mb-8 rounded-xl bg-white shadow-sm hover:shadow transition-all duration-300 overflow-hidden">
-      <div class="flex items-center justify-between p-5 border-b border-gray-100 cursor-pointer" (click)="showFilters = !showFilters">
+    <div
+      class="mb-8 rounded-xl bg-white shadow-sm hover:shadow transition-all duration-300 overflow-hidden"
+    >
+      <div
+        class="flex items-center justify-between p-5 border-b border-gray-100 cursor-pointer"
+        (click)="showFilters = !showFilters"
+      >
         <h2 class="text-base font-medium text-gray-900 flex items-center">
-          <svg class="h-5 w-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          <svg
+            class="h-5 w-5 mr-2 text-indigo-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
           </svg>
           Filters
         </h2>
         <div class="flex items-center text-gray-400">
-          <span class="mr-2 text-sm">{{showFilters ? 'Hide' : 'Show'}} filters</span>
-          <svg class="h-5 w-5 transition-transform duration-300" [ngClass]="{'rotate-180': showFilters}" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 101.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          <span class="mr-2 text-sm"
+            >{{ showFilters ? "Hide" : "Show" }} filters</span
+          >
+          <svg
+            class="h-5 w-5 transition-transform duration-300"
+            [ngClass]="{ 'rotate-180': showFilters }"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 101.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
         </div>
       </div>
 
-      <div *ngIf="showFilters" class="px-5 py-4 divide-y divide-gray-100 animate__animated animate__fadeIn animate__faster">
+      <div
+        *ngIf="showFilters"
+        class="px-5 py-4 divide-y divide-gray-100 animate__animated animate__fadeIn animate__faster"
+      >
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 pb-4">
           <div>
-            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Search</label>
+            <label
+              class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"
+              >Search</label
+            >
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <svg
+                  class="h-4 w-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
-              <input type="text" [(ngModel)]="searchTerm" (keyup)="applyFilter()" class="pl-10 block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm" placeholder="Search deals...">
+              <input
+                type="text"
+                [(ngModel)]="searchTerm"
+                (keyup)="applyFilter()"
+                class="pl-10 block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+                placeholder="Search deals..."
+              />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Status</label>
-            <select [(ngModel)]="selectedStatus" (change)="applyFilter()" class="block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm">
+            <label
+              class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"
+              >Status</label
+            >
+            <select
+              [(ngModel)]="selectedStatus"
+              (change)="applyFilter()"
+              class="block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+            >
               <option [value]="null">All Statuses</option>
               <option value="Active">Active</option>
               <option value="Pending">Pending</option>
               <option value="Rejected">Rejected</option>
             </select>
-        </div>
+          </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Location</label>
-            <select [(ngModel)]="selectedLocation" (change)="applyFilter()" class="block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm">
+            <label
+              class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"
+              >Location</label
+            >
+            <select
+              [(ngModel)]="selectedLocation"
+              (change)="applyFilter()"
+              class="block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+            >
               <option [value]="null">All Locations</option>
-              <option *ngFor="let location of locations" [value]="location.id">{{location.name}}</option>
+              <option *ngFor="let location of locations" [value]="location.id">
+                {{ location.name }}
+              </option>
             </select>
-  </div>
+          </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Active Status</label>
-            <select [(ngModel)]="isActiveFilter" (change)="applyFilter()" class="block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm">
+            <label
+              class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"
+              >Active Status</label
+            >
+            <select
+              [(ngModel)]="isActiveFilter"
+              (change)="applyFilter()"
+              class="block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+            >
               <option [value]="null">All</option>
               <option [value]="true">Active Only</option>
               <option [value]="false">Inactive Only</option>
@@ -127,45 +245,108 @@
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-4">
           <div>
-            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Date Range</label>
+            <label
+              class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"
+              >Date Range</label
+            >
             <div class="grid grid-cols-2 gap-3">
               <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <svg
+                    class="h-4 w-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                 </div>
-                <input type="date" [(ngModel)]="dateRange.start" (change)="applyFilter()" class="pl-10 block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm" placeholder="From">
+                <input
+                  type="date"
+                  [(ngModel)]="dateRange.start"
+                  (change)="applyFilter()"
+                  class="pl-10 block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+                  placeholder="From"
+                />
               </div>
               <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <svg
+                    class="h-4 w-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                 </div>
-                <input type="date" [(ngModel)]="dateRange.end" (change)="applyFilter()" class="pl-10 block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm" placeholder="To">
+                <input
+                  type="date"
+                  [(ngModel)]="dateRange.end"
+                  (change)="applyFilter()"
+                  class="pl-10 block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+                  placeholder="To"
+                />
               </div>
             </div>
           </div>
 
           <div class="flex items-end justify-end">
-            <button (click)="resetFilters()" class="inline-flex items-center rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200">
-              <svg class="mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <button
+              (click)="resetFilters()"
+              class="inline-flex items-center rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            >
+              <svg
+                class="mr-2 h-4 w-4 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
-          Reset Filters
-        </button>
-      </div>
+              Reset Filters
+            </button>
+          </div>
         </div>
       </div>
-  </div>
+    </div>
 
-  <!-- Error Message -->
-    <div *ngIf="error" class="mb-6 rounded-lg border-l-4 border-red-500 bg-red-50 p-4 animate__animated animate__fadeIn">
+    <!-- Error Message -->
+    <div
+      *ngIf="error"
+      class="mb-6 rounded-lg border-l-4 border-red-500 bg-red-50 p-4 animate__animated animate__fadeIn"
+    >
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          <svg
+            class="h-5 w-5 text-red-400"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
           </svg>
         </div>
         <div class="ml-3">
@@ -178,33 +359,65 @@
     <div *ngIf="isLoading" class="mb-6 flex justify-center">
       <div class="rounded-lg bg-white p-6 shadow-sm">
         <div class="flex items-center">
-          <div class="h-8 w-8 animate-spin rounded-full border-3 border-indigo-500 border-t-transparent"></div>
-          <span class="ml-3 text-sm font-medium text-gray-700">Loading your deals...</span>
+          <div
+            class="h-8 w-8 animate-spin rounded-full border-3 border-indigo-500 border-t-transparent"
+          ></div>
+          <span class="ml-3 text-sm font-medium text-gray-700"
+            >Loading your deals...</span
+          >
         </div>
       </div>
     </div>
 
     <!-- Deal Cards Grid -->
     <div *ngIf="!error && !isLoading">
-      <div *ngIf="deals.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl shadow-sm text-center">
+      <div
+        *ngIf="deals.length === 0"
+        class="flex flex-col items-center justify-center py-16 bg-white rounded-xl shadow-sm text-center"
+      >
         <div class="bg-indigo-100 p-4 rounded-full inline-flex mb-4">
-          <svg class="h-12 w-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <svg
+            class="h-12 w-12 text-indigo-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
           </svg>
         </div>
         <h3 class="text-lg font-medium text-gray-900">No deals found</h3>
-        <p class="mt-1 text-sm text-gray-500 max-w-md">You haven't created any deals yet. Get started by creating your first deal.</p>
+        <p class="mt-1 text-sm text-gray-500 max-w-md">
+          You haven't created any deals yet. Get started by creating your first
+          deal.
+        </p>
         <div class="mt-6">
-          <button (click)="createDeal()" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors duration-200 hover:cursor-pointer">
-            <svg class="-ml-0.5 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+          <button
+            (click)="createDeal()"
+            class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors duration-200 hover:cursor-pointer"
+          >
+            <svg
+              class="-ml-0.5 mr-2 h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
+              />
             </svg>
             Create New Deal
           </button>
         </div>
       </div>
 
-      <div *ngIf="deals.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div
+        *ngIf="deals.length > 0"
+        class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      >
         <app-manage-deal-card
           *ngFor="let deal of deals"
           [deal]="deal"
@@ -214,44 +427,100 @@
           (error)="showError($event)"
         ></app-manage-deal-card>
       </div>
-            </div>
-            </div>
+    </div>
+  </div>
 
   <!-- Floating Action Button for creating new deal -->
   <button
     *ngIf="deals.length > 0"
     (click)="createDeal()"
-    class="fixed bottom-6 right-6 inline-flex items-center justify-center rounded-full bg-indigo-600 p-4 text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 z-50 hover:cursor-pointer">
+    class="fixed bottom-6 right-6 inline-flex items-center justify-center rounded-full bg-indigo-600 p-4 text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 z-50 hover:cursor-pointer"
+  >
     <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+      <path
+        fill-rule="evenodd"
+        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+        clip-rule="evenodd"
+      />
     </svg>
   </button>
 
   <!-- Modal for Create/Edit Deal with dark backdrop and image upload -->
-  <div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 flex items-center justify-center">
-    <div class="modal-content bg-white w-full max-w-xl rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+  <div
+    *ngIf="showModal"
+    class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 flex items-center justify-center"
+  >
+    <div
+      class="modal-content bg-white w-full max-w-xl rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto"
+    >
       <!-- Error message display -->
-      <div *ngIf="formError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md animate__animated animate__fadeIn">
+      <div
+        *ngIf="formError"
+        class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md animate__animated animate__fadeIn"
+      >
         <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span class="text-sm text-red-800 font-medium">{{ formError }}</span>
+          <div class="flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-red-400 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span class="text-sm text-red-800 font-medium">{{
+              formError
+            }}</span>
           </div>
-          <button (click)="clearFormError()" class="text-red-400 hover:text-red-600 transition-colors duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <button
+            (click)="clearFormError()"
+            class="text-red-400 hover:text-red-600 transition-colors duration-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
-            </div>
-            </div>
+        </div>
+      </div>
 
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold text-gray-800">{{ isEditMode ? 'Edit Deal' : 'Create Deal' }}</h2>
-        <button (click)="closeModal()" class="text-gray-500 hover:text-gray-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <h2 class="text-xl font-bold text-gray-800">
+          {{ isEditMode ? "Edit Deal" : "Create Deal" }}
+        </h2>
+        <button
+          (click)="closeModal()"
+          class="text-gray-500 hover:text-gray-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -264,30 +533,34 @@
               type="button"
               class="tab-button"
               [class.active]="activeTab === 'basic'"
-              (click)="activeTab = 'basic'">
+              (click)="activeTab = 'basic'"
+            >
               Basic Info
-                    </button>
+            </button>
             <button
               type="button"
               class="tab-button"
               [class.active]="activeTab === 'duration'"
-              (click)="activeTab = 'duration'">
+              (click)="activeTab = 'duration'"
+            >
               Duration & Validity
-                    </button>
+            </button>
             <button
               type="button"
               class="tab-button"
               [class.active]="activeTab === 'photos'"
-              (click)="activeTab = 'photos'">
+              (click)="activeTab = 'photos'"
+            >
               Photos
-                    </button>
+            </button>
             <button
               type="button"
               class="tab-button"
               [class.active]="activeTab === 'details'"
-              (click)="activeTab = 'details'">
+              (click)="activeTab = 'details'"
+            >
               Additional Details
-                    </button>
+            </button>
           </div>
         </div>
 
@@ -297,7 +570,11 @@
           <div class="tab-panel" [class.active]="activeTab === 'basic'">
             <!-- Title -->
             <div>
-              <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <label
+                for="title"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Title *</label
+              >
               <input
                 type="text"
                 id="title"
@@ -305,33 +582,66 @@
                 class="form-input"
                 placeholder="Deal title"
               />
-              <div *ngIf="dealForm.get('title')?.invalid && dealForm.get('title')?.touched" class="mt-1 text-sm text-red-600">
+              <div
+                *ngIf="
+                  dealForm.get('title')?.invalid &&
+                  dealForm.get('title')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
                 Title is required
               </div>
             </div>
 
             <!-- Location -->
             <div>
-              <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+              <label
+                for="location"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Location *</label
+              >
               <div class="relative">
-                <div *ngIf="dealForm.get('locationId')?.value !== 'new'" class="relative">
+                <div
+                  *ngIf="dealForm.get('locationId')?.value !== 'new'"
+                  class="relative"
+                >
                   <select
                     id="location"
                     formControlName="locationId"
                     class="form-input w-full pr-10"
                   >
                     <option value="" disabled>Select location</option>
-                    <option *ngFor="let location of locations" [value]="location.id">{{location.name}}</option>
+                    <option
+                      *ngFor="let location of locations"
+                      [value]="location.id"
+                    >
+                      {{ location.name }}
+                    </option>
                     <option value="new">+ Create New Location</option>
                   </select>
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <div
+                    class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none"
+                  >
+                    <svg
+                      class="h-5 w-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </div>
                 </div>
 
-                <div *ngIf="dealForm.get('locationId')?.value === 'new'" class="flex gap-2">
+                <div
+                  *ngIf="dealForm.get('locationId')?.value === 'new'"
+                  class="flex gap-2"
+                >
                   <input
                     type="text"
                     #newLocation
@@ -341,22 +651,45 @@
                   <button
                     type="button"
                     class="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                    (click)="createLocation(newLocation.value); newLocation.value = ''"
+                    (click)="
+                      createLocation(newLocation.value); newLocation.value = ''
+                    "
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
                     </svg>
                   </button>
                 </div>
               </div>
-              <div *ngIf="dealForm.get('locationId')?.invalid && dealForm.get('locationId')?.touched" class="mt-1 text-sm text-red-600">
+              <div
+                *ngIf="
+                  dealForm.get('locationId')?.invalid &&
+                  dealForm.get('locationId')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
                 Location is required
               </div>
             </div>
 
             <!-- Description -->
             <div>
-              <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <label
+                for="description"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Description *</label
+              >
               <textarea
                 id="description"
                 formControlName="description"
@@ -364,23 +697,41 @@
                 class="form-input"
                 placeholder="Deal description"
               ></textarea>
-              <div *ngIf="dealForm.get('description')?.invalid && dealForm.get('description')?.touched" class="mt-1 text-sm text-red-600">
+              <div
+                *ngIf="
+                  dealForm.get('description')?.invalid &&
+                  dealForm.get('description')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
                 Description is required
               </div>
             </div>
 
             <!-- Package Type -->
             <div>
-              <label for="packageType" class="block text-sm font-medium text-gray-700 mb-1">Package Type *</label>
+              <label
+                for="packageType"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Package Type *</label
+              >
               <select
                 id="packageType"
                 formControlName="packageType"
                 class="form-input"
               >
                 <option value="" disabled>Select package type</option>
-                <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+                <option *ngFor="let category of categories" [value]="category">
+                  {{ category }}
+                </option>
               </select>
-              <div *ngIf="dealForm.get('packageType')?.invalid && dealForm.get('packageType')?.touched" class="mt-1 text-sm text-red-600">
+              <div
+                *ngIf="
+                  dealForm.get('packageType')?.invalid &&
+                  dealForm.get('packageType')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
                 Package type is required
               </div>
             </div>
@@ -388,7 +739,11 @@
             <!-- Price and Discount -->
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price ($) *</label>
+                <label
+                  for="price"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Price ($) *</label
+                >
                 <input
                   type="number"
                   id="price"
@@ -398,13 +753,23 @@
                   min="0"
                   step="0.01"
                 />
-                <div *ngIf="dealForm.get('price')?.invalid && dealForm.get('price')?.touched" class="mt-1 text-sm text-red-600">
+                <div
+                  *ngIf="
+                    dealForm.get('price')?.invalid &&
+                    dealForm.get('price')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
                   Valid price is required
                 </div>
               </div>
 
               <div>
-                <label for="discountPercentage" class="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
+                <label
+                  for="discountPercentage"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Discount (%)</label
+                >
                 <input
                   type="number"
                   id="discountPercentage"
@@ -414,21 +779,31 @@
                   min="0"
                   max="100"
                 />
-                <div *ngIf="dealForm.get('discountPercentage')?.invalid && dealForm.get('discountPercentage')?.touched" class="mt-1 text-sm text-red-600">
+                <div
+                  *ngIf="
+                    dealForm.get('discountPercentage')?.invalid &&
+                    dealForm.get('discountPercentage')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
                   Must be between 0-100
-                </div>
                 </div>
               </div>
             </div>
+          </div>
 
           <!-- Duration & Validity Tab -->
           <div class="tab-panel" [class.active]="activeTab === 'duration'">
             <!-- Duration -->
             <div class="mb-6">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Duration</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                  <label for="daysCount" class="block text-sm font-medium text-gray-700 mb-1">Days *</label>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    for="daysCount"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Days *</label
+                  >
                   <input
                     type="number"
                     id="daysCount"
@@ -436,21 +811,37 @@
                     class="form-input"
                     min="1"
                   />
-                  <div *ngIf="dealForm.get('daysCount')?.invalid && dealForm.get('daysCount')?.touched" class="mt-1 text-sm text-red-600">
+                  <div
+                    *ngIf="
+                      dealForm.get('daysCount')?.invalid &&
+                      dealForm.get('daysCount')?.touched
+                    "
+                    class="mt-1 text-sm text-red-600"
+                  >
                     Days count is required
                   </div>
                 </div>
 
                 <div>
-                  <label for="nightsCount" class="block text-sm font-medium text-gray-700 mb-1">Nights *</label>
+                  <label
+                    for="nightsCount"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Nights *</label
+                  >
                   <input
                     type="number"
                     id="nightsCount"
                     formControlName="nightsCount"
-                  class="form-input"
+                    class="form-input"
                     min="0"
                   />
-                  <div *ngIf="dealForm.get('nightsCount')?.invalid && dealForm.get('nightsCount')?.touched" class="mt-1 text-sm text-red-600">
+                  <div
+                    *ngIf="
+                      dealForm.get('nightsCount')?.invalid &&
+                      dealForm.get('nightsCount')?.touched
+                    "
+                    class="mt-1 text-sm text-red-600"
+                  >
                     Nights count is required
                   </div>
                 </div>
@@ -459,30 +850,52 @@
 
             <!-- Validity Period -->
             <div>
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Validity Period</h3>
+              <h3 class="text-lg font-medium text-gray-900 mb-4">
+                Validity Period
+              </h3>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label for="validFrom" class="block text-sm font-medium text-gray-700 mb-1">Valid From *</label>
+                  <label
+                    for="validFrom"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Valid From *</label
+                  >
                   <input
                     type="date"
                     id="validFrom"
                     formControlName="validFrom"
                     class="form-input"
                   />
-                  <div *ngIf="dealForm.get('validFrom')?.invalid && dealForm.get('validFrom')?.touched" class="mt-1 text-sm text-red-600">
+                  <div
+                    *ngIf="
+                      dealForm.get('validFrom')?.invalid &&
+                      dealForm.get('validFrom')?.touched
+                    "
+                    class="mt-1 text-sm text-red-600"
+                  >
                     Valid from date is required
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                  <label for="validUntil" class="block text-sm font-medium text-gray-700 mb-1">Valid Until *</label>
+                <div>
+                  <label
+                    for="validUntil"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Valid Until *</label
+                  >
                   <input
                     type="date"
                     id="validUntil"
                     formControlName="validUntil"
-                  class="form-input"
+                    class="form-input"
                   />
-                  <div *ngIf="dealForm.get('validUntil')?.invalid && dealForm.get('validUntil')?.touched" class="mt-1 text-sm text-red-600">
+                  <div
+                    *ngIf="
+                      dealForm.get('validUntil')?.invalid &&
+                      dealForm.get('validUntil')?.touched
+                    "
+                    class="mt-1 text-sm text-red-600"
+                  >
                     Valid until date is required
                   </div>
                 </div>
@@ -493,7 +906,9 @@
           <!-- Photos Tab -->
           <div class="tab-panel" [class.active]="activeTab === 'photos'">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Deal Photos</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Deal Photos</label
+              >
               <div
                 class="image-upload-container"
                 [class.dragging]="isDraggingOver"
@@ -509,24 +924,54 @@
                   multiple
                   hidden
                   (change)="onPhotosSelected($event)"
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
-                <p class="mt-1 text-sm text-gray-500">Drag and drop images here, or click to select files</p>
-                <p class="text-xs text-gray-400 mt-2">PNG, JPG, GIF up to 10MB</p>
+                <p class="mt-1 text-sm text-gray-500">
+                  Drag and drop images here, or click to select files
+                </p>
+                <p class="text-xs text-gray-400 mt-2">
+                  PNG, JPG, GIF up to 10MB
+                </p>
               </div>
 
               <!-- Image Preview Grid -->
               <div *ngIf="photos.length > 0" class="image-preview mt-4">
-                <div *ngFor="let photo of photos; let i = index" class="image-preview-item">
-                  <img [src]="photo.url || photo" alt="Preview">
+                <div
+                  *ngFor="let photo of photos; let i = index"
+                  class="image-preview-item"
+                >
+                  <img [src]="photo.url || photo" alt="Preview" />
                   <button
                     type="button"
                     class="remove-button"
-                    (click)="removePhoto(i, $event)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    (click)="removePhoto(i, $event)"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -541,7 +986,11 @@
               <h3 class="text-lg font-medium text-gray-900 mb-4">Group Size</h3>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label for="minGroupSize" class="block text-sm font-medium text-gray-700 mb-1">Min Group Size</label>
+                  <label
+                    for="minGroupSize"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Min Group Size</label
+                  >
                   <input
                     type="number"
                     id="minGroupSize"
@@ -552,7 +1001,11 @@
                 </div>
 
                 <div>
-                  <label for="maxGroupSize" class="block text-sm font-medium text-gray-700 mb-1">Max Group Size</label>
+                  <label
+                    for="maxGroupSize"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >Max Group Size</label
+                  >
                   <input
                     type="number"
                     id="maxGroupSize"
@@ -566,7 +1019,9 @@
 
             <!-- Difficulty Level -->
             <div class="mb-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Difficulty Level</h3>
+              <h3 class="text-lg font-medium text-gray-900 mb-4">
+                Difficulty Level
+              </h3>
               <select
                 id="difficultyLevel"
                 formControlName="difficultyLevel"
@@ -581,38 +1036,64 @@
 
             <!-- Tags input with proper add button -->
             <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Tags</label
+              >
               <div class="flex space-x-2">
                 <input
                   type="text"
                   #tagInput
                   placeholder="Add a tag..."
                   class="form-input flex-1"
-                  (keydown.enter)="addTag($event, tagInput); $event.preventDefault()"
+                  (keydown.enter)="
+                    addTag($event, tagInput); $event.preventDefault()
+                  "
                 />
                 <button
                   type="button"
                   class="px-3 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-md hover:bg-indigo-100 transition-colors"
                   (click)="addTag($event, tagInput)"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
                   </svg>
                 </button>
-                </div>
+              </div>
 
               <!-- Tags Display -->
               <div class="flex flex-wrap gap-2 mt-2">
-                <div *ngFor="let tag of getTags(); let i = index"
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                <div
+                  *ngFor="let tag of getTags(); let i = index"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+                >
                   {{ tag }}
                   <button
                     type="button"
                     class="ml-1.5 inline-flex items-center justify-center h-4 w-4 rounded-full bg-indigo-200 text-indigo-500 hover:bg-indigo-300 hover:text-indigo-700 focus:outline-none"
                     (click)="removeTag(i)"
                   >
-                    <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
-                      <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
+                    <svg
+                      class="h-2 w-2"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 8 8"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-width="1.5"
+                        d="M1 1l6 6m0-6L1 7"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -627,8 +1108,11 @@
                   type="checkbox"
                   formControlName="isInstantBooking"
                   class="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                />
+                <label
+                  for="isInstantBooking"
+                  class="ml-2 block text-sm text-gray-700"
                 >
-                <label for="isInstantBooking" class="ml-2 block text-sm text-gray-700">
                   Instant Booking
                 </label>
               </div>
@@ -638,8 +1122,11 @@
                   type="checkbox"
                   formControlName="isLastMinuteDeal"
                   class="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                />
+                <label
+                  for="isLastMinuteDeal"
+                  class="ml-2 block text-sm text-gray-700"
                 >
-                <label for="isLastMinuteDeal" class="ml-2 block text-sm text-gray-700">
                   Last Minute Deal
                 </label>
               </div>
@@ -660,7 +1147,13 @@
             [disabled]="isSubmitting"
             class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ isSubmitting ? 'Saving...' : isEditMode ? 'Update Deal' : 'Create Deal' }}
+            {{
+              isSubmitting
+                ? "Saving..."
+                : isEditMode
+                ? "Update Deal"
+                : "Create Deal"
+            }}
           </button>
         </div>
       </form>
@@ -676,82 +1169,82 @@
 ></app-delete-confirmation>
 
 <style>
-.photo-gallery {
-  margin-bottom: 2rem;
-}
+  .photo-gallery {
+    margin-bottom: 2rem;
+  }
 
-.main-photo {
-  width: 100%;
-  height: 400px;
-  overflow: hidden;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
+  .main-photo {
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
 
-.main-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  .main-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-.thumbnail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 1rem;
-}
+  .thumbnail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+  }
 
-.thumbnail {
-  aspect-ratio: 1;
-  overflow: hidden;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
+  .thumbnail {
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
 
-.thumbnail:hover {
-  transform: scale(1.05);
-}
+  .thumbnail:hover {
+    transform: scale(1.05);
+  }
 
-.thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-.deal-details {
-  padding: 1rem;
-}
+  .deal-details {
+    padding: 1rem;
+  }
 
-.deal-info {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
+  .deal-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
 
-.deal-description,
-.deal-features,
-.deal-itinerary,
-.deal-policies {
-  margin-bottom: 2rem;
-}
+  .deal-description,
+  .deal-features,
+  .deal-itinerary,
+  .deal-policies {
+    margin-bottom: 2rem;
+  }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
 
-.feature {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
+  .feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+  }
 
-.feature i {
-  color: #007bff;
-}
+  .feature i {
+    color: #007bff;
+  }
 </style>

@@ -19,7 +19,10 @@
 
     <div class="mt-6">
       <!-- Email display section -->
-      <div *ngIf="!codeRequested" class="rounded-md shadow-sm space-y-4 text-center">
+      <div
+        *ngIf="!codeRequested"
+        class="rounded-md shadow-sm space-y-4 text-center"
+      >
         <p class="text-lg font-semibold text-gray-900">{{ userEmail }}</p>
       </div>
 
@@ -39,7 +42,11 @@
       <div *ngIf="codeRequested" class="mt-6">
         <div class="rounded-md shadow-sm space-y-4">
           <div>
-            <label for="verificationCode" class="block text-sm font-medium text-gray-700">Verification Code</label>
+            <label
+              for="verificationCode"
+              class="block text-sm font-medium text-gray-700"
+              >Verification Code</label
+            >
             <input
               id="verificationCode"
               name="verificationCode"
@@ -48,7 +55,7 @@
               required
               class="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
               placeholder="Enter the code from your email"
-            >
+            />
           </div>
         </div>
 
