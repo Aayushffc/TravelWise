@@ -1,0 +1,131 @@
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+  <div class="px-4 py-5 sm:px-6">
+    <h3 class="text-lg leading-6 font-medium text-gray-900">Support Tickets</h3>
+  </div>
+  <div class="border-t border-gray-200">
+    <ul class="divide-y divide-gray-200">
+      <li *ngFor="let ticket of supportRequests" class="px-6 py-4 fade-in">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-medium text-gray-900">
+                {{ ticket.problemTitle }}
+              </h3>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="{
+                  'bg-yellow-100 text-yellow-800': ticket.status === 'PENDING',
+                  'bg-blue-100 text-blue-800': ticket.status === 'IN_PROGRESS',
+                  'bg-green-100 text-green-800': ticket.status === 'RESOLVED'
+                }"
+              >
+                {{ ticket.status }}
+              </span>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">
+              From: {{ ticket.name }} ({{ ticket.email }})
+            </p>
+            <p class="mt-2 text-sm text-gray-700">
+              {{ ticket.problemDescription }}
+            </p>
+            <p class="mt-1 text-sm text-gray-500">
+              Submitted: {{ ticket.createdAt | date : "medium" }}
+            </p>
+
+            <div
+              *ngIf="ticket.adminResponse"
+              class="mt-3 p-3 bg-gray-50 rounded-md slide-in"
+            >
+              <p class="text-sm font-medium text-gray-700">Response:</p>
+              <p class="mt-1 text-sm text-gray-600">
+                {{ ticket.adminResponse }}
+              </p>
+              <p class="mt-1 text-sm text-gray-500">
+                Resolved: {{ ticket.resolvedAt | date : "medium" }}
+              </p>
+            </div>
+
+            <div *ngIf="ticket.status !== 'RESOLVED'" class="mt-4">
+              <textarea
+                [(ngModel)]="ticket.adminResponse"
+                rows="3"
+                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                placeholder="Enter your response..."
+              ></textarea>
+              <div class="mt-2 flex justify-end space-x-2">
+                <button
+                  *ngIf="ticket.status === 'PENDING'"
+                  (click)="updateRequestStatus(ticket.id, 'IN_PROGRESS')"
+                  class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Mark In Progress
+                </button>
+                <button
+                  (click)="respondToRequest(ticket)"
+                  class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Send Response
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="px-6 py-4">
+    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg
+            class="h-5 w-5 text-red-400"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-700">{{ errorMessage }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div
+    *ngIf="!isLoading && supportRequests.length === 0"
+    class="text-center py-12"
+  >
+    <svg
+      class="mx-auto h-12 w-12 text-gray-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">
+      No support tickets found
+    </h3>
+    <p class="mt-1 text-sm text-gray-500">
+      There are no pending support tickets at the moment.
+    </p>
+  </div>
+</div>

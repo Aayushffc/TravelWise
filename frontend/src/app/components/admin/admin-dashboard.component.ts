@@ -7,20 +7,13 @@ import { AuthService } from '../../services/auth.service';
 import { AgencyApplicationService, AgencyApplicationResponseDTO } from '../../services/agency-application.service';
 import { FormsModule } from '@angular/forms';
 import { ManageLocationsComponent } from './manage-locations/manage-locations.component';
-
-interface FAQ {
-  id: number;
-  question: string;
-  answer: string;
-  category: string;
-  isActive: boolean;
-  createdAt: Date;
-}
+import { ManageSupportRequestsComponent } from './manage-support-requests/manage-support-requests.component';
+import { FAQService, FAQ, FAQCreateDTO } from '../../services/faq.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ManageLocationsComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ManageLocationsComponent, ManageSupportRequestsComponent],
   templateUrl: './admin-dashboard.component.html'
 })
 export class AdminDashboardComponent implements OnInit {
@@ -32,6 +25,11 @@ export class AdminDashboardComponent implements OnInit {
   rejectDialogOpen = false;
   selectedApplicationId: number | null = null;
   rejectionReason = '';
+  createFaqDialogOpen = false;
+  newFaq: FAQCreateDTO = {
+    question: '',
+    category: 'General'
+  };
 
   activeTabClass = 'border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
   inactiveTabClass = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
@@ -39,7 +37,8 @@ export class AdminDashboardComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private agencyApplicationService: AgencyApplicationService
+    private agencyApplicationService: AgencyApplicationService,
+    private faqService: FAQService
   ) {}
 
   ngOnInit() {
@@ -155,5 +154,39 @@ export class AdminDashboardComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  openCreateFaqDialog() {
+    this.createFaqDialogOpen = true;
+    this.newFaq = {
+      question: '',
+      category: 'General'
+    };
+  }
+
+  closeCreateFaqDialog() {
+    this.createFaqDialogOpen = false;
+    this.newFaq = {
+      question: '',
+      category: 'General'
+    };
+  }
+
+  createFaq() {
+    if (!this.newFaq.question.trim()) {
+      this.errorMessage = 'Question cannot be empty';
+      return;
+    }
+
+    this.faqService.submitQuestion(this.newFaq).subscribe({
+      next: () => {
+        this.loadFAQs();
+        this.closeCreateFaqDialog();
+      },
+      error: (error) => {
+        console.error('Error creating FAQ:', error);
+        this.errorMessage = 'Failed to create FAQ';
+      }
+    });
   }
 }
