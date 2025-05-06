@@ -20,6 +20,7 @@ namespace Backend.DBContext
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Wishlist> Wishlists { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -38,6 +39,13 @@ namespace Backend.DBContext
                 .HasOne(a => a.User)
                 .WithMany()
                 .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder
+                .Entity<Wishlist>()
+                .HasOne(w => w.Deal)
+                .WithMany()
+                .HasForeignKey(w => w.DealId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

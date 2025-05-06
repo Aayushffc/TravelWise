@@ -42,12 +42,12 @@
 
 /* Review card hover effect */
 .review-card {
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .review-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Photo gallery hover effect */
@@ -405,4 +405,28 @@ textarea.form-control {
 
 .star:not(.filled) {
   color: #e5e7eb;
+}
+
+/* Animation for star rating hover effect */
+.star-rating button {
+  transition: transform 0.2s ease;
+}
+
+.star-rating button:hover {
+  transform: scale(1.2);
+}
+
+/* Animation for photo preview hover effect */
+.photo-preview img {
+  transition: transform 0.2s ease;
+}
+
+.photo-preview img:hover {
+  transform: scale(1.05);
+}
+
+/* Drag and drop styles */
+.drag-over {
+  border: 2px dashed #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
 }

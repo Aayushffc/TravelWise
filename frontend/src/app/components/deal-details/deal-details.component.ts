@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { SearchCountryField, CountryISO, PhoneNumberFormat } from 'ngx-intl-tel-input';
 import { ReviewComponent } from '../review/review.component';
+import { WishlistService } from '../../services/wishlist.service';
 
 // Use DealResponseDto directly instead of custom Deal interface
 type Deal = DealResponseDto;
@@ -123,7 +124,8 @@ export class DealDetailsComponent implements OnInit {
     private authService: AuthService,
     private location: Location,
     private agencyProfileService: AgencyProfileService,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private wishlistService: WishlistService
   ) {}
 
   async ngOnInit() {
@@ -141,6 +143,11 @@ export class DealDetailsComponent implements OnInit {
       // Get agency profile using the new API
       if (this.deal?.userId) {
         this.agencyProfile = await firstValueFrom(this.agencyProfileService.getAgencyInfoByUserId(this.deal.userId));
+      }
+
+      // Check if deal is in wishlist
+      if (this.isLoggedIn && this.deal) {
+        this.isWishlisted = await firstValueFrom(this.wishlistService.isInWishlist(this.deal.id));
       }
 
       // Pre-fill user information if logged in
@@ -196,8 +203,30 @@ export class DealDetailsComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.isWishlisted = !this.isWishlisted;
-    // TODO: Implement wishlist API call
+
+    if (!this.deal) return;
+
+    if (this.isWishlisted) {
+      this.wishlistService.removeFromWishlist(this.deal.id).subscribe({
+        next: () => {
+          this.isWishlisted = false;
+        },
+        error: (error) => {
+          console.error('Error removing from wishlist:', error);
+          this.error = 'Failed to remove from wishlist';
+        }
+      });
+    } else {
+      this.wishlistService.addToWishlist(this.deal.id).subscribe({
+        next: () => {
+          this.isWishlisted = true;
+        },
+        error: (error) => {
+          console.error('Error adding to wishlist:', error);
+          this.error = 'Failed to add to wishlist';
+        }
+      });
+    }
   }
 
   shareDeal(): void {
@@ -260,11 +289,6 @@ export class DealDetailsComponent implements OnInit {
 
   goBack(): void {
     this.location.back();
-  }
-
-  addToWishlist(): void {
-    // Implement wishlist logic
-    console.log('Added to wishlist:', this.deal?.id);
   }
 
   share(): void {

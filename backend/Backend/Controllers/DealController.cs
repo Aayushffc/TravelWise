@@ -461,5 +461,120 @@ namespace Backend.Controllers
                 return StatusCode(500, "An error occurred while updating the deal status");
             }
         }
+
+        // POST: api/Deal/5/wishlist
+        [HttpPost("{id}/wishlist")]
+        public async Task<IActionResult> AddToWishlist(int id)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if deal exists
+                var deal = await _dbHelper.GetDealById(id);
+                if (deal == null)
+                {
+                    return NotFound($"Deal with ID {id} not found");
+                }
+
+                var success = await _dbHelper.AddToWishlist(userId, id);
+                if (!success)
+                {
+                    return StatusCode(500, "Failed to add deal to wishlist");
+                }
+
+                return Ok(new { message = "Deal added to wishlist successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while adding deal to wishlist");
+            }
+        }
+
+        // DELETE: api/Deal/5/wishlist
+        [HttpDelete("{id}/wishlist")]
+        public async Task<IActionResult> RemoveFromWishlist(int id)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if deal exists
+                var deal = await _dbHelper.GetDealById(id);
+                if (deal == null)
+                {
+                    return NotFound($"Deal with ID {id} not found");
+                }
+
+                var success = await _dbHelper.RemoveFromWishlist(userId, id);
+                if (!success)
+                {
+                    return StatusCode(500, "Failed to remove deal from wishlist");
+                }
+
+                return Ok(new { message = "Deal removed from wishlist successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while removing deal from wishlist");
+            }
+        }
+
+        // GET: api/Deal/wishlist
+        [HttpGet("wishlist")]
+        public async Task<ActionResult<IEnumerable<DealResponseDto>>> GetWishlist()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var wishlist = await _dbHelper.GetUserWishlist(userId);
+                return Ok(wishlist);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while retrieving wishlist");
+            }
+        }
+
+        // GET: api/Deal/5/wishlist
+        [HttpGet("{id}/wishlist")]
+        public async Task<ActionResult<bool>> IsInWishlist(int id)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if deal exists
+                var deal = await _dbHelper.GetDealById(id);
+                if (deal == null)
+                {
+                    return NotFound($"Deal with ID {id} not found");
+                }
+
+                var isInWishlist = await _dbHelper.IsInWishlist(userId, id);
+                return Ok(isInWishlist);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while checking wishlist status");
+            }
+        }
     }
 }

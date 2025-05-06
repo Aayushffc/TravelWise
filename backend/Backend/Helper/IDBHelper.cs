@@ -114,5 +114,11 @@ namespace Backend.Helper
         Task<bool> UpdateReview(int id, UpdateReviewDTO model, string userId);
         Task<bool> DeleteReview(int id, string userId);
         Task<IEnumerable<ReviewResponseDTO>> GetDealReviews(int dealId);
+
+        // Wishlist Operations
+        Task<bool> AddToWishlist(string userId, int dealId);
+        Task<bool> RemoveFromWishlist(string userId, int dealId);
+        Task<IEnumerable<DealResponseDto>> GetUserWishlist(string userId);
+        Task<bool> IsInWishlist(string userId, int dealId);
     }
 }

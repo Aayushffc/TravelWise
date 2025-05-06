@@ -1206,6 +1206,8 @@
 
   <!-- Reviews Section -->
   <div class="container mx-auto px-4 py-8">
-    <app-review *ngIf="deal?.id" [dealId]="deal!.id"></app-review>
+    <div class="w-full">
+      <app-review *ngIf="deal?.id" [dealId]="deal!.id"></app-review>
+    </div>
   </div>
 </div>

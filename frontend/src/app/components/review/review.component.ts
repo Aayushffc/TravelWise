@@ -64,22 +64,19 @@ export class ReviewComponent implements OnInit {
     this.loadReviews();
   }
 
-  loadReviews(): void {
-    this.reviewService.getDealReviews(this.dealId).subscribe({
-      next: reviews => {
-        this.reviews = reviews.map(review => ({
-          ...review,
-          user: {
-            name: review.userName || 'Anonymous',
-            photoUrl: review.userPhoto || 'assets/default-avatar.png'
-          }
-        }));
-      },
-      error: error => {
-        console.error('Error loading reviews:', error);
-        this.errorMessage = 'Failed to load reviews. Please try again later.';
-      }
-    });
+  async loadReviews(): Promise<void> {
+    try {
+      const reviews = await lastValueFrom(this.reviewService.getDealReviews(this.dealId));
+      this.reviews = reviews.map(review => ({
+        ...review,
+        user: {
+          name: review.userName || 'Anonymous',
+          photoUrl: review.userPhoto || 'assets/default-avatar.png'
+        }
+      }));
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
   }
 
   onFileSelected(event: Event): void {
@@ -88,11 +85,11 @@ export class ReviewComponent implements OnInit {
       this.selectedFiles = Array.from(input.files);
       this.previewUrls = [];
       this.selectedFiles.forEach(file => {
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = (e: any) => this.previewUrls.push(e.target.result);
-          reader.readAsDataURL(file);
-        }
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.previewUrls.push(e.target.result);
+        };
+        reader.readAsDataURL(file);
       });
     }
   }
@@ -113,6 +110,10 @@ export class ReviewComponent implements OnInit {
 
   onStarLeave(): void {
     this.hoveredRating = 0;
+  }
+
+  openImage(url: string): void {
+    window.open(url, '_blank');
   }
 
   async onSubmit(): Promise<void> {

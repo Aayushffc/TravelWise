@@ -3538,5 +3538,150 @@ namespace Backend.Helper
         }
 
         #endregion
+
+        #region Wishlist Operations
+
+        public async Task<bool> AddToWishlist(string userId, int dealId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                // Check if already in wishlist
+                var exists = await IsInWishlist(userId, dealId);
+                if (exists)
+                {
+                    return true; // Already in wishlist
+                }
+
+                var sql =
+                    @"
+                    INSERT INTO Wishlists (UserId, DealId, CreatedAt)
+                    VALUES (@UserId, @DealId, @CreatedAt)";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@DealId", dealId);
+                command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow);
+
+                var result = await command.ExecuteNonQueryAsync();
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error adding deal {DealId} to wishlist for user {UserId}",
+                    dealId,
+                    userId
+                );
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveFromWishlist(string userId, int dealId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    DELETE FROM Wishlists 
+                    WHERE UserId = @UserId AND DealId = @DealId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@DealId", dealId);
+
+                var result = await command.ExecuteNonQueryAsync();
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error removing deal {DealId} from wishlist for user {UserId}",
+                    dealId,
+                    userId
+                );
+                return false;
+            }
+        }
+
+        public async Task<IEnumerable<DealResponseDto>> GetUserWishlist(string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    SELECT d.*, l.Name as LocationName, l.Description as LocationDescription,
+                           l.ImageUrl as LocationImageUrl, l.IsPopular as LocationIsPopular,
+                           l.IsActive as LocationIsActive, l.ClickCount as LocationClickCount,
+                           l.RequestCallCount as LocationRequestCallCount,
+                           l.CreatedAt as LocationCreatedAt, l.UpdatedAt as LocationUpdatedAt
+                    FROM Wishlists w
+                    INNER JOIN Deals d ON w.DealId = d.Id
+                    INNER JOIN Locations l ON d.LocationId = l.Id
+                    WHERE w.UserId = @UserId
+                    ORDER BY w.CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                var deals = new List<DealResponseDto>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    deals.Add(MapToDealResponseDto(reader));
+                }
+
+                return deals;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting wishlist for user {UserId}", userId);
+                return new List<DealResponseDto>();
+            }
+        }
+
+        public async Task<bool> IsInWishlist(string userId, int dealId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    SELECT COUNT(1) 
+                    FROM Wishlists 
+                    WHERE UserId = @UserId AND DealId = @DealId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@DealId", dealId);
+
+                var result = await command.ExecuteScalarAsync();
+                return Convert.ToInt32(result) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error checking if deal {DealId} is in wishlist for user {UserId}",
+                    dealId,
+                    userId
+                );
+                return false;
+            }
+        }
+
+        #endregion
     }
 }

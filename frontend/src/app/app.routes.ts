@@ -23,6 +23,7 @@ import { AgencyDashboardComponent } from './components/agency-dashboard/agency-d
 import { BookingComponent } from './components/booking/booking.component';
 import { CreateEditProfileComponent } from './components/agency-profile/create-edit-profile.component';
 import { SupportComponent } from './components/support/support.component';
+import { WishlistComponent } from './components/wishlist/wishlist.component';
 
 export const routes: Routes = [
   {
@@ -92,8 +93,8 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'quotations',
-    component: ProfileComponent,
+    path: 'wishlist',
+    component: WishlistComponent,
     canActivate: [AuthGuard]
   },
   {
