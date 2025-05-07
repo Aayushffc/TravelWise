@@ -178,6 +178,22 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
+// Apply migrations at startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        dbContext.Database.Migrate(); // Applies all pending migrations
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Failed to apply database migrations");
+        throw; // Rethrow to ensure the application doesn't start with failed migrations
+    }
+}
+
 // Middleware
 app.UseCors();
 

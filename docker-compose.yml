@@ -1,36 +1,55 @@
 version: '3.8'
-
 services:
   frontend:
     build:
-      context: ./frontend
+      context: ./frontend # Path to Angular project
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "4200:4200"
     depends_on:
       - backend
+    networks:
+      - app-network
 
   backend:
     build:
-      context: ./backend
+      context: ./backend # Path to .NET project
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "8080:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Server=db;Database=TravelWiseDB;User=sa;Password=YourStrong!Password;TrustServerCertificate=True
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=db;Database=TravelWise;User Id=sa;Password=Pass@123;TrustServerCertificate=True;
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
 
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong!Password
+    build:
+      context: ./database # Path to SQL Server setup
+      dockerfile: Dockerfile
     ports:
       - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Pass@123
+      - MSSQL_PID=Express
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - sql-data:/var/opt/mssql
+    networks:
+      - app-network
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Pass@123" -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  sqlserver_data: 
+  sql-data: /var/opt/mssql
