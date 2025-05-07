@@ -42,6 +42,41 @@
 
       <!-- Main Content - Flexible width -->
       <div class="flex-1">
+        <!-- Location Filter -->
+        <div
+          *ngIf="!isLoading && !error && wishlistItems.length > 0"
+          class="mb-8"
+        >
+          <div class="flex flex-col space-y-4">
+            <label class="text-sm font-medium text-gray-700"
+              >Filter by Location:</label
+            >
+            <div class="flex flex-wrap gap-3">
+              <button
+                (click)="filterByLocation('')"
+                [class.bg-indigo-600]="selectedLocation === ''"
+                [class.text-white]="selectedLocation === ''"
+                [class.bg-white]="selectedLocation !== ''"
+                [class.text-gray-700]="selectedLocation !== ''"
+                class="px-4 py-2 rounded-full border border-gray-300 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                All Locations
+              </button>
+              <button
+                *ngFor="let location of locations"
+                (click)="filterByLocation(location)"
+                [class.bg-indigo-600]="selectedLocation === location"
+                [class.text-white]="selectedLocation === location"
+                [class.bg-white]="selectedLocation !== location"
+                [class.text-gray-700]="selectedLocation !== location"
+                class="px-4 py-2 rounded-full border border-gray-300 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                {{ location }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Loading State -->
         <div
           *ngIf="isLoading"
@@ -111,24 +146,26 @@
 
         <!-- Wishlist Grid -->
         <div
-          *ngIf="!isLoading && !error && wishlistItems.length > 0"
+          *ngIf="!isLoading && !error && filteredItems.length > 0"
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          [@listAnimation]
         >
           <div
-            *ngFor="let item of wishlistItems"
-            class="bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
+            *ngFor="let item of filteredItems"
+            class="bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 cursor-pointer"
+            [routerLink]="['/deal', item.id]"
           >
             <!-- Image -->
-            <div class="relative aspect-w-16 aspect-h-9">
+            <div class="relative aspect-w-16 aspect-h-9 group">
               <img
                 [src]="item.photos?.[0] || 'assets/placeholder.jpg'"
                 [alt]="item.title"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               <!-- Discount Badge -->
               <div
                 *ngIf="item.discountedPrice"
-                class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-medium"
+                class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium transform transition-transform duration-300 hover:scale-110"
               >
                 {{ getDiscountPercentage(item.price, item.discountedPrice) }}%
                 OFF
@@ -137,7 +174,9 @@
 
             <!-- Content -->
             <div class="p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+              <h3
+                class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors duration-300"
+              >
                 {{ item.title }}
               </h3>
 
@@ -162,7 +201,9 @@
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <span class="text-sm">{{ item.location }}</span>
+                <span class="text-sm">{{
+                  item.location?.name || "Unknown Location"
+                }}</span>
               </div>
 
               <!-- Duration -->
@@ -201,15 +242,17 @@
 
               <!-- Actions -->
               <div class="flex space-x-3">
-                <a
-                  [routerLink]="['/deals', item.id]"
-                  class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                <button
+                  [routerLink]="['/deal', item.id]"
+                  class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300 cursor-pointer"
                 >
                   View Details
-                </a>
+                </button>
                 <button
-                  (click)="removeFromWishlist(item.id)"
-                  class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  (click)="
+                    removeFromWishlist(item.id); $event.stopPropagation()
+                  "
+                  class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300 cursor-pointer"
                 >
                   <svg
                     class="w-5 h-5 text-red-500"
@@ -228,6 +271,37 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Empty Filtered State -->
+        <div
+          *ngIf="
+            !isLoading &&
+            !error &&
+            filteredItems.length === 0 &&
+            wishlistItems.length > 0
+          "
+          class="text-center py-12 bg-white rounded-2xl shadow-sm"
+        >
+          <svg
+            class="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">
+            No matching items
+          </h3>
+          <p class="mt-1 text-sm text-gray-500">
+            No wishlist items match the selected location filter.
+          </p>
         </div>
       </div>
     </div>
