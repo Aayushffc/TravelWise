@@ -10,6 +10,3 @@ EXPOSE 1433
 
 # Copy initialization script
 COPY ./init-db.sql /docker-entrypoint-initdb.d/
-
-# Ensure the script is executable (optional, SQL Server runs it automatically)
-RUN chmod +x /docker-entrypoint-initdb.d/init-db.sql
