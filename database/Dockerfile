@@ -8,9 +8,9 @@ ENV MSSQL_PID=Express
 # Expose SQL Server port
 EXPOSE 1433
 
-# Copy initialization script
-COPY ./init-db.sql /docker-entrypoint-initdb.d/
+# Copy scripts to a common location
+COPY ./init-db.sql /init-db.sql
+# COPY ./init.sh /init.sh
 
-# Create a shell script to run the initialization script
-COPY ./init.sh /docker-entrypoint-initdb.d/
-RUN chmod +x /docker-entrypoint-initdb.d/init.sh
+# Use CMD to launch SQL Server and init script at runtime (no chmod needed)
+CMD /bin/bash -c "/opt/mssql/bin/sqlservr & sleep 30 && /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Pass@123' -i /init-db.sql"

@@ -10,21 +10,6 @@ GO
 USE TravelWise;
 GO
 
--- Create roles if they don't exist
-IF NOT EXISTS (SELECT *
-FROM sys.tables
-WHERE name = 'AspNetRoles')
-BEGIN
-    CREATE TABLE AspNetRoles
-    (
-        Id NVARCHAR(450) NOT NULL PRIMARY KEY,
-        Name NVARCHAR(256) NULL,
-        NormalizedName NVARCHAR(256) NULL,
-        ConcurrencyStamp NVARCHAR(MAX) NULL
-    );
-END
-GO
-
 -- Insert roles if they don't exist
 MERGE AspNetRoles AS target
 USING (VALUES
@@ -36,52 +21,6 @@ ON target.Id = source.Id
 WHEN NOT MATCHED BY TARGET THEN
     INSERT (Id, Name, NormalizedName, ConcurrencyStamp)
     VALUES (source.Id, source.Name, source.NormalizedName, source.ConcurrencyStamp);
-
--- Create users table if it doesn't exist
-IF NOT EXISTS (SELECT *
-FROM sys.tables
-WHERE name = 'AspNetUsers')
-BEGIN
-    CREATE TABLE AspNetUsers
-    (
-        Id NVARCHAR(450) NOT NULL PRIMARY KEY,
-        UserName NVARCHAR(256) NULL,
-        NormalizedUserName NVARCHAR(256) NULL,
-        Email NVARCHAR(256) NULL,
-        NormalizedEmail NVARCHAR(256) NULL,
-        EmailConfirmed BIT NOT NULL,
-        PasswordHash NVARCHAR(MAX) NULL,
-        SecurityStamp NVARCHAR(MAX) NULL,
-        ConcurrencyStamp NVARCHAR(MAX) NULL,
-        PhoneNumber NVARCHAR(MAX) NULL,
-        PhoneNumberConfirmed BIT NOT NULL,
-        TwoFactorEnabled BIT NOT NULL,
-        LockoutEnd DATETIMEOFFSET NULL,
-        LockoutEnabled BIT NOT NULL,
-        AccessFailedCount INT NOT NULL,
-        FirstName NVARCHAR(MAX) NULL,
-        LastName NVARCHAR(MAX) NULL,
-        RefreshToken NVARCHAR(MAX) NULL,
-        RefreshTokenExpiresAt DATETIME2 NULL
-    );
-END
-GO
-
--- Create user roles table if it doesn't exist
-IF NOT EXISTS (SELECT *
-FROM sys.tables
-WHERE name = 'AspNetUserRoles')
-BEGIN
-    CREATE TABLE AspNetUserRoles
-    (
-        UserId NVARCHAR(450) NOT NULL,
-        RoleId NVARCHAR(450) NOT NULL,
-        CONSTRAINT PK_AspNetUserRoles PRIMARY KEY (UserId, RoleId),
-        CONSTRAINT FK_AspNetUserRoles_AspNetRoles_RoleId FOREIGN KEY (RoleId) REFERENCES AspNetRoles (Id) ON DELETE CASCADE,
-        CONSTRAINT FK_AspNetUserRoles_AspNetUsers_UserId FOREIGN KEY (UserId) REFERENCES AspNetUsers (Id) ON DELETE CASCADE
-    );
-END
-GO
 
 -- Insert admin user if it doesn't exist
 MERGE AspNetUsers AS target
@@ -104,14 +43,16 @@ USING (VALUES
         0, -- AccessFailedCount
         'Admin', -- FirstName
         'Admin', -- LastName
+        'Admin Admin', -- FullName
         NULL, -- RefreshToken
         NULL  -- RefreshTokenExpiresAt
-)
+    )
 ) AS source (
     Id, UserName, NormalizedUserName, Email, NormalizedEmail,
     EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp,
     PhoneNumber, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnd,
-    LockoutEnabled, AccessFailedCount, FirstName, LastName, RefreshToken, RefreshTokenExpiresAt
+    LockoutEnabled, AccessFailedCount, FirstName, LastName, FullName,
+    RefreshToken, RefreshTokenExpiresAt
 )
 ON target.Id = source.Id
 WHEN NOT MATCHED BY TARGET THEN
@@ -119,15 +60,17 @@ WHEN NOT MATCHED BY TARGET THEN
         Id, UserName, NormalizedUserName, Email, NormalizedEmail,
         EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp,
         PhoneNumber, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnd,
-        LockoutEnabled, AccessFailedCount, FirstName, LastName, RefreshToken, RefreshTokenExpiresAt
+        LockoutEnabled, AccessFailedCount, FirstName, LastName, FullName,
+        RefreshToken, RefreshTokenExpiresAt
     )
     VALUES (
         source.Id, source.UserName, source.NormalizedUserName, source.Email, source.NormalizedEmail,
         source.EmailConfirmed, source.PasswordHash, source.SecurityStamp, source.ConcurrencyStamp,
         source.PhoneNumber, source.PhoneNumberConfirmed, source.TwoFactorEnabled, source.LockoutEnd,
-        source.LockoutEnabled, source.AccessFailedCount, source.FirstName, source.LastName,
+        source.LockoutEnabled, source.AccessFailedCount, source.FirstName, source.LastName, source.FullName,
         source.RefreshToken, source.RefreshTokenExpiresAt
     );
+
 
 -- Assign admin role to admin user if not already assigned
 INSERT INTO AspNetUserRoles
