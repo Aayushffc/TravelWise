@@ -52,4 +52,4 @@ networks:
     driver: bridge
 
 volumes:
-  sql-data: /var/opt/mssql
+  sql-data: {}
