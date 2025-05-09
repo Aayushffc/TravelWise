@@ -2,7 +2,7 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: ./frontend # Path to Angular project
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "4200:4200"
@@ -13,7 +13,7 @@ services:
 
   backend:
     build:
-      context: ./backend # Path to .NET project
+      context: ./backend
       dockerfile: /Backend/Dockerfile
     ports:
       - "8080:8080"
@@ -28,7 +28,7 @@ services:
 
   db:
     build:
-      context: ./database # Path to SQL Server setup
+      context: ./database
       dockerfile: Dockerfile
     ports:
       - "1433:1433"
@@ -37,19 +37,25 @@ services:
       - SA_PASSWORD=Pass@123
       - MSSQL_PID=Express
     volumes:
-      - sql-data:/var/opt/mssql
+      - mssql_data:/var/opt/mssql/data
+      - mssql_log:/var/opt/mssql/log
+    healthcheck:
+      test: ["CMD", "/opt/mssql/bin/sqlservr", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     networks:
       - app-network
-    healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Pass@123" -Q "SELECT 1" -b -o /dev/null
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
+    restart: unless-stopped
 
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  sql-data: {}
+  mssql_data:
+    driver: local
+  mssql_log:
+    driver: local
+ 
