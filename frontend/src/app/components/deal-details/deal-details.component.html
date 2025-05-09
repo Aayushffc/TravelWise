@@ -1022,18 +1022,31 @@
           <div class="booking-card">
             <!-- Price -->
             <div class="price-section">
-              <div class="price-container">
-                <span class="current-price">
-                  {{ currentCurrency.symbol
-                  }}{{
-                    getConvertedPrice(deal?.discountedPrice || deal?.price || 0)
-                      | number : "1.0-0"
-                  }}
-                </span>
-                <span *ngIf="deal?.discountedPrice" class="original-price">
-                  {{ currentCurrency.symbol
-                  }}{{ getConvertedPrice(deal?.price || 0) | number : "1.0-0" }}
-                </span>
+              <div class="flex items-center justify-between">
+                <div class="flex items-baseline space-x-2">
+                  <span class="text-3xl font-bold text-indigo-600">
+                    {{ currentCurrency.symbol
+                    }}{{
+                      getConvertedPrice(deal.discountedPrice || deal.price || 0)
+                        | number : "1.0-0"
+                    }}
+                  </span>
+                  <span
+                    *ngIf="deal.discountedPrice"
+                    class="text-lg text-gray-500 line-through"
+                  >
+                    {{ currentCurrency.symbol
+                    }}{{
+                      getConvertedPrice(deal.price || 0) | number : "1.0-0"
+                    }}
+                  </span>
+                </div>
+                <div
+                  *ngIf="deal.discountedPrice"
+                  class="text-xl font-bold text-green-600"
+                >
+                  Save {{ getDiscountPercentage() }}%
+                </div>
               </div>
             </div>
 
