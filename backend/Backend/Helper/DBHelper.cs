@@ -3412,44 +3412,47 @@ namespace Backend.Helper
                     @"
                     DECLARE @DealId INT;
                     DECLARE @DealUserId NVARCHAR(450);
+                    DECLARE @Success BIT = 0;
 
                     -- Get the deal ID and user ID
                     SELECT @DealId = r.DealId, @DealUserId = d.UserId
                     FROM Reviews r
                     INNER JOIN Deals d ON r.DealId = d.Id
-                    WHERE r.Id = @Id AND r.UserId = @UserId AND r.IsActive = 1;
+                    WHERE r.Id = @Id AND r.UserId = @UserId;
 
-                    IF @DealId IS NULL
-                        RETURN 0;
+                    IF @DealId IS NOT NULL
+                    BEGIN
+                        -- Update the review
+                        UPDATE Reviews
+                        SET Text = @Text,
+                            Photos = @Photos,
+                            Rating = @Rating,
+                            UpdatedAt = GETUTCDATE()
+                        WHERE Id = @Id AND UserId = @UserId;
 
-                    -- Update the review
-                    UPDATE Reviews
-                    SET Text = ISNULL(@Text, Text),
-                        Photos = ISNULL(@Photos, Photos),
-                        Rating = ISNULL(@Rating, Rating),
-                        UpdatedAt = GETUTCDATE()
-                    WHERE Id = @Id AND UserId = @UserId;
+                        -- Update deal rating
+                        UPDATE Deals
+                        SET Rating = (
+                            SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
+                            FROM Reviews
+                            WHERE DealId = @DealId
+                        )
+                        WHERE Id = @DealId;
 
-                    -- Update deal rating
-                    UPDATE Deals
-                    SET Rating = (
-                        SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
-                        FROM Reviews
-                        WHERE DealId = @DealId AND IsActive = 1
-                    )
-                    WHERE Id = @DealId;
+                        -- Update agency rating
+                        UPDATE AgencyProfiles
+                        SET Rating = (
+                            SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
+                            FROM Reviews r
+                            INNER JOIN Deals d ON r.DealId = d.Id
+                            WHERE d.UserId = @DealUserId
+                        )
+                        WHERE UserId = @DealUserId;
 
-                    -- Update agency rating
-                    UPDATE AgencyProfiles
-                    SET Rating = (
-                        SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
-                        FROM Reviews r
-                        INNER JOIN Deals d ON r.DealId = d.Id
-                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
-                    )
-                    WHERE UserId = @DealUserId;
+                        SET @Success = 1;
+                    END
 
-                    RETURN 1;";
+                    SELECT @Success as Success;";
 
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@Id", id);
@@ -3459,14 +3462,15 @@ namespace Backend.Helper
                     "@Photos",
                     (object)JsonSerializer.Serialize(model.Photos) ?? DBNull.Value
                 );
-                command.Parameters.AddWithValue("@Rating", (object)model.Rating ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Rating", model.Rating);
 
-                return await command.ExecuteNonQueryAsync() > 0;
+                var result = await command.ExecuteScalarAsync();
+                return Convert.ToBoolean(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating review");
-                return false;
+                _logger.LogError(ex, "Error updating review: {Message}", ex.Message);
+                throw new Exception("Failed to update review: " + ex.Message);
             }
         }
 
@@ -3481,6 +3485,7 @@ namespace Backend.Helper
                     @"
                     DECLARE @DealId INT;
                     DECLARE @DealUserId NVARCHAR(450);
+                    DECLARE @Success BIT = 0;
 
                     -- Get the deal ID and user ID
                     SELECT @DealId = r.DealId, @DealUserId = d.UserId
@@ -3488,52 +3493,55 @@ namespace Backend.Helper
                     INNER JOIN Deals d ON r.DealId = d.Id
                     WHERE r.Id = @Id AND r.UserId = @UserId AND r.IsActive = 1;
 
-                    IF @DealId IS NULL
-                        RETURN 0;
+                    IF @DealId IS NOT NULL
+                    BEGIN
+                        -- Soft delete the review by setting IsActive to false
+                        UPDATE Reviews
+                        SET IsActive = 0,
+                            UpdatedAt = GETUTCDATE()
+                        WHERE Id = @Id AND UserId = @UserId;
 
-                    -- Soft delete the review
-                    UPDATE Reviews
-                    SET IsActive = 0,
-                        UpdatedAt = GETUTCDATE()
-                    WHERE Id = @Id AND UserId = @UserId;
+                        -- Update deal rating (only considering active reviews)
+                        UPDATE Deals
+                        SET Rating = ISNULL((
+                            SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
+                            FROM Reviews
+                            WHERE DealId = @DealId AND IsActive = 1
+                        ), 0)
+                        WHERE Id = @DealId;
 
-                    -- Update deal rating
-                    UPDATE Deals
-                    SET Rating = (
-                        SELECT AVG(CAST(Rating AS DECIMAL(5,2)))
-                        FROM Reviews
-                        WHERE DealId = @DealId AND IsActive = 1
-                    )
-                    WHERE Id = @DealId;
+                        -- Update agency rating and total reviews (only considering active reviews)
+                        UPDATE AgencyProfiles
+                        SET Rating = ISNULL((
+                            SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
+                            FROM Reviews r
+                            INNER JOIN Deals d ON r.DealId = d.Id
+                            WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                        ), 0),
+                        TotalReviews = (
+                            SELECT COUNT(*)
+                            FROM Reviews r
+                            INNER JOIN Deals d ON r.DealId = d.Id
+                            WHERE d.UserId = @DealUserId AND r.IsActive = 1
+                        )
+                        WHERE UserId = @DealUserId;
 
-                    -- Update agency rating and total reviews
-                    UPDATE AgencyProfiles
-                    SET Rating = (
-                        SELECT AVG(CAST(r.Rating AS DECIMAL(5,2)))
-                        FROM Reviews r
-                        INNER JOIN Deals d ON r.DealId = d.Id
-                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
-                    ),
-                    TotalReviews = (
-                        SELECT COUNT(*)
-                        FROM Reviews r
-                        INNER JOIN Deals d ON r.DealId = d.Id
-                        WHERE d.UserId = @DealUserId AND r.IsActive = 1
-                    )
-                    WHERE UserId = @DealUserId;
+                        SET @Success = 1;
+                    END
 
-                    RETURN 1;";
+                    SELECT @Success as Success;";
 
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@Id", id);
                 command.Parameters.AddWithValue("@UserId", userId);
 
-                return await command.ExecuteNonQueryAsync() > 0;
+                var result = await command.ExecuteScalarAsync();
+                return Convert.ToBoolean(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting review");
-                return false;
+                _logger.LogError(ex, "Error deleting review: {Message}", ex.Message);
+                throw new Exception("Failed to delete review: " + ex.Message);
             }
         }
 

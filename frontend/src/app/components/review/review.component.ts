@@ -1,5 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ReviewService, Review, CreateReview } from '../../services/review.service';
+import { Component, Input, OnInit, HostListener } from '@angular/core';
+import { ReviewService, Review, CreateReview, UpdateReview } from '../../services/review.service';
 import { FileUploadService } from '../../services/file-upload.service';
 import { AuthService, AuthResponse } from '../../services/auth.service';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -42,6 +42,10 @@ export class ReviewComponent implements OnInit {
   currentUser: AuthResponse | null = null;
   hoveredRating: number = 0;
   selectedRating: number = 5;
+  activeMenuId: number | null = null;
+  editingReview: ReviewWithUser | null = null;
+  showDeleteModal = false;
+  reviewToDelete: number | null = null;
 
   constructor(
     private reviewService: ReviewService,
@@ -116,6 +120,63 @@ export class ReviewComponent implements OnInit {
     window.open(url, '_blank');
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // Close menu when clicking outside
+    if (!(event.target as HTMLElement).closest('.relative')) {
+      this.activeMenuId = null;
+    }
+  }
+
+  toggleMenu(reviewId: number): void {
+    this.activeMenuId = this.activeMenuId === reviewId ? null : reviewId;
+  }
+
+  editReview(review: ReviewWithUser): void {
+    this.editingReview = review;
+    this.reviewForm.patchValue({
+      text: review.text,
+      rating: review.rating
+    });
+    this.selectedRating = review.rating;
+    this.previewUrls = review.photos || [];
+    this.activeMenuId = null;
+
+    // Scroll to the review form
+    const formElement = document.querySelector('.review-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  async deleteReview(reviewId: number): Promise<void> {
+    this.reviewToDelete = reviewId;
+    this.showDeleteModal = true;
+    this.activeMenuId = null;
+  }
+
+  cancelDelete(): void {
+    this.showDeleteModal = false;
+    this.reviewToDelete = null;
+  }
+
+  async confirmDelete(): Promise<void> {
+    if (!this.reviewToDelete) return;
+
+    try {
+      await lastValueFrom(this.reviewService.deleteReview(this.reviewToDelete));
+      // Remove the review from the list
+      this.reviews = this.reviews.filter(review => review.id !== this.reviewToDelete);
+      this.errorMessage = null;
+    } catch (error: any) {
+      console.error('Error deleting review:', error);
+      this.errorMessage = error.error?.message || 'Failed to delete review. Please try again later.';
+    } finally {
+      this.showDeleteModal = false;
+      this.reviewToDelete = null;
+    }
+  }
+
   async onSubmit(): Promise<void> {
     if (this.reviewForm.invalid || !this.currentUser) {
       this.errorMessage = 'Please fill in all required fields and ensure you are logged in.';
@@ -135,24 +196,34 @@ export class ReviewComponent implements OnInit {
         }
       }
 
-      // Create review
-      const review: CreateReview = {
-        dealId: this.dealId,
-        text: this.reviewForm.value.text,
-        photos: photoUrls,
-        rating: this.selectedRating
-      };
-
-      await lastValueFrom(this.reviewService.createReview(review));
+      if (this.editingReview) {
+        // Update existing review
+        const updatedReview: UpdateReview = {
+          text: this.reviewForm.value.text,
+          photos: photoUrls.length > 0 ? photoUrls : this.editingReview.photos,
+          rating: this.selectedRating
+        };
+        await lastValueFrom(this.reviewService.updateReview(this.editingReview.id, updatedReview));
+        this.editingReview = null;
+      } else {
+        // Create new review
+        const review: CreateReview = {
+          dealId: this.dealId,
+          text: this.reviewForm.value.text,
+          photos: photoUrls,
+          rating: this.selectedRating
+        };
+        await lastValueFrom(this.reviewService.createReview(review));
+      }
 
       // Reset form and reload reviews
       this.reviewForm.reset({ rating: 5 });
       this.selectedFiles = [];
       this.previewUrls = [];
       this.selectedRating = 5;
-      this.loadReviews();
+      await this.loadReviews();
     } catch (error: any) {
-      console.error('Error creating review:', error);
+      console.error('Error submitting review:', error);
       this.errorMessage = error.error?.message || 'Failed to submit review. Please try again later.';
     } finally {
       this.isSubmitting = false;

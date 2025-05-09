@@ -86,17 +86,19 @@ namespace Backend.Controllers
 
                 var result = await _dbHelper.UpdateReview(id, model, user.Id);
                 if (!result)
-                    return BadRequest(new { message = "Failed to update review" });
+                    return BadRequest(
+                        new
+                        {
+                            message = "Failed to update review. The review may not exist or you may not have permission to update it.",
+                        }
+                    );
 
                 return Ok(new { message = "Review updated successfully" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating review");
-                return StatusCode(
-                    500,
-                    new { message = "An error occurred while updating the review" }
-                );
+                _logger.LogError(ex, "Error updating review: {Message}", ex.Message);
+                return BadRequest(new { message = ex.Message });
             }
         }
 

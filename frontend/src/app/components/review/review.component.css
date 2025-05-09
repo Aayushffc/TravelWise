@@ -430,3 +430,60 @@ textarea.form-control {
   border: 2px dashed #3b82f6;
   background-color: rgba(59, 130, 246, 0.1);
 }
+
+/* Three-dot menu styles */
+.relative {
+  position: relative;
+}
+
+.relative button {
+  transition: all 0.2s ease;
+}
+
+.relative button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.relative button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Dropdown menu styles */
+.relative > div {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.relative > div button {
+  transition: all 0.15s ease;
+}
+
+.relative > div button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.relative > div button:active {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Delete button specific styles */
+.relative > div button.text-red-600:hover {
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+.relative > div button.text-red-600:active {
+  background-color: rgba(220, 38, 38, 0.2);
+}
