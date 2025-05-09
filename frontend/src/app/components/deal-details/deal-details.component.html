@@ -1021,24 +1021,20 @@
           <!-- Booking Card -->
           <div class="booking-card">
             <!-- Price -->
-            <div class="mb-6">
-              <div class="flex items-baseline">
-                <span class="text-3xl font-bold text-gray-900"
-                  >${{ deal.discountedPrice || deal.price }}</span
-                >
-                <span
-                  *ngIf="deal.discountedPrice"
-                  class="ml-2 text-lg text-gray-500 line-through"
-                  >${{ deal.price }}</span
-                >
-                <span
-                  *ngIf="deal.discountedPrice"
-                  class="ml-2 text-sm font-medium text-green-600"
-                >
-                  {{ getDiscountPercentage() }}% OFF
+            <div class="price-section">
+              <div class="price-container">
+                <span class="current-price">
+                  {{ currentCurrency.symbol
+                  }}{{
+                    getConvertedPrice(deal?.discountedPrice || deal?.price || 0)
+                      | number : "1.0-0"
+                  }}
+                </span>
+                <span *ngIf="deal?.discountedPrice" class="original-price">
+                  {{ currentCurrency.symbol
+                  }}{{ getConvertedPrice(deal?.price || 0) | number : "1.0-0" }}
                 </span>
               </div>
-              <p class="text-sm text-gray-500 mt-1">per person</p>
             </div>
 
             <!-- Action Buttons -->

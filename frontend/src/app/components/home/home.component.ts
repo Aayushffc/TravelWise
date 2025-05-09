@@ -9,6 +9,7 @@ import { DealCardComponent } from '../deal-card/deal-card.component';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, map, take } from 'rxjs/operators';
 import { DealResponseDto } from '../../models/deal.model';
+import { CurrencyPickerComponent } from '../currency-picker/currency-picker.component';
 
 interface Location {
   id: number;
@@ -32,7 +33,7 @@ interface Destination {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterModule, DealCardComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterModule, DealCardComponent, CurrencyPickerComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

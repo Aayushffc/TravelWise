@@ -39,14 +39,20 @@
   <div class="p-3 glass-content relative z-10 bg-white">
     <!-- Price Tag moved to content section -->
     <div class="price-tag mb-3">
-      <span class="text-white font-bold text-lg"
-        >${{ deal.discountedPrice || deal.price }}</span
-      >
+      <span class="text-white font-bold text-lg">
+        {{ currentCurrency.symbol
+        }}{{
+          getConvertedPrice(deal.discountedPrice || deal.price)
+            | number : "1.0-0"
+        }}
+      </span>
       <span
         *ngIf="deal.discountedPrice"
         class="text-xs text-gray-300 line-through ml-2"
-        >${{ deal.price }}</span
       >
+        {{ currentCurrency.symbol
+        }}{{ getConvertedPrice(deal.price) | number : "1.0-0" }}
+      </span>
     </div>
 
     <!-- Key Information with Hover Highlights -->

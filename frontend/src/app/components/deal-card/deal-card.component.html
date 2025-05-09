@@ -82,11 +82,16 @@
           <span
             *ngIf="deal.discountedPrice"
             class="text-sm text-gray-300 line-through mr-2"
-            >${{ deal.price }}</span
+            >{{ currentCurrency.symbol
+            }}{{ getConvertedPrice(deal.price) | number : "1.0-0" }}</span
           >
           <span
             class="text-xl font-bold text-white transition-colors duration-300"
-            >${{ deal.discountedPrice || deal.price }}</span
+            >{{ currentCurrency.symbol
+            }}{{
+              getConvertedPrice(deal.discountedPrice || deal.price)
+                | number : "1.0-0"
+            }}</span
           >
         </div>
 

@@ -8,6 +8,7 @@ import { AuthService, AuthResponse } from '../../services/auth.service';
 import { SidebarComponent } from '../side-bar/sidebar.component';
 import { LocationService } from '../../services/location.service';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { CurrencyService, Currency } from '../../services/currency.service';
 
 interface Location {
   id: number;
@@ -42,12 +43,19 @@ export class WishlistComponent implements OnInit {
   user: AuthResponse | null = null;
   locations: string[] = [];
   selectedLocation: string = '';
+  currentCurrency: Currency = {
+    code: 'USD',
+    name: 'US Dollar',
+    symbol: '$',
+    flag: 'https://flagcdn.com/32x24/us.png'
+  };
 
   constructor(
     private wishlistService: WishlistService,
     private authService: AuthService,
     private locationService: LocationService,
-    private router: Router
+    private router: Router,
+    private currencyService: CurrencyService
   ) {}
 
   ngOnInit() {
@@ -58,6 +66,9 @@ export class WishlistComponent implements OnInit {
     }
     this.user = this.authService.getCurrentUser();
     this.loadWishlist();
+    this.currencyService.getCurrentCurrency().subscribe(currency => {
+      this.currentCurrency = currency;
+    });
   }
 
   goBack() {
@@ -144,6 +155,10 @@ export class WishlistComponent implements OnInit {
   getDiscountPercentage(price: number, discountedPrice: number | null): number {
     if (!discountedPrice) return 0;
     return Math.round(((price - discountedPrice) / price) * 100);
+  }
+
+  getConvertedPrice(price: number): number {
+    return this.currencyService.convertPrice(price, 'USD', this.currentCurrency.code);
   }
 }
 

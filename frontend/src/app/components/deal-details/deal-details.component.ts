@@ -14,6 +14,7 @@ import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { SearchCountryField, CountryISO, PhoneNumberFormat } from 'ngx-intl-tel-input';
 import { ReviewComponent } from '../review/review.component';
 import { WishlistService } from '../../services/wishlist.service';
+import { CurrencyService, Currency } from '../../services/currency.service';
 
 // Use DealResponseDto directly instead of custom Deal interface
 type Deal = DealResponseDto;
@@ -97,6 +98,13 @@ export class DealDetailsComponent implements OnInit {
     specialRequirements: ''
   };
 
+  currentCurrency: Currency = {
+    code: 'USD',
+    name: 'US Dollar',
+    symbol: '$',
+    flag: 'https://flagcdn.com/32x24/us.png'
+  };
+
   get includedFeatures(): string[] {
     if (!this.deal) return [];
 
@@ -125,7 +133,8 @@ export class DealDetailsComponent implements OnInit {
     private location: Location,
     private agencyProfileService: AgencyProfileService,
     private bookingService: BookingService,
-    private wishlistService: WishlistService
+    private wishlistService: WishlistService,
+    private currencyService: CurrencyService
   ) {}
 
   async ngOnInit() {
@@ -162,6 +171,10 @@ export class DealDetailsComponent implements OnInit {
           };
         }
       }
+
+      this.currencyService.getCurrentCurrency().subscribe(currency => {
+        this.currentCurrency = currency;
+      });
     } catch (error) {
       this.error = 'Error loading deal details';
       console.error('Error:', error);
@@ -349,5 +362,9 @@ export class DealDetailsComponent implements OnInit {
         }, 5000);
       }
     });
+  }
+
+  getConvertedPrice(price: number): number {
+    return this.currencyService.convertPrice(price, 'USD', this.currentCurrency.code);
   }
 }
