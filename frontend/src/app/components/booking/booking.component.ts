@@ -8,11 +8,12 @@ import { trigger, transition, style, animate } from '@angular/animations';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
+import { SidebarComponent } from '../side-bar/sidebar.component';
 
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SidebarComponent],
   templateUrl: './booking.component.html',
   styleUrls: ['./booking.component.css'],
   animations: [
@@ -40,6 +41,7 @@ export class BookingComponent implements OnInit, OnDestroy {
   private scrollPosition = 0;
   private isLoadingMore = false;
   activeFilter: string = 'all'; // 'all', 'pending', 'Accepted', 'rejected'
+  user: any;
 
   constructor(
     private bookingService: BookingService,
@@ -48,6 +50,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     authService: AuthService
   ) {
     this.authService = authService;
+    this.user = this.authService.getCurrentUser();
   }
 
   ngOnInit() {
