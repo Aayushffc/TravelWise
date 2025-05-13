@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DealService } from '../../services/deal.service';
@@ -73,6 +73,9 @@ export class DealDetailsComponent implements OnInit {
   showEnquiryPopup = false;
   successMessage = '';
   hasExistingInquiry = false;
+  showShareDropdown = false;
+  shareSuccessMessage = '';
+  shareErrorMessage = '';
 
   // Phone input configuration
   SearchCountryField = SearchCountryField;
@@ -242,14 +245,102 @@ export class DealDetailsComponent implements OnInit {
     }
   }
 
-  shareDeal(): void {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      // Show success message
-      alert('Link copied to clipboard!');
-    }).catch(err => {
-      console.error('Failed to copy link:', err);
-    });
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const shareButton = (event.target as HTMLElement).closest('.share-button');
+    const shareDropdown = (event.target as HTMLElement).closest('.share-dropdown');
+
+    if (!shareButton && !shareDropdown) {
+      this.showShareDropdown = false;
+    }
+  }
+
+  share(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showShareDropdown = !this.showShareDropdown;
+  }
+
+  async copyLink(): Promise<void> {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      this.shareSuccessMessage = 'Link copied to clipboard!';
+      this.showShareDropdown = false;
+      setTimeout(() => {
+        this.shareSuccessMessage = '';
+      }, 3000);
+    } catch (err) {
+      this.shareErrorMessage = 'Failed to copy link';
+      setTimeout(() => {
+        this.shareErrorMessage = '';
+      }, 3000);
+    }
+  }
+
+  shareViaEmail(): void {
+    if (!this.deal) return;
+
+    const subject = `Check out this amazing deal on TravelWise: ${this.deal.title}`;
+    const body = `Hi there!
+
+    I found this amazing travel deal on TravelWise that I thought you might be interested in:
+
+    ${this.deal.title}
+    ${this.deal.headlines || ''}
+
+    Price: ${this.currentCurrency.symbol}${this.getConvertedPrice(this.deal.price)}
+    ${this.deal.discountedPrice ? `Discounted Price: ${this.currentCurrency.symbol}${this.getConvertedPrice(this.deal.discountedPrice)}` : ''}
+
+    Duration: ${this.deal.daysCount} Days / ${this.deal.nightsCount} Nights
+    Location: ${this.locationName}
+
+    Check it out here: ${window.location.href}
+
+    Best regards,
+    ${this.isLoggedIn ? this.authService.getCurrentUser()?.firstName || '' : ''}`;
+
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink, '_blank');
+    this.showShareDropdown = false;
+  }
+
+  shareViaWhatsApp(): void {
+    if (!this.deal) return;
+
+    const text = `Check out this amazing deal on TravelWise: ${this.deal.title}\n\n${window.location.href}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+    this.showShareDropdown = false;
+  }
+
+  shareViaFacebook(): void {
+    if (!this.deal) return;
+
+    const url = encodeURIComponent(window.location.href);
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+    this.showShareDropdown = false;
+  }
+
+  shareViaTwitter(): void {
+    if (!this.deal) return;
+
+    const text = `Check out this amazing deal on TravelWise: ${this.deal.title}`;
+    const url = encodeURIComponent(window.location.href);
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+    this.showShareDropdown = false;
+  }
+
+  shareViaLinkedIn(): void {
+    if (!this.deal) return;
+
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent(this.deal.title);
+    const summary = encodeURIComponent(this.deal.headlines || '');
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`;
+    window.open(linkedinUrl, '_blank', 'width=600,height=400');
+    this.showShareDropdown = false;
   }
 
   getDiscountPercentage(): number {
@@ -302,11 +393,6 @@ export class DealDetailsComponent implements OnInit {
 
   goBack(): void {
     this.location.back();
-  }
-
-  share(): void {
-    // Implement share logic
-    console.log('Sharing deal:', this.deal?.id);
   }
 
   bookNow(): void {
