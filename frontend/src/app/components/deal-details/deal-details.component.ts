@@ -327,7 +327,7 @@ export class DealDetailsComponent implements OnInit {
 
     const text = `Check out this amazing deal on TravelWise: ${this.deal.title}`;
     const url = encodeURIComponent(window.location.href);
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
     this.showShareDropdown = false;
   }
