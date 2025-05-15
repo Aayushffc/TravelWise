@@ -19,7 +19,13 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=db;Database=TravelWise;User Id=sa;Password=Pass@123;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - JWT__Key=${JWT_KEY}
+      - EmailSettings__SmtpPassword=${SMTP_PASSWORD}
+      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID}
+      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - AWS__AccessKey=${AWS_ACCESS_KEY}
+      - AWS__SecretKey=${AWS_SECRET_KEY}
     depends_on:
       db:
         condition: service_healthy
@@ -34,7 +40,7 @@ services:
       - "1433:1433"
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=Pass@123
+      - SA_PASSWORD=${DB_PASSWORD}
       - MSSQL_PID=Express
     volumes:
       - mssql_data:/var/opt/mssql/data
