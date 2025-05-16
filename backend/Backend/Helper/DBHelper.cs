@@ -3691,5 +3691,265 @@ namespace Backend.Helper
         }
 
         #endregion
+
+        #region Payment Operations
+
+        public async Task<PaymentResponseDTO> CreatePayment(
+            string stripePaymentId,
+            int bookingId,
+            decimal amount,
+            string currency,
+            string status,
+            string? paymentMethod = null,
+            string? customerId = null,
+            string? customerEmail = null,
+            string? customerName = null
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    INSERT INTO Payments (
+                        BookingId, StripePaymentId, Amount, Currency, Status,
+                        PaymentMethod, CustomerId, CustomerEmail, CustomerName,
+                        CreatedAt
+                    )
+                    OUTPUT INSERTED.*
+                    VALUES (
+                        @BookingId, @StripePaymentId, @Amount, @Currency, @Status,
+                        @PaymentMethod, @CustomerId, @CustomerEmail, @CustomerName,
+                        GETUTCDATE()
+                    )";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@BookingId", bookingId);
+                command.Parameters.AddWithValue("@StripePaymentId", stripePaymentId);
+                command.Parameters.AddWithValue("@Amount", amount);
+                command.Parameters.AddWithValue("@Currency", currency);
+                command.Parameters.AddWithValue("@Status", status);
+                command.Parameters.AddWithValue(
+                    "@PaymentMethod",
+                    (object)paymentMethod ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue("@CustomerId", (object)customerId ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@CustomerEmail",
+                    (object)customerEmail ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@CustomerName",
+                    (object)customerName ?? DBNull.Value
+                );
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToPaymentResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating payment");
+                throw;
+            }
+        }
+
+        public async Task<PaymentResponseDTO> GetPaymentById(int id)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT *
+                    FROM Payments
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToPaymentResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payment");
+                throw;
+            }
+        }
+
+        public async Task<PaymentResponseDTO> GetPaymentByStripeId(string stripePaymentId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT *
+                    FROM Payments
+                    WHERE StripePaymentId = @StripePaymentId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@StripePaymentId", stripePaymentId);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToPaymentResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payment by Stripe ID");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdatePaymentStatus(
+            int id,
+            string status,
+            string? errorMessage = null
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var sql =
+                    @"
+                    UPDATE Payments
+                    SET Status = @Status,
+                        UpdatedAt = GETUTCDATE(),
+                        ErrorMessage = @ErrorMessage,
+                        PaidAt = CASE WHEN @Status = 'succeeded' THEN GETUTCDATE() ELSE PaidAt END
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@Status", status);
+                command.Parameters.AddWithValue(
+                    "@ErrorMessage",
+                    (object)errorMessage ?? DBNull.Value
+                );
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating payment status");
+                throw;
+            }
+        }
+
+        public async Task<bool> RefundPayment(int id, string reason)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    UPDATE Payments
+                    SET Status = 'refunded',
+                        UpdatedAt = GETUTCDATE(),
+                        RefundedAt = GETUTCDATE(),
+                        RefundReason = @Reason
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@Reason", reason);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refunding payment");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<PaymentResponseDTO>> GetPaymentsByBookingId(int bookingId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT *
+                    FROM Payments
+                    WHERE BookingId = @BookingId
+                    ORDER BY CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@BookingId", bookingId);
+
+                var payments = new List<PaymentResponseDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    payments.Add(MapToPaymentResponseDto(reader));
+                }
+
+                return payments;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payments by booking ID");
+                throw;
+            }
+        }
+
+        private PaymentResponseDTO MapToPaymentResponseDto(SqlDataReader reader)
+        {
+            return new PaymentResponseDTO
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                BookingId = reader.GetInt32(reader.GetOrdinal("BookingId")),
+                StripePaymentId = reader.GetString(reader.GetOrdinal("StripePaymentId")),
+                Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                Currency = reader.GetString(reader.GetOrdinal("Currency")),
+                Status = reader.GetString(reader.GetOrdinal("Status")),
+                PaymentMethod = reader.IsDBNull(reader.GetOrdinal("PaymentMethod"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("PaymentMethod")),
+                CustomerEmail = reader.IsDBNull(reader.GetOrdinal("CustomerEmail"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("CustomerEmail")),
+                CustomerName = reader.IsDBNull(reader.GetOrdinal("CustomerName"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("CustomerName")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                PaidAt = reader.IsDBNull(reader.GetOrdinal("PaidAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("PaidAt")),
+                RefundedAt = reader.IsDBNull(reader.GetOrdinal("RefundedAt"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("RefundedAt")),
+            };
+        }
+
+        #endregion
     }
 }

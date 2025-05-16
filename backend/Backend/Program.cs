@@ -145,6 +145,12 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 builder.Services.Configure<AWSSettings>(builder.Configuration.GetSection("AWS"));
 builder.Services.AddScoped<IS3Service, S3Service>();
 
+// Add Stripe configuration
+//builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+
+// Add payment service
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
 // Controllers and Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

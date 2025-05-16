@@ -237,7 +237,7 @@ namespace TravelWiseAPI.Controllers
         }
 
         [HttpPost("google-login")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDTO model)
+        public async Task<IActionResult> RequestVerificationCode([FromBody] GoogleLoginDTO model)
         {
             try
             {
