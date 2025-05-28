@@ -18,6 +18,7 @@ interface Booking {
   agencyId: number;
   dealId: number;
   userName: string;
+  email: string;
   customerEmail?: string;
   customerName?: string;
 }
@@ -38,6 +39,7 @@ export class PaymentComponent implements OnInit {
   success: string | null = null;
   customerEmail: string = '';
   customerName: string = '';
+  showPaymentForm: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -80,8 +82,8 @@ export class PaymentComponent implements OnInit {
       }
 
       // Set customer information from booking
-      this.customerEmail = this.booking.customerEmail || '';
-      this.customerName = this.booking.customerName || '';
+      this.customerEmail = this.booking.email || '';
+      this.customerName = this.booking.userName || '';
     } catch (error) {
       console.error('Error loading booking:', error);
       this.error = 'Failed to load booking details';
@@ -89,42 +91,91 @@ export class PaymentComponent implements OnInit {
     }
   }
 
-  async createPaymentRequest() {
-    if (!this.amount || this.isProcessing || !this.booking) return;
-
-    try {
-      this.isProcessing = true;
-      this.error = null;
-      this.success = null;
-
-      const paymentIntent: CreatePaymentIntentDTO = {
-        bookingId: this.booking.id,
-        amount: this.amount * 100, // Convert to cents
-        currency: 'usd',
-        customerEmail: this.customerEmail,
-        customerName: this.customerName,
-        bookingCustomerEmail: this.booking.customerEmail,
-        bookingCustomerName: this.booking.customerName
-      };
-
-      // Create payment intent
-      await firstValueFrom(this.paymentService.createPaymentIntent(paymentIntent));
-
-      this.success = 'Payment request created successfully. The customer will be notified to complete the payment.';
-
-      // Wait for 2 seconds before redirecting
-      setTimeout(() => {
-        this.router.navigate(['/agency-dashboard'], {
-          queryParams: { paymentRequestCreated: true }
-        });
-      }, 2000);
-
-    } catch (error) {
-      console.error('Error creating payment request:', error);
-      this.error = 'Failed to create payment request. Please try again.';
-    } finally {
-      this.isProcessing = false;
+  createPaymentRequest() {
+    if (!this.amount || this.amount <= 0) {
+      this.error = 'Please enter a valid amount';
+      return;
     }
+
+    if (!this.booking?.id) {
+      this.error = 'Invalid booking information';
+      return;
+    }
+
+    this.isProcessing = true;
+    this.error = null;
+    this.success = null;
+
+    const paymentData: CreatePaymentIntentDTO = {
+      amount: this.amount, // Amount is already in cents from the form
+      currency: 'usd',
+      customerEmail: this.customerEmail,
+      customerName: this.customerName,
+      bookingId: this.booking.id,
+      description: `Payment for booking #${this.booking.id}`
+    };
+
+    this.paymentService.createPaymentIntent(paymentData).subscribe({
+      next: (response) => {
+        this.isProcessing = false;
+        this.success = 'Payment request created successfully';
+        // Handle successful payment creation
+        if (response.clientSecret) {
+          // Handle Stripe payment flow
+          this.handleStripePayment(response.clientSecret);
+        }
+      },
+      error: (err) => {
+        this.isProcessing = false;
+        if (err.error) {
+          if (err.error.message) {
+            this.error = err.error.message;
+          } else if (err.error.error) {
+            this.error = err.error.error;
+          } else if (err.error.details) {
+            this.error = err.error.details;
+          } else {
+            this.error = 'Failed to create payment request. Please try again.';
+          }
+        } else {
+          this.error = 'Failed to create payment request. Please try again.';
+        }
+        console.error('Payment request error:', err);
+      }
+    });
+  }
+
+  private handleStripePayment(clientSecret: string) {
+    // Implement Stripe payment handling logic here
+    // This could include redirecting to Stripe's hosted payment page
+    // or implementing a custom payment form
+    console.log('Handling Stripe payment with client secret:', clientSecret);
+    // For now, we'll just show a success message
+    this.success = 'Payment request created successfully. The customer will be notified to complete the payment.';
+    this.showPaymentForm = false;
+
+    // Wait for 2 seconds before redirecting
+    setTimeout(() => {
+      this.router.navigate(['/agency-dashboard'], {
+        queryParams: { paymentRequestCreated: true }
+      });
+    }, 2000);
+  }
+
+  showPaymentRequestForm() {
+    this.showPaymentForm = true;
+  }
+
+  closePaymentForm() {
+    this.showPaymentForm = false;
+  }
+
+  formatDate(date: Date | string): string {
+    return new Date(date).toLocaleDateString();
+  }
+
+  formatAmount(amount: number): string {
+    return (amount / 100).toFixed(2);
   }
 
   goBack() {

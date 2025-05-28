@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 
 export interface Payment {
   id: string;
@@ -28,6 +29,7 @@ export interface CreatePaymentIntentDTO {
   customerName?: string;
   bookingCustomerEmail?: string;
   bookingCustomerName?: string;
+  description?: string;
 }
 
 export interface PaymentIntentResponseDTO {
@@ -90,8 +92,11 @@ export interface PaymentRequest {
 })
 export class PaymentService {
   private apiUrl = `${environment.apiUrl}/api/payment`;
+  private stripePromise: Promise<Stripe | null>;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.stripePromise = loadStripe(environment.stripePublicKey);
+  }
 
   getPayments(): Observable<Payment[]> {
     return this.http.get<Payment[]>(this.apiUrl);
@@ -135,5 +140,21 @@ export class PaymentService {
 
   refundPayment(paymentId: number, dto: RefundPaymentDTO): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/refund/${paymentId}`, dto);
+  }
+
+  async initializeStripePayment(clientSecret: string) {
+    const stripe = await this.stripePromise;
+    if (!stripe) {
+      throw new Error('Stripe failed to initialize');
+    }
+
+    const { error } = await stripe.confirmCardPayment(clientSecret);
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  downloadInvoice(paymentId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${paymentId}/invoice`, { responseType: 'blob' });
   }
 }

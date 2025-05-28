@@ -132,6 +132,34 @@
           Payment History
         </h2>
 
+        <!-- Stripe Connect Button for Agency -->
+        <button
+          *ngIf="isAgency"
+          (click)="connectStripeAccount()"
+          class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center"
+        >
+          <svg
+            class="h-5 w-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M17 9V7a5 5 0 00-10 0v2a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 17v.01"
+            />
+          </svg>
+          Connect Stripe Account
+        </button>
+        <!-- End Stripe Connect Button -->
+
         <!-- Status Filter Toggle -->
         <div class="flex space-x-2">
           <button
@@ -376,6 +404,16 @@
                     />
                   </svg>
                 </button>
+                <!-- Accept Button for Pending Payments (Agency Only) -->
+                <button
+                  *ngIf="isAgency && payment.status === 'pending'"
+                  (click)="acceptPayment(payment)"
+                  class="text-indigo-600 hover:text-indigo-900 border border-indigo-600 rounded px-2 py-1 text-xs font-semibold ml-2"
+                  title="Accept Payment"
+                >
+                  Accept
+                </button>
+                <!-- End Accept Button -->
               </div>
             </td>
           </tr>

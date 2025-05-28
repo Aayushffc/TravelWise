@@ -21,13 +21,13 @@ namespace Backend.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly ILogger<PaymentController> _logger;
-        private readonly DBHelper _dbHelper;
+        private readonly IDBHelper _dbHelper;
         private readonly IConfiguration _configuration;
 
         public PaymentController(
             IPaymentService paymentService,
             ILogger<PaymentController> logger,
-            DBHelper dbHelper,
+            IDBHelper dbHelper,
             IConfiguration configuration
         )
         {
@@ -44,13 +44,25 @@ namespace Backend.Controllers
         {
             try
             {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "User not authenticated" });
+                }
+
+                // Set the agency ID from the authenticated user
+                dto.AgencyId = userId;
+
                 var response = await _paymentService.CreatePaymentIntent(dto);
                 return Ok(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating payment intent");
-                return StatusCode(500, "Error creating payment intent");
+                return StatusCode(
+                    500,
+                    new { message = "Error creating payment intent", error = ex.Message }
+                );
             }
         }
 
@@ -65,7 +77,10 @@ namespace Backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error confirming payment");
-                return StatusCode(500, "Error confirming payment");
+                return StatusCode(
+                    500,
+                    new { message = "Error confirming payment", error = ex.Message }
+                );
             }
         }
 
@@ -77,14 +92,17 @@ namespace Backend.Controllers
                 var payment = await _paymentService.GetPayment(paymentIntentId);
                 if (payment == null)
                 {
-                    return NotFound();
+                    return NotFound(new { message = "Payment not found" });
                 }
                 return Ok(payment);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting payment");
-                return StatusCode(500, "Error getting payment");
+                return StatusCode(
+                    500,
+                    new { message = "Error getting payment", error = ex.Message }
+                );
             }
         }
 
@@ -100,14 +118,17 @@ namespace Backend.Controllers
                 var success = await _paymentService.RefundPayment(paymentId, dto.Reason);
                 if (!success)
                 {
-                    return NotFound();
+                    return NotFound(new { message = "Payment not found" });
                 }
-                return Ok();
+                return Ok(new { message = "Payment refunded successfully" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error refunding payment");
-                return StatusCode(500, "Error refunding payment");
+                return StatusCode(
+                    500,
+                    new { message = "Error refunding payment", error = ex.Message }
+                );
             }
         }
 
@@ -122,14 +143,14 @@ namespace Backend.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized();
+                    return Unauthorized(new { message = "User not authenticated" });
                 }
 
                 // Get booking details
                 var booking = await _dbHelper.GetBookingById(dto.BookingId, userId);
                 if (booking == null)
                 {
-                    return NotFound("Booking not found");
+                    return NotFound(new { message = "Booking not found or you don't have access to it" });
                 }
 
                 // Create payment request
@@ -155,7 +176,10 @@ namespace Backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating payment request");
-                return StatusCode(500, "Error creating payment request");
+                return StatusCode(
+                    500,
+                    new { message = "Error creating payment request", error = ex.Message }
+                );
             }
         }
 

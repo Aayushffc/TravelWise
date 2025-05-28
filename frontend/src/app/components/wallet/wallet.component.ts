@@ -31,7 +31,10 @@ export class WalletComponent implements OnInit {
   };
   isLoading: boolean = false;
   error: string | null = null;
+  success: string | null = null;
   selectedFilter: string = 'all';
+  showPaymentModal: boolean = false;
+  selectedPayment: PaymentResponseDTO | null = null;
 
   filters = [
     { label: 'All', value: 'all' },
@@ -86,13 +89,55 @@ export class WalletComponent implements OnInit {
     try {
       this.isLoading = true;
       this.error = null;
-      await this.paymentService.confirmPayment(request.stripePaymentId).toPromise();
+      this.success = null;
+
+      // Create payment intent
+      const paymentIntent = await this.paymentService.createPaymentIntent({
+        bookingId: request.bookingId,
+        amount: request.amount,
+        currency: request.currency,
+        customerEmail: this.user.email,
+        customerName: this.user.fullName,
+        bookingCustomerEmail: request.bookingCustomerEmail,
+        bookingCustomerName: request.bookingCustomerName
+      }).toPromise();
+
+      if (!paymentIntent) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      // Initialize Stripe payment
+      await this.paymentService.initializeStripePayment(paymentIntent.clientSecret);
+
+      // Confirm payment
+      await this.paymentService.confirmPayment(paymentIntent.paymentIntentId).toPromise();
+
+      this.success = 'Payment processed successfully!';
       await this.loadPaymentRequests();
     } catch (error) {
       console.error('Error processing payment:', error);
-      this.error = 'Failed to process payment';
+      this.error = error instanceof Error ? error.message : 'Failed to process payment';
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async downloadInvoice(paymentId: string) {
+    try {
+      const blob = await this.paymentService.downloadInvoice(paymentId).toPromise();
+      if (blob) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `invoice-${paymentId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      this.error = 'Failed to download invoice';
     }
   }
 
@@ -101,6 +146,18 @@ export class WalletComponent implements OnInit {
       return this.paymentRequests;
     }
     return this.paymentRequests.filter(request => request.status === this.selectedFilter);
+  }
+
+  getPendingPaymentsCount(): number {
+    return this.paymentRequests.filter(request => request.status === 'requires_payment_method').length;
+  }
+
+  getCompletedPaymentsCount(): number {
+    return this.paymentRequests.filter(request => request.status === 'succeeded').length;
+  }
+
+  getFailedPaymentsCount(): number {
+    return this.paymentRequests.filter(request => request.status === 'failed').length;
   }
 
   getStatusClass(status: string): string {
@@ -116,6 +173,24 @@ export class WalletComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  showPaymentForm(payment: PaymentResponseDTO) {
+    this.selectedPayment = payment;
+    this.showPaymentModal = true;
+  }
+
+  closePaymentModal() {
+    this.showPaymentModal = false;
+    this.selectedPayment = null;
+  }
+
+  formatDate(date: Date | string): string {
+    return new Date(date).toLocaleDateString();
+  }
+
+  formatAmount(amount: number): string {
+    return (amount / 100).toFixed(2);
   }
 
   goBack() {

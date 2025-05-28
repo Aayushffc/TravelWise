@@ -58,6 +58,7 @@ namespace Backend.DTOs
 
     public class RefundPaymentDTO
     {
+        [Required]
         public string? Reason { get; set; }
     }
 

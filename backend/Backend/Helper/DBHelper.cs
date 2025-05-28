@@ -3753,7 +3753,10 @@ namespace Backend.Helper
                 command.Parameters.AddWithValue("@AgencyStripeAccountId", agencyStripeAccountId);
                 command.Parameters.AddWithValue("@CommissionPercentage", commissionPercentage);
                 command.Parameters.AddWithValue("@Description", description);
-                command.Parameters.AddWithValue("@PaymentDeadline", (object)paymentDeadline ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@PaymentDeadline",
+                    (object)paymentDeadline ?? DBNull.Value
+                );
 
                 using var reader = await command.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
@@ -3832,7 +3835,11 @@ namespace Backend.Helper
             }
         }
 
-        public async Task<bool> UpdatePaymentStatus(int id, string status, string errorMessage = null)
+        public async Task<bool> UpdatePaymentStatus(
+            int id,
+            string status,
+            string errorMessage = null
+        )
         {
             try
             {
@@ -3851,7 +3858,10 @@ namespace Backend.Helper
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@Id", id);
                 command.Parameters.AddWithValue("@Status", status);
-                command.Parameters.AddWithValue("@ErrorMessage", (object)errorMessage ?? DBNull.Value);
+                command.Parameters.AddWithValue(
+                    "@ErrorMessage",
+                    (object)errorMessage ?? DBNull.Value
+                );
 
                 return await command.ExecuteNonQueryAsync() > 0;
             }

@@ -1,253 +1,295 @@
-<!-- Navigation Bar -->
-<nav class="bg-white shadow-sm sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-16">
+<!-- Main Container -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto py-4 px-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <button
+            (click)="goBack()"
+            class="btn flex items-center mr-4 text-gray-600 hover:text-gray-900"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+          </button>
+          <h1
+            class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text"
+          >
+            Create Payment Request
+          </h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Messages -->
+  <div
+    class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md"
+  >
+    <!-- Error Message -->
+    <div
+      *ngIf="error"
+      class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg mb-4 flex items-center justify-between"
+    >
       <div class="flex items-center">
+        <svg
+          class="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      <button (click)="error = null" class="text-red-700 hover:text-red-900">
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Success Message -->
+    <div
+      *ngIf="success"
+      class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg mb-4 flex items-center justify-between"
+    >
+      <div class="flex items-center">
+        <svg
+          class="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <span>{{ success }}</span>
+      </div>
+      <button
+        (click)="success = null"
+        class="text-green-700 hover:text-green-900"
+      >
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- Booking Details -->
+    <div class="bg-white shadow-sm rounded-lg p-6 mb-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Booking Details</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-500">Booking ID</p>
+          <p class="text-sm font-medium text-gray-900">
+            {{ booking?.id || "N/A" }}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Travel Date</p>
+          <p class="text-sm font-medium text-gray-900">
+            {{ booking?.travelDate ? formatDate(booking!.travelDate) : "N/A" }}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Number of People</p>
+          <p class="text-sm font-medium text-gray-900">
+            {{ booking?.numberOfPeople || "N/A" }}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Customer Name</p>
+          <p class="text-sm font-medium text-gray-900">
+            {{ booking?.userName || "N/A" }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Request Form -->
+    <div class="bg-white shadow-sm rounded-lg p-8">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-xl font-semibold text-gray-900">Payment Request</h2>
         <button
-          (click)="goBack()"
-          class="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          *ngIf="!showPaymentForm"
+          (click)="showPaymentRequestForm()"
+          class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
         >
           <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-gray-600"
+            class="w-5 h-5 mr-2"
             fill="none"
-            viewBox="0 0 24 24"
             stroke="currentColor"
+            viewBox="0 0 24 24"
           >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
+          Create Payment Request
         </button>
-        <h1
-          class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text"
-        >
-          Payment Settlement
-        </h1>
-      </div>
-    </div>
-  </div>
-</nav>
-
-<div class="min-h-screen bg-gray-100">
-  <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <!-- Main Content -->
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-      <!-- Error Message -->
-      <div
-        *ngIf="error"
-        class="p-4 bg-red-50 border-l-4 border-red-400 animate-shake"
-      >
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg
-              class="h-5 w-5 text-red-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-red-700">{{ error }}</p>
-          </div>
-        </div>
       </div>
 
-      <!-- Success Message -->
-      <div *ngIf="success" class="p-4 bg-green-50 border-l-4 border-green-400">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg
-              class="h-5 w-5 text-green-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-green-700">{{ success }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Booking Details Card -->
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex items-center justify-between">
+      <!-- Payment Form -->
+      <div *ngIf="showPaymentForm" class="max-w-2xl mx-auto space-y-8">
+        <!-- Amount Section -->
+        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Amount</h3>
           <div>
-            <h2 class="text-xl font-semibold text-gray-900">
-              Create Payment Request
-            </h2>
-            <p class="mt-1 text-sm text-gray-500">Booking #{{ booking?.id }}</p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span
-              class="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800"
+            <label
+              for="amount"
+              class="block text-sm font-medium text-gray-700 mb-2"
+              >Amount (USD)</label
             >
-              {{ booking?.status | titlecase }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Deal Information -->
-        <div
-          *ngIf="deal"
-          class="mt-6 flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
-        >
-          <img
-            [src]="deal.photos?.[0] || 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'"
-            [alt]="deal.title"
-            class="w-24 h-24 object-cover rounded-lg"
-          />
-          <div class="flex-1">
-            <h3 class="text-lg font-medium text-gray-900">{{ deal.title }}</h3>
-            <p class="mt-2 text-sm font-medium text-indigo-600">
-              ${{ deal.price }}
+            <div class="relative rounded-md shadow-sm">
+              <div
+                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+              >
+                <span class="text-gray-500 sm:text-lg">$</span>
+              </div>
+              <input
+                type="number"
+                id="amount"
+                [(ngModel)]="amount"
+                class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-8 pr-12 py-3 sm:text-lg border-gray-300 rounded-md"
+                placeholder="0.00"
+              />
+            </div>
+            <p class="mt-3 text-sm text-gray-500 flex items-center">
+              <svg
+                class="w-4 h-4 mr-2 text-indigo-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Suggested amount: ${{
+                deal?.price || booking?.totalAmount || 0 | number : "1.2-2"
+              }}
             </p>
           </div>
         </div>
 
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-4">
+        <!-- Customer Information Section -->
+        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">
+            Customer Information
+          </h3>
+          <div class="space-y-6">
             <div>
-              <p class="text-sm font-medium text-gray-500">Customer Name</p>
-              <p class="mt-1 text-lg text-gray-900">
-                {{ booking?.userName }}
-              </p>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Travel Date</p>
-              <p class="mt-1 text-lg text-gray-900">
-                {{ booking?.travelDate | date : "mediumDate" }}
-              </p>
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div>
-              <p class="text-sm font-medium text-gray-500">Number of People</p>
-              <p class="mt-1 text-lg text-gray-900">
-                {{ booking?.numberOfPeople }}
-              </p>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Suggested Amount</p>
-              <p class="mt-1 text-lg text-gray-900">
-                ${{ deal?.price || booking?.totalAmount || 0 }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payment Form -->
-      <div class="p-6 bg-gray-50">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">
-          Payment Information
-        </h3>
-        <div class="space-y-6">
-          <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
               <label
-                for="amount"
-                class="block text-sm font-medium text-gray-700"
+                for="customerEmail"
+                class="block text-sm font-medium text-gray-700 mb-2"
+                >Customer Email</label
               >
-                Payment Amount
-              </label>
-              <span class="text-sm text-gray-500">USD</span>
-            </div>
-            <div class="relative rounded-md shadow-sm">
-              <div
-                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-              >
-                <span class="text-gray-500 sm:text-sm">$</span>
-              </div>
               <input
-                type="number"
-                name="amount"
-                id="amount"
-                [(ngModel)]="amount"
-                class="block w-full pl-7 pr-12 py-3 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="0.00"
-                step="0.01"
-                min="0"
-                [disabled]="isProcessing"
+                type="email"
+                id="customerEmail"
+                [(ngModel)]="customerEmail"
+                readonly
+                class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full px-4 py-3 text-base border-gray-300 rounded-md bg-white"
               />
             </div>
-            <div class="mt-4 flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-500">Suggested amount:</span>
-                <span class="text-sm font-medium text-indigo-600"
-                  >${{ deal?.price || booking?.totalAmount || 0 }}</span
-                >
-              </div>
-              <button
-                *ngIf="(deal?.price || booking?.totalAmount) && !isProcessing"
-                (click)="amount = deal?.price || booking?.totalAmount || 0"
-                type="button"
-                class="text-sm text-indigo-600 hover:text-indigo-700 font-medium focus:outline-none focus:underline"
-                [disabled]="isProcessing"
+
+            <div>
+              <label
+                for="customerName"
+                class="block text-sm font-medium text-gray-700 mb-2"
+                >Customer Name</label
               >
-                Use suggested amount
-              </button>
+              <input
+                type="text"
+                id="customerName"
+                [(ngModel)]="customerName"
+                readonly
+                class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full px-4 py-3 text-base border-gray-300 rounded-md bg-white"
+              />
             </div>
           </div>
-
-          <!-- Action Buttons -->
-          <div class="flex items-center justify-end space-x-4 pt-4">
-            <button
-              (click)="goBack()"
-              [disabled]="isProcessing"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-            <button
-              (click)="createPaymentRequest()"
-              [disabled]="!amount || isProcessing"
-              class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              <span *ngIf="isProcessing" class="mr-2">
-                <svg
-                  class="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                  ></circle>
-                  <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              </span>
-              {{
-                isProcessing ? "Creating Request..." : "Create Payment Request"
-              }}
-            </button>
-          </div>
         </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4 pt-4">
+          <button
+            (click)="closePaymentForm()"
+            class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="createPaymentRequest()"
+            [disabled]="isProcessing"
+            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+          >
+            <span *ngIf="isProcessing" class="animate-spin mr-2">⟳</span>
+            Create Request
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div
+      *ngIf="isProcessing"
+      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
+    >
+      <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"
+        ></div>
+        <p class="text-gray-700">Processing payment request...</p>
       </div>
     </div>
   </div>
