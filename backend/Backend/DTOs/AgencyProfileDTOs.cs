@@ -98,6 +98,7 @@ namespace Backend.DTOs
         public bool IsOnline { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string? StripeAccountId { get; set; }
 
         // Agency Application Fields
         public string? AgencyName { get; set; }

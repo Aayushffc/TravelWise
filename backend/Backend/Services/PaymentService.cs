@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Backend.DTOs;
 using Backend.Helper;
-using Backend.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Stripe;
@@ -21,49 +21,90 @@ namespace Backend.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<PaymentService> _logger;
-        private readonly DBHelper _dbHelper;
-        private readonly StripeClient _stripeClient;
+        private readonly IDBHelper _dbHelper;
+        private readonly string _stripeSecretKey;
+        private readonly decimal _defaultCommissionPercentage = 10; // 10% default commission
 
         public PaymentService(
             IConfiguration configuration,
             ILogger<PaymentService> logger,
-            DBHelper dbHelper
+            IDBHelper dbHelper
         )
         {
             _configuration = configuration;
             _logger = logger;
             _dbHelper = dbHelper;
-
-            var stripeSecretKey = _configuration["Stripe:SecretKey"];
-            if (string.IsNullOrEmpty(stripeSecretKey))
-            {
-                throw new ArgumentException("Stripe secret key is not configured");
-            }
-
-            _stripeClient = new StripeClient(stripeSecretKey);
+            _stripeSecretKey = _configuration["Stripe:SecretKey"] ?? string.Empty;
+            StripeConfiguration.ApiKey = _stripeSecretKey;
         }
 
         public async Task<PaymentIntentResponseDTO> CreatePaymentIntent(CreatePaymentIntentDTO dto)
         {
             try
             {
+                // Get booking details
+                var booking = await _dbHelper.GetBookingById(dto.BookingId, dto.AgencyId);
+                if (booking == null)
+                {
+                    throw new Exception("Booking not found");
+                }
+
+                // Get agency's Stripe account ID
+                var agencyProfile = await _dbHelper.GetAgencyProfileByUserId(dto.AgencyId);
+                if (agencyProfile == null || string.IsNullOrEmpty(agencyProfile.StripeAccountId))
+                {
+                    throw new Exception("Agency not found or not connected to Stripe");
+                }
+
+                // Calculate commission amount
+                var commissionPercentage = dto.CommissionPercentage ?? _defaultCommissionPercentage;
+                var commissionAmount = (dto.Amount * commissionPercentage) / 100;
+                var transferAmount = dto.Amount - commissionAmount;
+
+                // Create or get customer
+                var customerId = await GetOrCreateCustomer(dto.CustomerEmail, dto.CustomerName);
+
+                // Create payment intent
                 var options = new PaymentIntentCreateOptions
                 {
                     Amount = (long)(dto.Amount * 100), // Convert to cents
                     Currency = dto.Currency.ToLower(),
+                    Customer = customerId,
                     PaymentMethodTypes = new List<string> { "card" },
-                    Customer =
-                        dto.CustomerEmail != null
-                            ? await GetOrCreateCustomer(dto.CustomerEmail, dto.CustomerName)
-                            : null,
+                    Description = dto.Description,
+                    TransferData = new PaymentIntentTransferDataOptions
+                    {
+                        Destination = agencyProfile.StripeAccountId,
+                        Amount = (long)(transferAmount * 100), // Convert to cents
+                    },
                     Metadata = new Dictionary<string, string>
                     {
                         { "bookingId", dto.BookingId.ToString() },
+                        { "agencyId", dto.AgencyId },
+                        { "commissionPercentage", commissionPercentage.ToString() },
+                        { "commissionAmount", commissionAmount.ToString() },
                     },
                 };
 
-                var service = new PaymentIntentService(_stripeClient);
+                var service = new PaymentIntentService();
                 var intent = await service.CreateAsync(options);
+
+                // Create payment record
+                var payment = await _dbHelper.CreatePayment(
+                    intent.Id,
+                    dto.BookingId,
+                    dto.Amount,
+                    dto.Currency,
+                    intent.Status,
+                    dto.PaymentMethod ?? string.Empty,
+                    customerId ?? string.Empty,
+                    dto.CustomerEmail ?? string.Empty,
+                    dto.CustomerName ?? string.Empty,
+                    agencyProfile.StripeAccountId ?? string.Empty,
+                    commissionPercentage,
+                    dto.Description ?? string.Empty,
+                    dto.PaymentDeadline
+                );
 
                 return new PaymentIntentResponseDTO
                 {
@@ -85,41 +126,30 @@ namespace Backend.Services
         {
             try
             {
-                var service = new PaymentIntentService(_stripeClient);
+                var service = new PaymentIntentService();
                 var intent = await service.GetAsync(paymentIntentId);
 
-                if (intent.Status != "succeeded")
-                {
-                    throw new Exception(
-                        $"Payment intent status is {intent.Status}, expected succeeded"
-                    );
-                }
-
-                var bookingId = int.Parse(intent.Metadata["bookingId"]);
                 var payment = await _dbHelper.GetPaymentByStripeId(paymentIntentId);
-
                 if (payment == null)
                 {
-                    // Create new payment record
-                    payment = await _dbHelper.CreatePayment(
-                        paymentIntentId,
-                        bookingId,
-                        (decimal)intent.Amount / 100, // Convert from cents
-                        intent.Currency.ToUpper(),
-                        intent.Status,
-                        intent.PaymentMethodTypes.FirstOrDefault(),
-                        intent.CustomerId,
-                        intent.Customer?.Email,
-                        intent.Customer?.Name
-                    );
-                }
-                else
-                {
-                    // Update existing payment record
-                    await _dbHelper.UpdatePaymentStatus(payment.Id, intent.Status);
+                    throw new Exception("Payment not found");
                 }
 
-                return payment;
+                // Update payment status
+                await _dbHelper.UpdatePaymentStatus(payment.Id, intent.Status);
+
+                // If payment succeeded, update booking status
+                if (intent.Status == "succeeded")
+                {
+                    await _dbHelper.UpdateBookingStatus(
+                        payment.BookingId,
+                        "Paid",
+                        null,
+                        payment.AgencyId.ToString()
+                    );
+                }
+
+                return await _dbHelper.GetPaymentByStripeId(paymentIntentId);
             }
             catch (Exception ex)
             {
@@ -132,28 +162,7 @@ namespace Backend.Services
         {
             try
             {
-                var payment = await _dbHelper.GetPaymentByStripeId(paymentIntentId);
-                if (payment != null)
-                {
-                    return payment;
-                }
-
-                // If not found in database, fetch from Stripe
-                var service = new PaymentIntentService(_stripeClient);
-                var intent = await service.GetAsync(paymentIntentId);
-
-                var bookingId = int.Parse(intent.Metadata["bookingId"]);
-                return await _dbHelper.CreatePayment(
-                    paymentIntentId,
-                    bookingId,
-                    (decimal)intent.Amount / 100,
-                    intent.Currency.ToUpper(),
-                    intent.Status,
-                    intent.PaymentMethodTypes.FirstOrDefault(),
-                    intent.CustomerId,
-                    intent.Customer?.Email,
-                    intent.Customer?.Name
-                );
+                return await _dbHelper.GetPaymentByStripeId(paymentIntentId);
             }
             catch (Exception ex)
             {
@@ -169,18 +178,31 @@ namespace Backend.Services
                 var payment = await _dbHelper.GetPaymentById(paymentId);
                 if (payment == null)
                 {
-                    throw new Exception($"Payment with ID {paymentId} not found");
+                    throw new Exception("Payment not found");
                 }
 
-                var service = new RefundService(_stripeClient);
-                var options = new RefundCreateOptions
+                // Create refund in Stripe
+                var refundOptions = new RefundCreateOptions
                 {
                     PaymentIntent = payment.StripePaymentId,
-                    Reason = reason != null ? RefundReasons.RequestedByCustomer : null,
+                    Reason = reason,
                 };
 
-                await service.CreateAsync(options);
-                return await _dbHelper.RefundPayment(paymentId, reason);
+                var service = new RefundService();
+                await service.CreateAsync(refundOptions);
+
+                // Update payment status in database
+                await _dbHelper.RefundPayment(paymentId, reason);
+
+                // Update booking status
+                await _dbHelper.UpdateBookingStatus(
+                    payment.BookingId,
+                    "Refunded",
+                    reason,
+                    payment.AgencyId.ToString()
+                );
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -193,13 +215,13 @@ namespace Backend.Services
         {
             try
             {
-                var service = new CustomerService(_stripeClient);
+                var service = new CustomerService();
                 var options = new CustomerListOptions { Email = email, Limit = 1 };
 
                 var customers = await service.ListAsync(options);
-                if (customers.Data.Any())
+                if (customers.Data.Count > 0)
                 {
-                    return customers.Data.First().Id;
+                    return customers.Data[0].Id;
                 }
 
                 var createOptions = new CustomerCreateOptions { Email = email, Name = name };

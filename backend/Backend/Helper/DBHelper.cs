@@ -30,13 +30,16 @@ namespace Backend.Helper
             _configuration = configuration;
             _userManager = userManager;
             _roleManager = roleManager;
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _connectionString =
+                configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
             _logger = logger;
         }
 
         public async Task<string> GenerateJwtToken(ApplicationUser user)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration["JWT:Key"] ?? string.Empty)
+            );
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             // Get user roles
@@ -46,12 +49,18 @@ namespace Backend.Helper
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Iss, _configuration["JWT:Issuer"]),
-                new Claim(JwtRegisteredClaimNames.Aud, _configuration["JWT:Audience"]),
+                new Claim(
+                    JwtRegisteredClaimNames.Iss,
+                    _configuration["JWT:Issuer"] ?? string.Empty
+                ),
+                new Claim(
+                    JwtRegisteredClaimNames.Aud,
+                    _configuration["JWT:Audience"] ?? string.Empty
+                ),
                 new Claim("UserId", user.Id),
                 new Claim("FirstName", user.FirstName),
                 new Claim("LastName", user.LastName),
@@ -3700,10 +3709,14 @@ namespace Backend.Helper
             decimal amount,
             string currency,
             string status,
-            string? paymentMethod = null,
-            string? customerId = null,
-            string? customerEmail = null,
-            string? customerName = null
+            string paymentMethod,
+            string customerId,
+            string customerEmail,
+            string customerName,
+            string agencyStripeAccountId,
+            decimal commissionPercentage,
+            string description,
+            DateTime? paymentDeadline
         )
         {
             try
@@ -3716,12 +3729,14 @@ namespace Backend.Helper
                     INSERT INTO Payments (
                         BookingId, StripePaymentId, Amount, Currency, Status,
                         PaymentMethod, CustomerId, CustomerEmail, CustomerName,
+                        AgencyStripeAccountId, CommissionPercentage, Description, PaymentDeadline,
                         CreatedAt
                     )
                     OUTPUT INSERTED.*
                     VALUES (
                         @BookingId, @StripePaymentId, @Amount, @Currency, @Status,
                         @PaymentMethod, @CustomerId, @CustomerEmail, @CustomerName,
+                        @AgencyStripeAccountId, @CommissionPercentage, @Description, @PaymentDeadline,
                         GETUTCDATE()
                     )";
 
@@ -3731,19 +3746,14 @@ namespace Backend.Helper
                 command.Parameters.AddWithValue("@Amount", amount);
                 command.Parameters.AddWithValue("@Currency", currency);
                 command.Parameters.AddWithValue("@Status", status);
-                command.Parameters.AddWithValue(
-                    "@PaymentMethod",
-                    (object)paymentMethod ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue("@CustomerId", (object)customerId ?? DBNull.Value);
-                command.Parameters.AddWithValue(
-                    "@CustomerEmail",
-                    (object)customerEmail ?? DBNull.Value
-                );
-                command.Parameters.AddWithValue(
-                    "@CustomerName",
-                    (object)customerName ?? DBNull.Value
-                );
+                command.Parameters.AddWithValue("@PaymentMethod", paymentMethod);
+                command.Parameters.AddWithValue("@CustomerId", customerId);
+                command.Parameters.AddWithValue("@CustomerEmail", customerEmail);
+                command.Parameters.AddWithValue("@CustomerName", customerName);
+                command.Parameters.AddWithValue("@AgencyStripeAccountId", agencyStripeAccountId);
+                command.Parameters.AddWithValue("@CommissionPercentage", commissionPercentage);
+                command.Parameters.AddWithValue("@Description", description);
+                command.Parameters.AddWithValue("@PaymentDeadline", (object)paymentDeadline ?? DBNull.Value);
 
                 using var reader = await command.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
@@ -3822,33 +3832,26 @@ namespace Backend.Helper
             }
         }
 
-        public async Task<bool> UpdatePaymentStatus(
-            int id,
-            string status,
-            string? errorMessage = null
-        )
+        public async Task<bool> UpdatePaymentStatus(int id, string status, string errorMessage = null)
         {
             try
             {
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                var sql =
+                const string sql =
                     @"
                     UPDATE Payments
                     SET Status = @Status,
                         UpdatedAt = GETUTCDATE(),
-                        ErrorMessage = @ErrorMessage,
-                        PaidAt = CASE WHEN @Status = 'succeeded' THEN GETUTCDATE() ELSE PaidAt END
+                        PaidAt = CASE WHEN @Status = 'succeeded' THEN GETUTCDATE() ELSE PaidAt END,
+                        ErrorMessage = @ErrorMessage
                     WHERE Id = @Id";
 
                 using var command = new SqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@Id", id);
                 command.Parameters.AddWithValue("@Status", status);
-                command.Parameters.AddWithValue(
-                    "@ErrorMessage",
-                    (object)errorMessage ?? DBNull.Value
-                );
+                command.Parameters.AddWithValue("@ErrorMessage", (object)errorMessage ?? DBNull.Value);
 
                 return await command.ExecuteNonQueryAsync() > 0;
             }

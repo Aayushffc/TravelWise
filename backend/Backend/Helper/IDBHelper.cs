@@ -120,5 +120,26 @@ namespace Backend.Helper
         Task<bool> RemoveFromWishlist(string userId, int dealId);
         Task<IEnumerable<DealResponseDto>> GetUserWishlist(string userId);
         Task<bool> IsInWishlist(string userId, int dealId);
+
+        // Payment Operations
+        Task<PaymentResponseDTO> CreatePayment(
+            string stripePaymentId,
+            int bookingId,
+            decimal amount,
+            string currency,
+            string status,
+            string paymentMethod,
+            string customerId,
+            string customerEmail,
+            string customerName,
+            string agencyStripeAccountId,
+            decimal commissionPercentage,
+            string description,
+            DateTime? paymentDeadline
+        );
+        Task<PaymentResponseDTO> GetPaymentByStripeId(string stripePaymentId);
+        Task<PaymentResponseDTO> GetPaymentById(int paymentId);
+        Task<bool> UpdatePaymentStatus(int paymentId, string status, string errorMessage = null);
+        Task<bool> RefundPayment(int paymentId, string reason);
     }
 }

@@ -14,8 +14,14 @@ namespace Backend.DTOs
         [Required]
         public string Currency { get; set; } = "USD";
 
-        public string? BookingCustomerEmail { get; set; }
-        public string? BookingCustomerName { get; set; }
+        public string? CustomerEmail { get; set; }
+        public string? CustomerName { get; set; }
+        public string? AgencyId { get; set; }
+        public string? AgencyStripeAccountId { get; set; }
+        public decimal? CommissionPercentage { get; set; }
+        public string? PaymentMethod { get; set; }
+        public string? Description { get; set; }
+        public DateTime? PaymentDeadline { get; set; }
     }
 
     public class PaymentIntentResponseDTO
@@ -52,7 +58,6 @@ namespace Backend.DTOs
 
     public class RefundPaymentDTO
     {
-        [Required]
         public string? Reason { get; set; }
     }
 
@@ -105,5 +110,40 @@ namespace Backend.DTOs
 
         [Required]
         public string? BusinessAddress { get; set; }
+    }
+
+    public class PaymentRequestDTO
+    {
+        public int Id { get; set; }
+        public int BookingId { get; set; }
+        public string AgencyId { get; set; }
+        public string UserId { get; set; }
+        public decimal Amount { get; set; }
+        public string Currency { get; set; }
+        public string Status { get; set; }
+        public string? PaymentIntentId { get; set; }
+        public string? AgencyStripeAccountId { get; set; }
+        public decimal? CommissionPercentage { get; set; }
+        public string? Description { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? PaymentDeadline { get; set; }
+        public DateTime? PaidAt { get; set; }
+        public DateTime? RefundedAt { get; set; }
+    }
+
+    public class CreatePaymentRequestDTO
+    {
+        [Required]
+        public int BookingId { get; set; }
+
+        [Required]
+        public decimal Amount { get; set; }
+
+        [Required]
+        public string Currency { get; set; } = "USD";
+
+        public string? Description { get; set; }
+        public DateTime? PaymentDeadline { get; set; }
+        public decimal? CommissionPercentage { get; set; }
     }
 }
