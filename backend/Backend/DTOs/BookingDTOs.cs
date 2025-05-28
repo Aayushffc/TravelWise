@@ -5,7 +5,7 @@ namespace Backend.DTOs
     public class CreateBookingDTO
     {
         [Required]
-        public string AgencyId { get; set; }
+        public string? AgencyId { get; set; }
 
         [Required]
         public int DealId { get; set; }
@@ -16,13 +16,13 @@ namespace Backend.DTOs
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [Required]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [Required]
-        public string BookingMessage { get; set; }
+        public string? BookingMessage { get; set; }
 
         public DateTime? TravelDate { get; set; }
         public string? SpecialRequirements { get; set; }
@@ -41,10 +41,10 @@ namespace Backend.DTOs
     public class SendMessageDTO
     {
         [Required]
-        public string ReceiverId { get; set; }
+        public string? ReceiverId { get; set; }
 
         [Required]
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
         public string? MessageType { get; set; }
         public string? FileUrl { get; set; }
@@ -111,19 +111,19 @@ namespace Backend.DTOs
     public class UserBookingResponseDTO
     {
         public int Id { get; set; }
-        public string AgencyId { get; set; }
-        public string AgencyName { get; set; }
+        public string? AgencyId { get; set; }
+        public string? AgencyName { get; set; }
         public int DealId { get; set; }
-        public string Status { get; set; }
+        public string? Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public int NumberOfPeople { get; set; }
         public DateTime? TravelDate { get; set; }
-        public string SpecialRequirements { get; set; }
-        public string LastMessage { get; set; }
+        public string? SpecialRequirements { get; set; }
+        public string? LastMessage { get; set; }
         public DateTime? LastMessageAt { get; set; }
         public bool HasUnreadMessages { get; set; }
         public decimal? TotalAmount { get; set; }
-        public string PaymentStatus { get; set; }
+        public string? PaymentStatus { get; set; }
     }
 }

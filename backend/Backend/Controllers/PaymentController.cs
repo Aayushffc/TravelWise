@@ -150,7 +150,9 @@ namespace Backend.Controllers
                 var booking = await _dbHelper.GetBookingById(dto.BookingId, userId);
                 if (booking == null)
                 {
-                    return NotFound(new { message = "Booking not found or you don't have access to it" });
+                    return NotFound(
+                        new { message = "Booking not found or you don't have access to it" }
+                    );
                 }
 
                 // Create payment request

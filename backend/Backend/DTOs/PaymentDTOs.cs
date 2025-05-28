@@ -117,11 +117,11 @@ namespace Backend.DTOs
     {
         public int Id { get; set; }
         public int BookingId { get; set; }
-        public string AgencyId { get; set; }
-        public string UserId { get; set; }
+        public string? AgencyId { get; set; }
+        public string? UserId { get; set; }
         public decimal Amount { get; set; }
-        public string Currency { get; set; }
-        public string Status { get; set; }
+        public string? Currency { get; set; }
+        public string? Status { get; set; }
         public string? PaymentIntentId { get; set; }
         public string? AgencyStripeAccountId { get; set; }
         public decimal? CommissionPercentage { get; set; }
@@ -146,5 +146,13 @@ namespace Backend.DTOs
         public string? Description { get; set; }
         public DateTime? PaymentDeadline { get; set; }
         public decimal? CommissionPercentage { get; set; }
+    }
+
+    public class StripeStatusResponse
+    {
+        public bool IsConnected { get; set; }
+        public string? AccountId { get; set; }
+        public string? AccountStatus { get; set; }
+        public DateTime? ConnectedAt { get; set; }
     }
 }
