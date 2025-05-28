@@ -24,6 +24,8 @@ import { BookingComponent } from './components/booking/booking.component';
 import { CreateEditProfileComponent } from './components/agency-profile/create-edit-profile.component';
 import { SupportComponent } from './components/support/support.component';
 import { WishlistComponent } from './components/wishlist/wishlist.component';
+import { PaymentComponent } from './components/payment/payment.component';
+import { WalletComponent } from './components/wallet/wallet.component';
 
 export const routes: Routes = [
   {
@@ -99,7 +101,7 @@ export const routes: Routes = [
   },
   {
     path: 'wallet',
-    component: ProfileComponent,
+    component: WalletComponent,
     canActivate: [AuthGuard]
   },
   {
@@ -149,6 +151,11 @@ export const routes: Routes = [
   {
     path: 'agency/edit-profile/:id',
     component: CreateEditProfileComponent,
+    canActivate: [AuthGuard, AgencyGuard]
+  },
+  {
+    path: 'payment/:id',
+    component: PaymentComponent,
     canActivate: [AuthGuard, AgencyGuard]
   },
   {

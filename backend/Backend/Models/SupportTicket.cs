@@ -7,17 +7,17 @@ namespace Backend.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [Required]
-        public string ProblemTitle { get; set; }
+        public string? ProblemTitle { get; set; }
 
         [Required]
-        public string ProblemDescription { get; set; }
+        public string? ProblemDescription { get; set; }
 
         public string Status { get; set; } = "Open"; // Open, In Progress, Resolved, Closed
 

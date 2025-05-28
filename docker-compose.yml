@@ -26,6 +26,8 @@ services:
       - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - AWS__AccessKey=${AWS_ACCESS_KEY}
       - AWS__SecretKey=${AWS_SECRET_KEY}
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY}
+      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE_KEY}
     depends_on:
       db:
         condition: service_healthy

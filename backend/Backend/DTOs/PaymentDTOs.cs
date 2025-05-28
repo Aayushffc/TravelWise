@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Backend.DTOs
@@ -13,8 +14,8 @@ namespace Backend.DTOs
         [Required]
         public string Currency { get; set; } = "USD";
 
-        public string? CustomerEmail { get; set; }
-        public string? CustomerName { get; set; }
+        public string? BookingCustomerEmail { get; set; }
+        public string? BookingCustomerName { get; set; }
     }
 
     public class PaymentIntentResponseDTO
@@ -29,15 +30,22 @@ namespace Backend.DTOs
     public class PaymentResponseDTO
     {
         public int Id { get; set; }
-        public int BookingId { get; set; }
         public string? StripePaymentId { get; set; }
+        public int BookingId { get; set; }
+        public int AgencyId { get; set; }
         public decimal Amount { get; set; }
         public string? Currency { get; set; }
         public string? Status { get; set; }
         public string? PaymentMethod { get; set; }
+        public string? CustomerId { get; set; }
         public string? CustomerEmail { get; set; }
         public string? CustomerName { get; set; }
+        public string? BookingCustomerEmail { get; set; }
+        public string? BookingCustomerName { get; set; }
+        public string? ErrorMessage { get; set; }
+        public string? RefundReason { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public DateTime? PaidAt { get; set; }
         public DateTime? RefundedAt { get; set; }
     }
@@ -45,7 +53,57 @@ namespace Backend.DTOs
     public class RefundPaymentDTO
     {
         [Required]
-        public int PaymentId { get; set; }
         public string? Reason { get; set; }
+    }
+
+    public class AcceptPaymentDTO
+    {
+        [Required]
+        public string? BankAccountNumber { get; set; }
+
+        [Required]
+        public string? BankRoutingNumber { get; set; }
+
+        [Required]
+        public string? BankName { get; set; }
+
+        [Required]
+        public string? AccountHolderName { get; set; }
+
+        [Required]
+        public string? AccountType { get; set; } // "checking" or "savings"
+    }
+
+    public class RejectPaymentDTO
+    {
+        [Required]
+        public string? Reason { get; set; }
+    }
+
+    public class AgencyPaymentSetupDTO
+    {
+        [Required]
+        public string? BankAccountNumber { get; set; }
+
+        [Required]
+        public string? BankRoutingNumber { get; set; }
+
+        [Required]
+        public string? BankName { get; set; }
+
+        [Required]
+        public string? AccountHolderName { get; set; }
+
+        [Required]
+        public string? AccountType { get; set; } // "checking" or "savings"
+
+        [Required]
+        public string? TaxId { get; set; }
+
+        [Required]
+        public string? BusinessName { get; set; }
+
+        [Required]
+        public string? BusinessAddress { get; set; }
     }
 }

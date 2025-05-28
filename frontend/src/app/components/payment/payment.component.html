@@ -1,0 +1,254 @@
+<!-- Navigation Bar -->
+<nav class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex items-center">
+        <button
+          (click)="goBack()"
+          class="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-gray-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+        </button>
+        <h1
+          class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text"
+        >
+          Payment Settlement
+        </h1>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="min-h-screen bg-gray-100">
+  <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- Main Content -->
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+      <!-- Error Message -->
+      <div
+        *ngIf="error"
+        class="p-4 bg-red-50 border-l-4 border-red-400 animate-shake"
+      >
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-5 w-5 text-red-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-red-700">{{ error }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="success" class="p-4 bg-green-50 border-l-4 border-green-400">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-5 w-5 text-green-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-green-700">{{ success }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking Details Card -->
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900">
+              Create Payment Request
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">Booking #{{ booking?.id }}</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span
+              class="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800"
+            >
+              {{ booking?.status | titlecase }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Deal Information -->
+        <div
+          *ngIf="deal"
+          class="mt-6 flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
+        >
+          <img
+            [src]="deal.photos?.[0] || 'https://travelwiseapp.s3.ap-south-1.amazonaws.com/Placeholder/placeholder-mountain.jpg'"
+            [alt]="deal.title"
+            class="w-24 h-24 object-cover rounded-lg"
+          />
+          <div class="flex-1">
+            <h3 class="text-lg font-medium text-gray-900">{{ deal.title }}</h3>
+            <p class="mt-2 text-sm font-medium text-indigo-600">
+              ${{ deal.price }}
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <p class="text-sm font-medium text-gray-500">Customer Name</p>
+              <p class="mt-1 text-lg text-gray-900">
+                {{ booking?.userName }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Travel Date</p>
+              <p class="mt-1 text-lg text-gray-900">
+                {{ booking?.travelDate | date : "mediumDate" }}
+              </p>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <p class="text-sm font-medium text-gray-500">Number of People</p>
+              <p class="mt-1 text-lg text-gray-900">
+                {{ booking?.numberOfPeople }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Suggested Amount</p>
+              <p class="mt-1 text-lg text-gray-900">
+                ${{ deal?.price || booking?.totalAmount || 0 }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Form -->
+      <div class="p-6 bg-gray-50">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Payment Information
+        </h3>
+        <div class="space-y-6">
+          <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <label
+                for="amount"
+                class="block text-sm font-medium text-gray-700"
+              >
+                Payment Amount
+              </label>
+              <span class="text-sm text-gray-500">USD</span>
+            </div>
+            <div class="relative rounded-md shadow-sm">
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <span class="text-gray-500 sm:text-sm">$</span>
+              </div>
+              <input
+                type="number"
+                name="amount"
+                id="amount"
+                [(ngModel)]="amount"
+                class="block w-full pl-7 pr-12 py-3 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                [disabled]="isProcessing"
+              />
+            </div>
+            <div class="mt-4 flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-500">Suggested amount:</span>
+                <span class="text-sm font-medium text-indigo-600"
+                  >${{ deal?.price || booking?.totalAmount || 0 }}</span
+                >
+              </div>
+              <button
+                *ngIf="(deal?.price || booking?.totalAmount) && !isProcessing"
+                (click)="amount = deal?.price || booking?.totalAmount || 0"
+                type="button"
+                class="text-sm text-indigo-600 hover:text-indigo-700 font-medium focus:outline-none focus:underline"
+                [disabled]="isProcessing"
+              >
+                Use suggested amount
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-end space-x-4 pt-4">
+            <button
+              (click)="goBack()"
+              [disabled]="isProcessing"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              (click)="createPaymentRequest()"
+              [disabled]="!amount || isProcessing"
+              class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              <span *ngIf="isProcessing" class="mr-2">
+                <svg
+                  class="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </span>
+              {{
+                isProcessing ? "Creating Request..." : "Create Payment Request"
+              }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

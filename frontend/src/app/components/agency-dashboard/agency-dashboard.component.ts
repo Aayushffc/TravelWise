@@ -114,6 +114,10 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     return booking.status !== 'Rejected' && booking.status !== 'Cancelled';
   }
 
+  canShowPayment(booking: any): boolean {
+    return booking.status === 'Accepted' && !booking.paymentId;
+  }
+
   readonly availableTabs: TabType[] = ['profile', 'bookings', 'payments'];
   private messageSubscription: Subscription | null = null;
   isConnecting: boolean = false;
@@ -684,5 +688,9 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   refundPayment(payment: any): void {
     console.log('Refund payment:', payment);
     // Implement payment refund logic
+  }
+
+  initiatePayment(booking: any) {
+    this.router.navigate(['/payment', booking.id]);
   }
 }

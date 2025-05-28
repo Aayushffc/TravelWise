@@ -21,6 +21,7 @@ namespace Backend.DBContext
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<Payment> Payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -32,6 +33,16 @@ namespace Backend.DBContext
                 entity.Property(e => e.Price).HasPrecision(18, 2);
                 entity.Property(e => e.Rating).HasPrecision(10, 2);
                 entity.Property(e => e.RelevanceScore).HasPrecision(12, 4);
+            });
+
+            builder.Entity<Payment>(entity =>
+            {
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+                entity
+                    .HasOne(p => p.Booking)
+                    .WithMany()
+                    .HasForeignKey(p => p.BookingId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder

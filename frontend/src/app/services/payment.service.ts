@@ -5,20 +5,91 @@ import { environment } from '../../environments/environment';
 
 export interface Payment {
   id: string;
-  bookingId: string;
+  bookingId: number;
   amount: number;
   status: 'pending' | 'completed' | 'failed';
   paymentMethod: string;
   customerName: string;
-  createdAt: string;
+  createdAt: Date;
   updatedAt: string;
+  booking: {
+    id: number;
+    travelDate: Date;
+    numberOfPeople: number;
+    agencyName: string;
+  };
+}
+
+export interface CreatePaymentIntentDTO {
+  bookingId: number;
+  amount: number;
+  currency: string;
+  customerEmail?: string;
+  customerName?: string;
+  bookingCustomerEmail?: string;
+  bookingCustomerName?: string;
+}
+
+export interface PaymentIntentResponseDTO {
+  clientSecret: string;
+  paymentIntentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+}
+
+export interface PaymentResponseDTO {
+  id: number;
+  stripePaymentId: string;
+  bookingId: number;
+  agencyId: number;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentMethod?: string;
+  customerId?: string;
+  customerEmail?: string;
+  customerName?: string;
+  bookingCustomerEmail?: string;
+  bookingCustomerName?: string;
+  errorMessage?: string;
+  refundReason?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  paidAt?: Date;
+  refundedAt?: Date;
+}
+
+export interface RefundPaymentDTO {
+  reason: string;
+}
+
+export interface PaymentStats {
+  totalEarnings: number;
+  completedPayments: number;
+  pendingPayments: number;
+  failedPayments: number;
+}
+
+export interface PaymentIntentRequest {
+  bookingId: number;
+  amount: number;
+  currency: string;
+}
+
+export interface PaymentRequest {
+  id: number;
+  bookingId: number;
+  amount: number;
+  status: 'pending' | 'completed' | 'failed';
+  createdAt: Date;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class PaymentService {
-  private apiUrl = `${environment.apiUrl}/payments`;
+  private apiUrl = `${environment.apiUrl}/api/payment`;
 
   constructor(private http: HttpClient) {}
 
@@ -30,29 +101,39 @@ export class PaymentService {
     return this.http.get<Payment>(`${this.apiUrl}/${id}`);
   }
 
-  getPaymentsByBookingId(bookingId: string): Observable<Payment[]> {
+  getPaymentsByBookingId(bookingId: number): Observable<Payment[]> {
     return this.http.get<Payment[]>(`${this.apiUrl}/booking/${bookingId}`);
   }
 
-  processPayment(id: string): Observable<Payment> {
-    return this.http.post<Payment>(`${this.apiUrl}/${id}/process`, {});
+  processPayment(paymentIntentId: string): Observable<PaymentResponseDTO> {
+    return this.http.post<PaymentResponseDTO>(`${this.apiUrl}/confirm/${paymentIntentId}`, {});
   }
 
-  refundPayment(id: string): Observable<Payment> {
-    return this.http.post<Payment>(`${this.apiUrl}/${id}/refund`, {});
+  getPaymentStats(): Observable<PaymentStats> {
+    return this.http.get<PaymentStats>(`${this.apiUrl}/stats`);
   }
 
-  getPaymentStats(): Observable<{
-    totalEarnings: number;
-    completedPayments: number;
-    pendingPayments: number;
-    failedPayments: number;
-  }> {
-    return this.http.get<{
-      totalEarnings: number;
-      completedPayments: number;
-      pendingPayments: number;
-      failedPayments: number;
-    }>(`${this.apiUrl}/stats`);
+  createPaymentIntent(dto: CreatePaymentIntentDTO): Observable<PaymentIntentResponseDTO> {
+    return this.http.post<PaymentIntentResponseDTO>(`${this.apiUrl}/create-intent`, dto);
+  }
+
+  confirmPayment(paymentIntentId: string): Observable<PaymentResponseDTO> {
+    return this.http.post<PaymentResponseDTO>(`${this.apiUrl}/confirm/${paymentIntentId}`, {});
+  }
+
+  getPayment(paymentIntentId: string): Observable<PaymentResponseDTO> {
+    return this.http.get<PaymentResponseDTO>(`${this.apiUrl}/${paymentIntentId}`);
+  }
+
+  getPaymentRequests(): Observable<PaymentResponseDTO[]> {
+    return this.http.get<PaymentResponseDTO[]>(`${this.apiUrl}/requests`);
+  }
+
+  getAgencyPayments(agencyId: number): Observable<PaymentResponseDTO[]> {
+    return this.http.get<PaymentResponseDTO[]>(`${this.apiUrl}/agency/${agencyId}`);
+  }
+
+  refundPayment(paymentId: number, dto: RefundPaymentDTO): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/refund/${paymentId}`, dto);
   }
 }
