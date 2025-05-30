@@ -32,6 +32,7 @@ namespace Backend.Models
 
         public string? PaymentMethod { get; set; }
         public string? CustomerId { get; set; }
+        public string? StripeCustomerId { get; set; }
         public string? CustomerEmail { get; set; }
         public string? CustomerName { get; set; }
         public string? AgencyStripeAccountId { get; set; }

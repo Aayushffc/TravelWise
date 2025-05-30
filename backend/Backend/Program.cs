@@ -151,6 +151,9 @@ builder.Services.AddScoped<IS3Service, S3Service>();
 // Add payment service
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
+// Add Stripe Connect service
+builder.Services.AddScoped<IStripeConnectService, StripeConnectService>();
+
 // Controllers and Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

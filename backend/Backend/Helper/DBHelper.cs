@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Backend.DTOs;
+using Backend.Models;
 using Backend.Models.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
@@ -1523,40 +1524,27 @@ namespace Backend.Helper
         {
             try
             {
-                using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync();
-
-                var sql =
-                    @"
-                    UPDATE Bookings
-                    SET Status = @Status,
-                        UpdatedAt = GETUTCDATE(),";
-
-                switch (status.ToLower())
+                using (var connection = new SqlConnection(_connectionString))
                 {
-                    case "accepted":
-                        sql += " AcceptedAt = GETUTCDATE()";
-                        break;
-                    case "rejected":
-                        sql += " RejectedAt = GETUTCDATE(), RejectionReason = @Reason";
-                        break;
-                    case "cancelled":
-                        sql += " CancelledAt = GETUTCDATE(), CancellationReason = @Reason";
-                        break;
-                    case "completed":
-                        sql += " CompletedAt = GETUTCDATE()";
-                        break;
+                    await connection.OpenAsync();
+
+                    var command = new SqlCommand(
+                        @"UPDATE Bookings 
+                        SET Status = @Status,
+                            UpdatedAt = GETDATE(),
+                            LastMessage = @Reason
+                        WHERE Id = @Id AND UserId = @UserId",
+                        connection
+                    );
+
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.Parameters.AddWithValue("@Status", status);
+                    command.Parameters.AddWithValue("@Reason", reason ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@UserId", userId);
+
+                    var result = await command.ExecuteNonQueryAsync();
+                    return result > 0;
                 }
-
-                sql += " WHERE Id = @Id AND (UserId = @UserId OR AgencyId = @UserId)";
-
-                using var command = new SqlCommand(sql, connection);
-                command.Parameters.AddWithValue("@Id", id);
-                command.Parameters.AddWithValue("@Status", status);
-                command.Parameters.AddWithValue("@UserId", userId);
-                command.Parameters.AddWithValue("@Reason", (object)reason ?? DBNull.Value);
-
-                return await command.ExecuteNonQueryAsync() > 0;
             }
             catch (Exception ex)
             {
@@ -3711,6 +3699,7 @@ namespace Backend.Helper
             string status,
             string paymentMethod,
             string customerId,
+            string stripeCustomerId,
             string customerEmail,
             string customerName,
             string agencyStripeAccountId,
@@ -3724,44 +3713,58 @@ namespace Backend.Helper
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                const string sql =
-                    @"
+                // First get the agency ID from the booking
+                const string getAgencyIdSql = @"
+                    SELECT AgencyId 
+                    FROM Bookings 
+                    WHERE Id = @BookingId";
+
+                using (var command = new SqlCommand(getAgencyIdSql, connection))
+                {
+                    command.Parameters.AddWithValue("@BookingId", bookingId);
+                    var agencyId = await command.ExecuteScalarAsync();
+                    if (agencyId == null)
+                    {
+                        throw new Exception("Booking not found");
+                    }
+
+                    const string sql = @"
                     INSERT INTO Payments (
                         BookingId, StripePaymentId, Amount, Currency, Status,
-                        PaymentMethod, CustomerId, CustomerEmail, CustomerName,
-                        AgencyStripeAccountId, CommissionPercentage, Description, PaymentDeadline,
+                        PaymentMethod, CustomerId, StripeCustomerId, CustomerEmail, CustomerName,
+                        AgencyId, AgencyStripeAccountId, CommissionPercentage, Description, PaymentDeadline,
                         CreatedAt
                     )
                     OUTPUT INSERTED.*
                     VALUES (
                         @BookingId, @StripePaymentId, @Amount, @Currency, @Status,
-                        @PaymentMethod, @CustomerId, @CustomerEmail, @CustomerName,
-                        @AgencyStripeAccountId, @CommissionPercentage, @Description, @PaymentDeadline,
+                        @PaymentMethod, @CustomerId, @StripeCustomerId, @CustomerEmail, @CustomerName,
+                        @AgencyId, @AgencyStripeAccountId, @CommissionPercentage, @Description, @PaymentDeadline,
                         GETUTCDATE()
                     )";
 
-                using var command = new SqlCommand(sql, connection);
-                command.Parameters.AddWithValue("@BookingId", bookingId);
-                command.Parameters.AddWithValue("@StripePaymentId", stripePaymentId);
-                command.Parameters.AddWithValue("@Amount", amount);
-                command.Parameters.AddWithValue("@Currency", currency);
-                command.Parameters.AddWithValue("@Status", status);
-                command.Parameters.AddWithValue("@PaymentMethod", paymentMethod);
-                command.Parameters.AddWithValue("@CustomerId", customerId);
-                command.Parameters.AddWithValue("@CustomerEmail", customerEmail);
-                command.Parameters.AddWithValue("@CustomerName", customerName);
-                command.Parameters.AddWithValue("@AgencyStripeAccountId", agencyStripeAccountId);
-                command.Parameters.AddWithValue("@CommissionPercentage", commissionPercentage);
-                command.Parameters.AddWithValue("@Description", description);
-                command.Parameters.AddWithValue(
-                    "@PaymentDeadline",
-                    (object)paymentDeadline ?? DBNull.Value
-                );
+                    using var insertCommand = new SqlCommand(sql, connection);
+                    insertCommand.Parameters.AddWithValue("@BookingId", bookingId);
+                    insertCommand.Parameters.AddWithValue("@StripePaymentId", stripePaymentId);
+                    insertCommand.Parameters.AddWithValue("@Amount", amount);
+                    insertCommand.Parameters.AddWithValue("@Currency", currency);
+                    insertCommand.Parameters.AddWithValue("@Status", status);
+                    insertCommand.Parameters.AddWithValue("@PaymentMethod", paymentMethod);
+                    insertCommand.Parameters.AddWithValue("@CustomerId", customerId);
+                    insertCommand.Parameters.AddWithValue("@StripeCustomerId", stripeCustomerId);
+                    insertCommand.Parameters.AddWithValue("@CustomerEmail", customerEmail);
+                    insertCommand.Parameters.AddWithValue("@CustomerName", customerName);
+                    insertCommand.Parameters.AddWithValue("@AgencyId", agencyId);
+                    insertCommand.Parameters.AddWithValue("@AgencyStripeAccountId", agencyStripeAccountId);
+                    insertCommand.Parameters.AddWithValue("@CommissionPercentage", commissionPercentage);
+                    insertCommand.Parameters.AddWithValue("@Description", description);
+                    insertCommand.Parameters.AddWithValue("@PaymentDeadline", (object)paymentDeadline ?? DBNull.Value);
 
-                using var reader = await command.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    return MapToPaymentResponseDto(reader);
+                    using var reader = await insertCommand.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        return MapToPaymentResponseDto(reader);
+                    }
                 }
 
                 return null;
@@ -3769,37 +3772,6 @@ namespace Backend.Helper
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating payment");
-                throw;
-            }
-        }
-
-        public async Task<PaymentResponseDTO> GetPaymentById(int id)
-        {
-            try
-            {
-                using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync();
-
-                const string sql =
-                    @"
-                    SELECT *
-                    FROM Payments
-                    WHERE Id = @Id";
-
-                using var command = new SqlCommand(sql, connection);
-                command.Parameters.AddWithValue("@Id", id);
-
-                using var reader = await command.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    return MapToPaymentResponseDto(reader);
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting payment");
                 throw;
             }
         }
@@ -3963,6 +3935,440 @@ namespace Backend.Helper
             };
         }
 
+        public async Task<PaymentResponseDTO> GetPaymentById(int id)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT *
+                    FROM Payments
+                    WHERE Id = @Id";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@Id", id);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToPaymentResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payment");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<PaymentResponseDTO>> GetPaymentsByAgencyId(string agencyId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT *
+                    FROM Payments
+                    WHERE AgencyId = @AgencyId
+                    ORDER BY CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@AgencyId", agencyId);
+
+                var payments = new List<PaymentResponseDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    payments.Add(MapToPaymentResponseDto(reader));
+                }
+
+                return payments;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payments by agency ID");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<PaymentResponseDTO>> GetPaymentsByCustomerId(string customerId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql =
+                    @"
+                    SELECT *
+                    FROM Payments
+                    WHERE CustomerId = @CustomerId
+                    ORDER BY CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@CustomerId", customerId);
+
+                var payments = new List<PaymentResponseDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    payments.Add(MapToPaymentResponseDto(reader));
+                }
+
+                return payments;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payments by customer ID");
+                throw;
+            }
+        }
+
+        public async Task<PaymentResponseDTO> GetPaymentByBookingId(int bookingId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql = @"
+                    SELECT TOP 1 *
+                    FROM Payments
+                    WHERE BookingId = @BookingId
+                    ORDER BY CreatedAt DESC";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@BookingId", bookingId);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return MapToPaymentResponseDto(reader);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payment by booking ID");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdatePaymentWithNewIntent(
+            int paymentId,
+            string newStripePaymentId,
+            string status,
+            string stripeCustomerId
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                const string sql = @"
+                    UPDATE Payments
+                    SET StripePaymentId = @NewStripePaymentId,
+                        Status = @Status,
+                        StripeCustomerId = @StripeCustomerId,
+                        UpdatedAt = GETUTCDATE()
+                    WHERE Id = @PaymentId";
+
+                using var command = new SqlCommand(sql, connection);
+                command.Parameters.AddWithValue("@PaymentId", paymentId);
+                command.Parameters.AddWithValue("@NewStripePaymentId", newStripePaymentId);
+                command.Parameters.AddWithValue("@Status", status);
+                command.Parameters.AddWithValue("@StripeCustomerId", stripeCustomerId);
+
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating payment with new intent");
+                throw;
+            }
+        }
+
+        #endregion
+        #region Agency Stripe Connect Operations
+        public async Task<AgencyStripeConnect?> GetAgencyStripeConnect(string userId)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = new SqlCommand(
+                    @"SELECT * FROM agencyStripeConnects WHERE AgencyId = @UserId",
+                    connection
+                );
+                command.Parameters.AddWithValue("@UserId", userId);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new AgencyStripeConnect
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        AgencyId = reader.GetString(reader.GetOrdinal("AgencyId")),
+                        StripeAccountId = reader.GetString(reader.GetOrdinal("StripeAccountId")),
+                        StripeAccountStatus = reader.IsDBNull(
+                            reader.GetOrdinal("StripeAccountStatus")
+                        )
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("StripeAccountStatus")),
+                        IsEnabled = reader.GetBoolean(reader.GetOrdinal("IsEnabled")),
+                        PayoutsEnabled = reader.IsDBNull(reader.GetOrdinal("PayoutsEnabled"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("PayoutsEnabled")),
+                        ChargesEnabled = reader.IsDBNull(reader.GetOrdinal("ChargesEnabled"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("ChargesEnabled")),
+                        DetailsSubmitted = reader.IsDBNull(reader.GetOrdinal("DetailsSubmitted"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("DetailsSubmitted")),
+                        Requirements = reader.IsDBNull(reader.GetOrdinal("Requirements"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("Requirements")),
+                        VerificationStatus = reader.IsDBNull(
+                            reader.GetOrdinal("VerificationStatus")
+                        )
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("VerificationStatus")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
+                            ? null
+                            : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                        LastVerifiedAt = reader.IsDBNull(reader.GetOrdinal("LastVerifiedAt"))
+                            ? null
+                            : reader.GetDateTime(reader.GetOrdinal("LastVerifiedAt")),
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting agency Stripe Connect");
+                throw;
+            }
+        }
+
+        public async Task<bool> CreateAgencyStripeConnect(
+            string userId,
+            string stripeAccountId,
+            string stripeAccountStatus = null,
+            bool isEnabled = true, // Changed default to true
+            string payoutsEnabled = null,
+            string chargesEnabled = null,
+            string detailsSubmitted = null,
+            string requirements = null,
+            string capabilities = null,
+            string businessType = null,
+            string businessProfile = null,
+            string externalAccounts = null,
+            string verificationStatus = null
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = new SqlCommand(
+                    @"MERGE INTO agencyStripeConnects AS target
+                      USING (SELECT @AgencyId AS AgencyId) AS source
+                      ON target.AgencyId = source.AgencyId
+                      WHEN MATCHED THEN
+                        UPDATE SET 
+                            StripeAccountId = @StripeAccountId,
+                            StripeAccountStatus = @StripeAccountStatus,
+                            IsEnabled = @IsEnabled,
+                            PayoutsEnabled = @PayoutsEnabled,
+                            ChargesEnabled = @ChargesEnabled,
+                            DetailsSubmitted = @DetailsSubmitted,
+                            Requirements = @Requirements,
+                            Capabilities = @Capabilities,
+                            BusinessType = @BusinessType,
+                            BusinessProfile = @BusinessProfile,
+                            ExternalAccounts = @ExternalAccounts,
+                            VerificationStatus = @VerificationStatus,
+                            UpdatedAt = @UpdatedAt,
+                            LastVerifiedAt = @LastVerifiedAt
+                      WHEN NOT MATCHED THEN
+                        INSERT (
+                            AgencyId, 
+                            StripeAccountId, 
+                            StripeAccountStatus,
+                            IsEnabled, 
+                            PayoutsEnabled,
+                            ChargesEnabled,
+                            DetailsSubmitted,
+                            Requirements,
+                            Capabilities,
+                            BusinessType,
+                            BusinessProfile,
+                            ExternalAccounts,
+                            VerificationStatus,
+                            CreatedAt,
+                            UpdatedAt,
+                            LastVerifiedAt
+                        )
+                        VALUES (
+                            @AgencyId, 
+                            @StripeAccountId, 
+                            @StripeAccountStatus,
+                            @IsEnabled, 
+                            @PayoutsEnabled,
+                            @ChargesEnabled,
+                            @DetailsSubmitted,
+                            @Requirements,
+                            @Capabilities,
+                            @BusinessType,
+                            @BusinessProfile,
+                            @ExternalAccounts,
+                            @VerificationStatus,
+                            @CreatedAt,
+                            @UpdatedAt,
+                            @LastVerifiedAt
+                        );",
+                    connection
+                );
+
+                var now = DateTime.UtcNow;
+
+                command.Parameters.AddWithValue("@AgencyId", userId);
+                command.Parameters.AddWithValue("@StripeAccountId", stripeAccountId);
+                command.Parameters.AddWithValue(
+                    "@StripeAccountStatus",
+                    (object)stripeAccountStatus ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue("@IsEnabled", isEnabled);
+                command.Parameters.AddWithValue(
+                    "@PayoutsEnabled",
+                    (object)payoutsEnabled ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@ChargesEnabled",
+                    (object)chargesEnabled ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@DetailsSubmitted",
+                    (object)detailsSubmitted ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Requirements",
+                    (object)requirements ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Capabilities",
+                    (object)capabilities ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@BusinessType",
+                    (object)businessType ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@BusinessProfile",
+                    (object)businessProfile ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@ExternalAccounts",
+                    (object)externalAccounts ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@VerificationStatus",
+                    (object)verificationStatus ?? DBNull.Value
+                );
+                command.Parameters.AddWithValue("@CreatedAt", now);
+                command.Parameters.AddWithValue("@UpdatedAt", now);
+                command.Parameters.AddWithValue("@LastVerifiedAt", now);
+
+                var result = await command.ExecuteNonQueryAsync();
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating/updating agency Stripe Connect");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateAgencyStripeConnect(
+            string stripeAccountId,
+            string status,
+            bool isEnabled,
+            string payoutsEnabled,
+            string chargesEnabled,
+            string detailsSubmitted,
+            string requirements,
+            string? verificationStatus
+        )
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = new SqlCommand(
+                    @"UPDATE agencyStripeConnects SET
+                        StripeAccountStatus = @Status,
+                        IsEnabled = @IsEnabled,
+                        PayoutsEnabled = @PayoutsEnabled,
+                        ChargesEnabled = @ChargesEnabled,
+                        DetailsSubmitted = @DetailsSubmitted,
+                        Requirements = @Requirements,
+                        VerificationStatus = @VerificationStatus,
+                        UpdatedAt = @UpdatedAt,
+                        LastVerifiedAt = @LastVerifiedAt
+                    WHERE StripeAccountId = @StripeAccountId",
+                    connection
+                );
+
+                command.Parameters.AddWithValue("@StripeAccountId", stripeAccountId);
+                command.Parameters.AddWithValue("@Status", status);
+                command.Parameters.AddWithValue("@IsEnabled", isEnabled);
+                command.Parameters.AddWithValue(
+                    "@PayoutsEnabled",
+                    payoutsEnabled ?? (object)DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@ChargesEnabled",
+                    chargesEnabled ?? (object)DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@DetailsSubmitted",
+                    detailsSubmitted ?? (object)DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@Requirements",
+                    requirements ?? (object)DBNull.Value
+                );
+                command.Parameters.AddWithValue(
+                    "@VerificationStatus",
+                    verificationStatus ?? (object)DBNull.Value
+                );
+                command.Parameters.AddWithValue("@UpdatedAt", DateTime.UtcNow);
+                command.Parameters.AddWithValue("@LastVerifiedAt", DateTime.UtcNow);
+
+                var result = await command.ExecuteNonQueryAsync();
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating agency Stripe Connect");
+                throw;
+            }
+        }
         #endregion
     }
 }

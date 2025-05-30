@@ -7,6 +7,7 @@ import { BookingService } from '../../services/booking.service';
 import { ChatService } from '../../services/chat.service';
 import { AuthService } from '../../services/auth.service';
 import { FileUploadService } from '../../services/file-upload.service';
+import { StripeConnectService, StripeConnectStatus } from '../../services/stripe-connect.service';
 import { Observable, firstValueFrom, Subscription } from 'rxjs';
 import { Location } from '@angular/common';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -127,6 +128,11 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private scrollPosition = 0;
   private isLoadingMore = false;
 
+  // Add Stripe Connect related properties
+  stripeConnectStatus: StripeConnectStatus | null = null;
+  isConnectingStripe: boolean = false;
+  stripeError: string | null = null;
+
   constructor(
     private agencyProfileService: AgencyProfileService,
     private bookingService: BookingService,
@@ -135,7 +141,8 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     private fileUploadService: FileUploadService,
     private router: Router,
     private location: Location,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private stripeConnectService: StripeConnectService
   ) {
     this.profileForm = this.formBuilder.group({
       name: [''],
@@ -174,10 +181,15 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     return this.profileForm.get('testimonials') as FormArray;
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.loadProfile();
     this.loadBookings();
     this.setupMessageSubscription();
+
+    // Load Stripe Connect status when payments tab is active
+    if (this.activeTab === 'payments') {
+      await this.loadStripeConnectStatus();
+    }
   }
 
   ngAfterViewInit() {
@@ -390,8 +402,46 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     });
   }
 
-  switchTab(tab: TabType): void {
+  async switchTab(tab: TabType): Promise<void> {
     this.activeTab = tab;
+    if (tab === 'payments') {
+      await this.loadStripeConnectStatus();
+      if (this.stripeConnectStatus?.isConnected && this.stripeConnectStatus?.isEnabled) {
+        await this.loadPayments();
+      }
+    }
+  }
+
+  async loadStripeConnectStatus() {
+    try {
+      this.isConnectingStripe = true;
+      this.stripeError = null;
+      const response = await this.stripeConnectService.getConnectStatus().toPromise();
+      this.stripeConnectStatus = response || null;
+      console.log('Stripe Connect Status:', this.stripeConnectStatus); // Debug log
+    } catch (error) {
+      console.error('Error loading Stripe Connect status:', error);
+      this.stripeError = 'Failed to load Stripe connection status. Please try again.';
+      this.stripeConnectStatus = null;
+    } finally {
+      this.isConnectingStripe = false;
+    }
+  }
+
+  async connectStripeAccount() {
+    try {
+      this.isConnectingStripe = true;
+      this.stripeError = null;
+      const response = await this.stripeConnectService.createConnectAccount().toPromise();
+      if (response) {
+        window.location.href = response.accountLink;
+      }
+    } catch (error) {
+      console.error('Error connecting Stripe account:', error);
+      this.stripeError = 'Failed to connect Stripe account. Please try again.';
+    } finally {
+      this.isConnectingStripe = false;
+    }
   }
 
   async updateLastActive() {
@@ -644,6 +694,19 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     }
   }
 
+  getStatusIcon(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return 'fas fa-check-circle';
+      case 'pending':
+        return 'fas fa-clock';
+      case 'failed':
+        return 'fas fa-times-circle';
+      default:
+        return 'fas fa-circle';
+    }
+  }
+
   getStatusDotColor(status: string): string {
     switch (status?.toLowerCase()) {
       case 'accepted':
@@ -692,5 +755,12 @@ export class AgencyDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
   initiatePayment(booking: any) {
     this.router.navigate(['/payment', booking.id]);
+  }
+
+  getRequirementsList(requirements: any): string[] {
+    if (!requirements) return [];
+    return Object.entries(requirements)
+      .filter(([_, value]) => value === 'currently_due')
+      .map(([key]) => key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '));
   }
 }

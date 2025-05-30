@@ -36,22 +36,16 @@ namespace Backend.DTOs
     public class PaymentResponseDTO
     {
         public int Id { get; set; }
-        public string? StripePaymentId { get; set; }
         public int BookingId { get; set; }
-        public int AgencyId { get; set; }
+        public string? StripePaymentId { get; set; }
+        public string? AgencyId { get; set; }
         public decimal Amount { get; set; }
         public string? Currency { get; set; }
         public string? Status { get; set; }
         public string? PaymentMethod { get; set; }
-        public string? CustomerId { get; set; }
         public string? CustomerEmail { get; set; }
         public string? CustomerName { get; set; }
-        public string? BookingCustomerEmail { get; set; }
-        public string? BookingCustomerName { get; set; }
-        public string? ErrorMessage { get; set; }
-        public string? RefundReason { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
         public DateTime? PaidAt { get; set; }
         public DateTime? RefundedAt { get; set; }
     }
@@ -154,5 +148,11 @@ namespace Backend.DTOs
         public string? AccountId { get; set; }
         public string? AccountStatus { get; set; }
         public DateTime? ConnectedAt { get; set; }
+    }
+
+    public class ConfirmPaymentDTO
+    {
+        [Required]
+        public string PaymentMethodId { get; set; }
     }
 }

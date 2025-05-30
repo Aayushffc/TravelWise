@@ -1,424 +1,456 @@
 <div class="container mx-auto px-4 py-8">
-  <!-- Statistics Section -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Total Earnings Card -->
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center min-h-[200px]">
     <div
-      class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-    >
-      <div class="flex items-center">
-        <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-gray-500 text-sm font-medium">Total Earnings</h3>
-          <p class="text-2xl font-bold text-gray-800">
-            ${{ stats.totalEarnings | number : "1.2-2" }}
-          </p>
-        </div>
-      </div>
-    </div>
+      class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
+    ></div>
+  </div>
 
-    <!-- Completed Payments Card -->
-    <div
-      class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-    >
-      <div class="flex items-center">
-        <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-gray-500 text-sm font-medium">Completed Payments</h3>
-          <p class="text-2xl font-bold text-gray-800">
-            {{ stats.completedPayments }}
-          </p>
-        </div>
-      </div>
-    </div>
+  <!-- Error Message -->
+  <div
+    *ngIf="errorMessage"
+    class="mb-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+    role="alert"
+  >
+    <span class="block sm:inline">{{ errorMessage }}</span>
+  </div>
 
-    <!-- Pending Payments Card -->
-    <div
-      class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-    >
-      <div class="flex items-center">
-        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-gray-500 text-sm font-medium">Pending Payments</h3>
-          <p class="text-2xl font-bold text-gray-800">
-            {{ stats.pendingPayments }}
-          </p>
-        </div>
-      </div>
-    </div>
+  <!-- Agency Stripe Connect Section -->
+  <div *ngIf="isAgency && !isLoading" class="mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-semibold mb-4">Stripe Connect Status</h2>
 
-    <!-- Failed Payments Card -->
-    <div
-      class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-    >
-      <div class="flex items-center">
-        <div class="p-3 rounded-full bg-red-100 text-red-600 mr-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+      <!-- Not Connected State -->
+      <div *ngIf="!stripeConnectStatus?.isConnected" class="text-center py-8">
+        <div class="mb-4">
+          <i class="fas fa-credit-card text-4xl text-gray-400"></i>
         </div>
-        <div>
-          <h3 class="text-gray-500 text-sm font-medium">Failed Payments</h3>
-          <p class="text-2xl font-bold text-gray-800">
-            {{ stats.failedPayments }}
-          </p>
+        <h3 class="text-xl font-medium mb-2">Connect Your Stripe Account</h3>
+        <p class="text-gray-600 mb-4">
+          To start accepting payments, you need to connect your Stripe account.
+          This will allow you to:
+        </p>
+        <ul class="text-gray-600 mb-6 text-left max-w-md mx-auto">
+          <li class="mb-2 flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+            Accept payments from customers
+          </li>
+          <li class="mb-2 flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+            Receive payouts to your bank account
+          </li>
+          <li class="mb-2 flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+            Manage your payment settings
+          </li>
+          <li class="mb-2 flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+            View detailed payment reports
+          </li>
+        </ul>
+        <button
+          (click)="connectStripeAccount()"
+          class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center mx-auto"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="isLoading" class="mr-2">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          <i class="fas fa-link mr-2"></i>
+          Connect Stripe Account
+        </button>
+      </div>
+
+      <!-- Connected but Not Enabled State -->
+      <div
+        *ngIf="
+          stripeConnectStatus?.isConnected && !stripeConnectStatus?.isEnabled
+        "
+        class="text-center py-8"
+      >
+        <div class="mb-4">
+          <i class="fas fa-exclamation-circle text-4xl text-yellow-400"></i>
+        </div>
+        <h3 class="text-xl font-medium mb-2">
+          Complete Your Stripe Account Setup
+        </h3>
+        <p class="text-gray-600 mb-4">
+          Your Stripe account is connected but needs additional setup to start
+          accepting payments.
+        </p>
+        <div
+          class="bg-yellow-50 p-4 rounded-lg mb-6 max-w-md mx-auto text-left"
+        >
+          <h4 class="font-medium mb-2 text-yellow-800">Required Actions:</h4>
+          <div class="space-y-2">
+            <div
+              *ngFor="
+                let req of getRequirementsList(
+                  stripeConnectStatus?.requirements
+                )
+              "
+              class="flex items-start"
+            >
+              <i
+                class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-2"
+              ></i>
+              <span class="text-yellow-700">{{ req }}</span>
+            </div>
+          </div>
+        </div>
+        <button
+          (click)="connectStripeAccount()"
+          class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center mx-auto"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="isLoading" class="mr-2">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          <i class="fas fa-cog mr-2"></i>
+          Complete Account Setup
+        </button>
+      </div>
+
+      <!-- Connected and Enabled State -->
+      <div
+        *ngIf="
+          stripeConnectStatus?.isConnected && stripeConnectStatus?.isEnabled
+        "
+        class="space-y-6"
+      >
+        <div
+          class="flex items-center justify-between bg-green-50 p-4 rounded-lg"
+        >
+          <div>
+            <h3 class="text-lg font-medium text-green-800">Account Status</h3>
+            <p class="text-green-600">
+              {{ stripeConnectStatus?.accountStatus }}
+            </p>
+          </div>
+          <div class="flex items-center bg-green-100 px-3 py-1 rounded-full">
+            <span class="w-3 h-3 rounded-full mr-2 bg-green-500"></span>
+            <span class="text-green-700 font-medium">Enabled</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-medium mb-2 text-gray-700">Verification Status</h4>
+            <div class="flex items-center">
+              <i class="fas fa-shield-alt text-blue-500 mr-2"></i>
+              <p class="text-gray-600">
+                {{ stripeConnectStatus?.verificationStatus || "Verified" }}
+              </p>
+            </div>
+          </div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-medium mb-2 text-gray-700">Account Details</h4>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 flex items-center">
+                  <i class="fas fa-money-bill-wave mr-2"></i>
+                  Payouts
+                </span>
+                <span
+                  [class]="
+                    stripeConnectStatus?.payoutsEnabled === 'True'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  "
+                  class="px-3 py-1 rounded-full text-sm font-medium"
+                >
+                  {{
+                    stripeConnectStatus?.payoutsEnabled === "True"
+                      ? "Enabled"
+                      : "Disabled"
+                  }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 flex items-center">
+                  <i class="fas fa-credit-card mr-2"></i>
+                  Charges
+                </span>
+                <span
+                  [class]="
+                    stripeConnectStatus?.chargesEnabled === 'True'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  "
+                  class="px-3 py-1 rounded-full text-sm font-medium"
+                >
+                  {{
+                    stripeConnectStatus?.chargesEnabled === "True"
+                      ? "Enabled"
+                      : "Disabled"
+                  }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 flex items-center">
+                  <i class="fas fa-file-alt mr-2"></i>
+                  Details
+                </span>
+                <span
+                  [class]="
+                    stripeConnectStatus?.detailsSubmitted === 'True'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  "
+                  class="px-3 py-1 rounded-full text-sm font-medium"
+                >
+                  {{
+                    stripeConnectStatus?.detailsSubmitted === "True"
+                      ? "Submitted"
+                      : "Pending"
+                  }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          *ngIf="stripeConnectStatus?.requirements"
+          class="bg-gray-50 p-4 rounded-lg"
+        >
+          <h4 class="font-medium mb-3 text-gray-700">Requirements Status</h4>
+          <div class="space-y-3">
+            <div
+              *ngIf="
+                getRequirementsList(stripeConnectStatus?.requirements)
+                  .length === 0
+              "
+              class="flex items-center text-green-600 bg-green-50 p-3 rounded-lg"
+            >
+              <i class="fas fa-check-circle mr-2"></i>
+              All requirements have been met
+            </div>
+            <div
+              *ngFor="
+                let req of getRequirementsList(
+                  stripeConnectStatus?.requirements
+                )
+              "
+              class="flex items-start bg-white p-3 rounded-lg shadow-sm"
+            >
+              <i
+                class="fas fa-exclamation-circle text-yellow-500 mt-1 mr-2"
+              ></i>
+              <span class="text-gray-700">{{ req }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Payments Table Section -->
-  <div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <div class="p-6 border-b border-gray-200">
+  <!-- Payment Stats and List (Only show if connected and enabled or not an agency) -->
+  <div
+    *ngIf="
+      (!isAgency ||
+        (stripeConnectStatus?.isConnected && stripeConnectStatus?.isEnabled)) &&
+      !isLoading
+    "
+    class="space-y-6"
+  >
+    <!-- Payment Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center"
+        class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
       >
-        <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-0">
-          Payment History
-        </h2>
-
-        <!-- Stripe Connect Button for Agency -->
-        <button
-          *ngIf="isAgency"
-          (click)="connectStripeAccount()"
-          class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center"
-        >
-          <svg
-            class="h-5 w-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M17 9V7a5 5 0 00-10 0v2a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 17v.01"
-            />
-          </svg>
-          Connect Stripe Account
-        </button>
-        <!-- End Stripe Connect Button -->
-
-        <!-- Status Filter Toggle -->
-        <div class="flex space-x-2">
-          <button
-            (click)="onStatusFilterChange('all')"
-            [class.bg-blue-600]="selectedStatus === 'all'"
-            [class.text-white]="selectedStatus === 'all'"
-            [class.bg-gray-200]="selectedStatus !== 'all'"
-            [class.text-gray-700]="selectedStatus !== 'all'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            All
-          </button>
-          <button
-            (click)="onStatusFilterChange('completed')"
-            [class.bg-green-600]="selectedStatus === 'completed'"
-            [class.text-white]="selectedStatus === 'completed'"
-            [class.bg-gray-200]="selectedStatus !== 'completed'"
-            [class.text-gray-700]="selectedStatus !== 'completed'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            Completed
-          </button>
-          <button
-            (click)="onStatusFilterChange('pending')"
-            [class.bg-yellow-600]="selectedStatus === 'pending'"
-            [class.text-white]="selectedStatus === 'pending'"
-            [class.bg-gray-200]="selectedStatus !== 'pending'"
-            [class.text-gray-700]="selectedStatus !== 'pending'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            Pending
-          </button>
-          <button
-            (click)="onStatusFilterChange('failed')"
-            [class.bg-red-600]="selectedStatus === 'failed'"
-            [class.text-white]="selectedStatus === 'failed'"
-            [class.bg-gray-200]="selectedStatus !== 'failed'"
-            [class.text-gray-700]="selectedStatus !== 'failed'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            Failed
-          </button>
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium text-gray-600">Total Earnings</h3>
+          <i class="fas fa-dollar-sign text-blue-500"></i>
         </div>
+        <p class="text-2xl font-bold mt-2">
+          ${{ stats.totalEarnings.toFixed(2) }}
+        </p>
+      </div>
+      <div
+        class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+      >
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium text-gray-600">Completed</h3>
+          <i class="fas fa-check-circle text-green-500"></i>
+        </div>
+        <p class="text-2xl font-bold mt-2">{{ stats.completedPayments }}</p>
+      </div>
+      <div
+        class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+      >
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium text-gray-600">Pending</h3>
+          <i class="fas fa-clock text-yellow-500"></i>
+        </div>
+        <p class="text-2xl font-bold mt-2">{{ stats.pendingPayments }}</p>
+      </div>
+      <div
+        class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+      >
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium text-gray-600">Failed</h3>
+          <i class="fas fa-times-circle text-red-500"></i>
+        </div>
+        <p class="text-2xl font-bold mt-2">{{ stats.failedPayments }}</p>
       </div>
     </div>
 
-    <!-- Table Container -->
-    <div class="overflow-x-auto">
-      <!-- Loading State -->
-      <div
-        *ngIf="isLoading"
-        class="flex flex-col items-center justify-center p-12"
-      >
-        <div
-          class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
-        ></div>
-        <p class="mt-4 text-gray-500">Loading payments...</p>
+    <!-- Payment List -->
+    <div class="bg-white rounded-lg shadow-md">
+      <div class="p-6 border-b">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-semibold">Payments</h2>
+          <div class="flex space-x-2">
+            <button
+              (click)="onStatusFilterChange('all')"
+              [class.bg-blue-600]="selectedStatus === 'all'"
+              [class.text-white]="selectedStatus === 'all'"
+              class="px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <i class="fas fa-list mr-2"></i>
+              All
+            </button>
+            <button
+              (click)="onStatusFilterChange('completed')"
+              [class.bg-blue-600]="selectedStatus === 'completed'"
+              [class.text-white]="selectedStatus === 'completed'"
+              class="px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <i class="fas fa-check-circle mr-2"></i>
+              Completed
+            </button>
+            <button
+              (click)="onStatusFilterChange('pending')"
+              [class.bg-blue-600]="selectedStatus === 'pending'"
+              [class.text-white]="selectedStatus === 'pending'"
+              class="px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <i class="fas fa-clock mr-2"></i>
+              Pending
+            </button>
+            <button
+              (click)="onStatusFilterChange('failed')"
+              [class.bg-blue-600]="selectedStatus === 'failed'"
+              [class.text-white]="selectedStatus === 'failed'"
+              class="px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <i class="fas fa-times-circle mr-2"></i>
+              Failed
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- No Data State -->
-      <div
-        *ngIf="!isLoading && filteredPayments.length === 0"
-        class="flex flex-col items-center justify-center p-12"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-16 w-16 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-        <p class="mt-4 text-gray-500">No payments found</p>
-      </div>
-
-      <!-- Payments Table -->
-      <table
-        *ngIf="!isLoading && filteredPayments.length > 0"
-        class="min-w-full divide-y divide-gray-200"
-      >
-        <thead class="bg-gray-50">
-          <tr>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              ID
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Booking ID
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Amount
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Status
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Payment Method
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Customer
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Date
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let payment of filteredPayments" class="hover:bg-gray-50">
-            <td
-              class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-            >
-              {{ payment.id }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ payment.bookingId }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              ${{ payment.amount | number : "1.2-2" }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                [class]="
-                  'px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' +
-                  getStatusColor(payment.status)
-                "
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
+                ID
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Customer
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Amount
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Status
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Payment Method
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Date
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr
+              *ngFor="let payment of filteredPayments"
+              class="hover:bg-gray-50"
+            >
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                #{{ payment.id }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ payment.customerName }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${{ payment.amount.toFixed(2) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
                 <span
-                  [class]="
-                    'h-2 w-2 rounded-full mr-1 ' +
-                    getStatusDotColor(payment.status)
-                  "
-                ></span>
-                {{ payment.status | titlecase }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ payment.paymentMethod }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ payment.customerName }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ payment.createdAt | date : "medium" }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <div class="flex space-x-2">
-                <button
-                  (click)="viewPaymentDetails(payment)"
-                  class="text-blue-600 hover:text-blue-900"
-                  title="View Details"
+                  class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                  [ngClass]="getStatusColor(payment.status)"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                  <i [class]="getStatusIcon(payment.status)" class="mr-1"></i>
+                  {{ payment.status }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="flex items-center">
+                  <i class="fas fa-credit-card mr-2 text-gray-400"></i>
+                  {{ payment.paymentMethod }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ payment.createdAt | date : "medium" }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex space-x-3">
+                  <button
+                    (click)="viewPaymentDetails(payment)"
+                    class="text-blue-600 hover:text-blue-900 flex items-center"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  (click)="processPayment(payment)"
-                  class="text-green-600 hover:text-green-900"
-                  title="Process Payment"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    <i class="fas fa-eye mr-1"></i>
+                    View
+                  </button>
+                  <button
+                    *ngIf="payment.status === 'pending'"
+                    (click)="processPayment(payment)"
+                    class="text-green-600 hover:text-green-900 flex items-center"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  (click)="refundPayment(payment)"
-                  class="text-red-600 hover:text-red-900"
-                  title="Refund Payment"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    <i class="fas fa-check mr-1"></i>
+                    Process
+                  </button>
+                  <button
+                    *ngIf="payment.status === 'completed'"
+                    (click)="refundPayment(payment)"
+                    class="text-red-600 hover:text-red-900 flex items-center"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"
-                    />
-                  </svg>
-                </button>
-                <!-- Accept Button for Pending Payments (Agency Only) -->
-                <button
-                  *ngIf="isAgency && payment.status === 'pending'"
-                  (click)="acceptPayment(payment)"
-                  class="text-indigo-600 hover:text-indigo-900 border border-indigo-600 rounded px-2 py-1 text-xs font-semibold ml-2"
-                  title="Accept Payment"
-                >
-                  Accept
-                </button>
-                <!-- End Accept Button -->
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                    <i class="fas fa-undo mr-1"></i>
+                    Refund
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="filteredPayments.length === 0" class="text-center py-8">
+        <i class="fas fa-receipt text-4xl text-gray-400 mb-4"></i>
+        <p class="text-gray-500">No payments found</p>
+      </div>
     </div>
   </div>
 </div>

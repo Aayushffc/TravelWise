@@ -22,6 +22,7 @@ namespace Backend.DBContext
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<AgencyStripeConnect> agencyStripeConnects { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

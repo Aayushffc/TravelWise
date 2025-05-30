@@ -12,7 +12,7 @@ namespace Backend.Services
     public interface IPaymentService
     {
         Task<PaymentIntentResponseDTO> CreatePaymentIntent(CreatePaymentIntentDTO dto);
-        Task<PaymentResponseDTO> ConfirmPayment(string paymentIntentId);
+        Task<PaymentResponseDTO> ConfirmPayment(string paymentIntentId, string paymentMethodId = null);
         Task<PaymentResponseDTO> GetPayment(string paymentIntentId);
         Task<bool> RefundPayment(int paymentId, string reason);
     }
@@ -50,8 +50,8 @@ namespace Backend.Services
                 }
 
                 // Get agency's Stripe account ID
-                var agencyProfile = await _dbHelper.GetAgencyProfileByUserId(dto.AgencyId);
-                if (agencyProfile == null || string.IsNullOrEmpty(agencyProfile.StripeAccountId))
+                var agencyStripeConnect = await _dbHelper.GetAgencyStripeConnect(booking.AgencyId);
+                if (agencyStripeConnect == null || !agencyStripeConnect.IsEnabled)
                 {
                     throw new Exception("Agency not found or not connected to Stripe");
                 }
@@ -62,28 +62,100 @@ namespace Backend.Services
                 var transferAmount = dto.Amount - commissionAmount;
 
                 // Create or get customer
-                var customerId = await GetOrCreateCustomer(dto.CustomerEmail, dto.CustomerName);
+                var stripeCustomerId = await GetOrCreateCustomer(dto.CustomerEmail, dto.CustomerName);
+
+                // Check if payment intent already exists for this booking
+                var existingPayment = await _dbHelper.GetPaymentByBookingId(dto.BookingId);
+                if (existingPayment != null)
+                {
+                    // If payment exists but failed, create a new one
+                    if (existingPayment.Status == "failed" || existingPayment.Status == "canceled")
+                    {
+                        // Create new payment intent
+                        var newOptions = new PaymentIntentCreateOptions
+                        {
+                            Amount = (long)(dto.Amount * 100), // Convert to cents
+                            Currency = dto.Currency.ToLower(),
+                            Customer = stripeCustomerId,
+                            PaymentMethodTypes = new List<string> { "card" },
+                            Description = dto.Description,
+                            TransferData = new PaymentIntentTransferDataOptions
+                            {
+                                Destination = agencyStripeConnect.StripeAccountId,
+                                Amount = (long)(transferAmount * 100), // Convert to cents
+                            },
+                            Metadata = new Dictionary<string, string>
+                            {
+                                { "bookingId", dto.BookingId.ToString() },
+                                { "agencyId", booking.AgencyId },
+                                { "commissionPercentage", commissionPercentage.ToString() },
+                                { "commissionAmount", commissionAmount.ToString() },
+                            },
+                        };
+
+                        var newService = new PaymentIntentService();
+                        var newIntent = await newService.CreateAsync(newOptions);
+
+                        // Update existing payment record with new intent
+                        await _dbHelper.UpdatePaymentWithNewIntent(
+                            existingPayment.Id,
+                            newIntent.Id,
+                            newIntent.Status,
+                            stripeCustomerId
+                        );
+
+                        return new PaymentIntentResponseDTO
+                        {
+                            ClientSecret = newIntent.ClientSecret,
+                            PaymentIntentId = newIntent.Id,
+                            Amount = dto.Amount,
+                            Currency = dto.Currency,
+                            Status = newIntent.Status,
+                        };
+                    }
+                    else
+                    {
+                        // Return existing payment intent
+                        var existingService = new PaymentIntentService();
+                        var existingIntent = await existingService.GetAsync(existingPayment.StripePaymentId);
+
+                        return new PaymentIntentResponseDTO
+                        {
+                            ClientSecret = existingIntent.ClientSecret,
+                            PaymentIntentId = existingPayment.StripePaymentId,
+                            Amount = existingPayment.Amount,
+                            Currency = existingPayment.Currency,
+                            Status = existingPayment.Status,
+                        };
+                    }
+                }
 
                 // Create payment intent
                 var options = new PaymentIntentCreateOptions
                 {
                     Amount = (long)(dto.Amount * 100), // Convert to cents
                     Currency = dto.Currency.ToLower(),
-                    Customer = customerId,
-                    PaymentMethodTypes = new List<string> { "card" },
+                    Customer = stripeCustomerId,
                     Description = dto.Description,
                     TransferData = new PaymentIntentTransferDataOptions
                     {
-                        Destination = agencyProfile.StripeAccountId,
+                        Destination = agencyStripeConnect.StripeAccountId,
                         Amount = (long)(transferAmount * 100), // Convert to cents
                     },
                     Metadata = new Dictionary<string, string>
                     {
                         { "bookingId", dto.BookingId.ToString() },
-                        { "agencyId", dto.AgencyId },
+                        { "agencyId", booking.AgencyId },
                         { "commissionPercentage", commissionPercentage.ToString() },
                         { "commissionAmount", commissionAmount.ToString() },
                     },
+                    SetupFutureUsage = "off_session", // Allow future payments without requiring customer action
+                    Confirm = false, // Don't confirm immediately
+                    AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+                    {
+                        Enabled = true,
+                        AllowRedirects = "never"
+                    }
                 };
 
                 var service = new PaymentIntentService();
@@ -97,10 +169,11 @@ namespace Backend.Services
                     dto.Currency,
                     intent.Status,
                     dto.PaymentMethod ?? string.Empty,
-                    customerId ?? string.Empty,
+                    booking.UserId,  // Application user ID
+                    stripeCustomerId,  // Stripe customer ID
                     dto.CustomerEmail ?? string.Empty,
                     dto.CustomerName ?? string.Empty,
-                    agencyProfile.StripeAccountId ?? string.Empty,
+                    agencyStripeConnect.StripeAccountId ?? string.Empty,
                     commissionPercentage,
                     dto.Description ?? string.Empty,
                     dto.PaymentDeadline
@@ -122,30 +195,87 @@ namespace Backend.Services
             }
         }
 
-        public async Task<PaymentResponseDTO> ConfirmPayment(string paymentIntentId)
+        public async Task<PaymentResponseDTO> ConfirmPayment(string paymentIntentId, string paymentMethodId = null)
         {
             try
             {
                 var service = new PaymentIntentService();
                 var intent = await service.GetAsync(paymentIntentId);
 
-                var payment = await _dbHelper.GetPaymentByStripeId(paymentIntentId);
-                if (payment == null)
+                // Get the payment record from our database
+                var paymentRecord = await _dbHelper.GetPaymentByStripeId(paymentIntentId);
+                if (paymentRecord == null)
                 {
-                    throw new Exception("Payment not found");
+                    throw new Exception("Payment record not found");
                 }
 
-                // Update payment status
-                await _dbHelper.UpdatePaymentStatus(payment.Id, intent.Status);
+                // If the payment is already succeeded, update our database
+                if (intent.Status == "succeeded")
+                {
+                    await _dbHelper.UpdatePaymentStatus(paymentRecord.Id, intent.Status);
+
+                    // Update the payment method if we have one
+                    if (!string.IsNullOrEmpty(paymentMethodId))
+                    {
+                        await _dbHelper.UpdatePaymentWithNewIntent(
+                            paymentRecord.Id,
+                            paymentIntentId,
+                            intent.Status,
+                            paymentMethodId
+                        );
+                    }
+
+                    // Update booking status to Paid
+                    await _dbHelper.UpdateBookingStatus(
+                        paymentRecord.BookingId,
+                        "Paid",
+                        "Payment completed successfully",
+                        paymentRecord.CustomerId  // Use CustomerId instead of AgencyId
+                    );
+
+                    return await _dbHelper.GetPaymentByStripeId(paymentIntentId);
+                }
+
+                // If we have a payment method ID and the intent is not succeeded, attach it
+                if (!string.IsNullOrEmpty(paymentMethodId) &&
+                    (intent.Status == "requires_payment_method" ||
+                     intent.Status == "requires_confirmation" ||
+                     intent.Status == "requires_action"))
+                {
+                    var options = new PaymentIntentUpdateOptions
+                    {
+                        PaymentMethod = paymentMethodId
+                    };
+                    intent = await service.UpdateAsync(paymentIntentId, options);
+                }
+
+                // Confirm the payment intent if it's not already confirmed
+                if (intent.Status != "succeeded")
+                {
+                    var confirmOptions = new PaymentIntentConfirmOptions();
+                    intent = await service.ConfirmAsync(paymentIntentId, confirmOptions);
+                }
+
+                // Update payment status and method in database
+                await _dbHelper.UpdatePaymentStatus(paymentRecord.Id, intent.Status);
+                if (!string.IsNullOrEmpty(paymentMethodId))
+                {
+                    await _dbHelper.UpdatePaymentWithNewIntent(
+                        paymentRecord.Id,
+                        paymentIntentId,
+                        intent.Status,
+                        paymentMethodId
+                    );
+                }
 
                 // If payment succeeded, update booking status
                 if (intent.Status == "succeeded")
                 {
                     await _dbHelper.UpdateBookingStatus(
-                        payment.BookingId,
+                        paymentRecord.BookingId,
                         "Paid",
-                        null,
-                        payment.AgencyId.ToString()
+                        "Payment completed successfully",
+                        paymentRecord.CustomerId  // Use CustomerId instead of AgencyId
                     );
                 }
 

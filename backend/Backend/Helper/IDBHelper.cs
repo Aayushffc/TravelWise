@@ -130,6 +130,7 @@ namespace Backend.Helper
             string status,
             string paymentMethod,
             string customerId,
+            string stripeCustomerId,
             string customerEmail,
             string customerName,
             string agencyStripeAccountId,
@@ -139,7 +140,37 @@ namespace Backend.Helper
         );
         Task<PaymentResponseDTO> GetPaymentByStripeId(string stripePaymentId);
         Task<PaymentResponseDTO> GetPaymentById(int paymentId);
+        Task<PaymentResponseDTO> GetPaymentByBookingId(int bookingId);
+        Task<bool> UpdatePaymentWithNewIntent(int paymentId, string newStripePaymentId, string status, string stripeCustomerId);
         Task<bool> UpdatePaymentStatus(int paymentId, string status, string errorMessage = null);
         Task<bool> RefundPayment(int paymentId, string reason);
+        Task<IEnumerable<PaymentResponseDTO>> GetPaymentsByAgencyId(string agencyId);
+        Task<IEnumerable<PaymentResponseDTO>> GetPaymentsByCustomerId(string customerId);
+
+        Task<AgencyStripeConnect?> GetAgencyStripeConnect(string userId);
+        Task<bool> CreateAgencyStripeConnect(
+            string userId,
+            string stripeAccountId,
+            string stripeAccountStatus = null,
+            bool isEnabled = false,
+            string payoutsEnabled = null,
+            string chargesEnabled = null,
+            string detailsSubmitted = null,
+            string requirements = null,
+            string capabilities = null,
+            string businessType = null,
+            string businessProfile = null,
+            string externalAccounts = null,
+            string verificationStatus = null);
+        Task<bool> UpdateAgencyStripeConnect(
+            string stripeAccountId,
+            string status,
+            bool isEnabled,
+            string payoutsEnabled,
+            string chargesEnabled,
+            string detailsSubmitted,
+            string requirements,
+            string? verificationStatus
+        );
     }
 }

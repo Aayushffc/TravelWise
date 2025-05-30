@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Stripe;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using Backend.Models.Auth;
 
 namespace Backend.Controllers
 {
@@ -23,18 +26,21 @@ namespace Backend.Controllers
         private readonly ILogger<PaymentController> _logger;
         private readonly IDBHelper _dbHelper;
         private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public PaymentController(
             IPaymentService paymentService,
             ILogger<PaymentController> logger,
             IDBHelper dbHelper,
-            IConfiguration configuration
+            IConfiguration configuration,
+            UserManager<ApplicationUser> userManager
         )
         {
             _paymentService = paymentService;
             _logger = logger;
             _dbHelper = dbHelper;
             _configuration = configuration;
+            _userManager = userManager;
         }
 
         [HttpPost("create-intent")]
@@ -67,11 +73,23 @@ namespace Backend.Controllers
         }
 
         [HttpPost("confirm/{paymentIntentId}")]
-        public async Task<ActionResult<PaymentResponseDTO>> ConfirmPayment(string paymentIntentId)
+        public async Task<ActionResult<PaymentResponseDTO>> ConfirmPayment(
+            string paymentIntentId,
+            [FromBody] ConfirmPaymentDTO dto
+        )
         {
             try
             {
-                var payment = await _paymentService.ConfirmPayment(paymentIntentId);
+                if (string.IsNullOrEmpty(dto.PaymentMethodId))
+                {
+                    return BadRequest(new { message = "Payment method ID is required" });
+                }
+
+                var payment = await _paymentService.ConfirmPayment(paymentIntentId, dto.PaymentMethodId);
+                if (payment == null)
+                {
+                    return NotFound(new { message = "Payment not found" });
+                }
                 return Ok(payment);
             }
             catch (Exception ex)
@@ -187,7 +205,7 @@ namespace Backend.Controllers
 
         [HttpGet("requests")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<PaymentRequestDTO>>> GetPaymentRequests()
+        public async Task<ActionResult<IEnumerable<PaymentResponseDTO>>> GetPaymentRequests()
         {
             try
             {
@@ -197,10 +215,29 @@ namespace Backend.Controllers
                     return Unauthorized();
                 }
 
-                // TODO: Get payment requests from database
-                // Filter based on user role (agency sees their requests, users see requests for them)
+                // Get user's role
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return Unauthorized();
+                }
 
-                return Ok(new List<PaymentRequestDTO>());
+                var isAgency = await _userManager.IsInRoleAsync(user, "Agency");
+                var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+
+                // Get payments based on user role
+                if (isAgency)
+                {
+                    // For agencies, get payments where they are the agency
+                    var payments = await _dbHelper.GetPaymentsByAgencyId(userId);
+                    return Ok(payments);
+                }
+                else
+                {
+                    // For regular users, get payments where they are the customer
+                    var payments = await _dbHelper.GetPaymentsByCustomerId(userId);
+                    return Ok(payments);
+                }
             }
             catch (Exception ex)
             {

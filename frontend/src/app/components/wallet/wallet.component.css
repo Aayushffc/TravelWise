@@ -247,3 +247,199 @@ button:active {
 .error button:hover {
   background-color: #1d4ed8;
 }
+
+.wallet-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.wallet-header {
+  margin-bottom: 30px;
+}
+
+.wallet-header h1 {
+  font-size: 24px;
+  color: #333;
+}
+
+.payment-requests {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.payment-request-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.payment-info h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.payment-info p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.payment-actions {
+  margin-top: 20px;
+}
+
+.pay-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.pay-button:hover {
+  background-color: #45a049;
+}
+
+.pay-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.payment-summary {
+  margin-bottom: 20px;
+}
+
+.payment-summary h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.card-element-container {
+  margin: 20px 0;
+}
+
+.card-element-container label {
+  display: block;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+#card-element {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.confirm-button {
+  flex: 1;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.confirm-button:hover {
+  background-color: #45a049;
+}
+
+.confirm-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  flex: 1;
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.cancel-button:hover {
+  background-color: #e9ecef;
+}
+
+.cancel-button:disabled {
+  background-color: #f8f9fa;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.no-requests {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}

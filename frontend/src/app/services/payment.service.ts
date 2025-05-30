@@ -27,8 +27,6 @@ export interface CreatePaymentIntentDTO {
   currency: string;
   customerEmail?: string;
   customerName?: string;
-  bookingCustomerEmail?: string;
-  bookingCustomerName?: string;
   description?: string;
 }
 
@@ -42,24 +40,17 @@ export interface PaymentIntentResponseDTO {
 
 export interface PaymentResponseDTO {
   id: number;
-  stripePaymentId: string;
   bookingId: number;
-  agencyId: number;
+  stripePaymentId: string;
   amount: number;
   currency: string;
   status: string;
-  paymentMethod?: string;
-  customerId?: string;
-  customerEmail?: string;
-  customerName?: string;
-  bookingCustomerEmail?: string;
-  bookingCustomerName?: string;
-  errorMessage?: string;
-  refundReason?: string;
-  createdAt: Date;
-  updatedAt?: Date;
-  paidAt?: Date;
-  refundedAt?: Date;
+  paymentMethod: string;
+  customerEmail: string;
+  customerName: string;
+  createdAt: string;
+  paidAt?: string;
+  refundedAt?: string;
 }
 
 export interface RefundPaymentDTO {
@@ -85,6 +76,10 @@ export interface PaymentRequest {
   amount: number;
   status: 'pending' | 'completed' | 'failed';
   createdAt: Date;
+}
+
+export interface ConfirmPaymentDTO {
+  paymentMethodId: string;
 }
 
 @Injectable({
@@ -122,8 +117,10 @@ export class PaymentService {
     return this.http.post<PaymentIntentResponseDTO>(`${this.apiUrl}/create-intent`, dto);
   }
 
-  confirmPayment(paymentIntentId: string): Observable<PaymentResponseDTO> {
-    return this.http.post<PaymentResponseDTO>(`${this.apiUrl}/confirm/${paymentIntentId}`, {});
+  confirmPayment(paymentIntentId: string, paymentMethodId: string): Observable<PaymentResponseDTO> {
+    return this.http.post<PaymentResponseDTO>(`${this.apiUrl}/confirm/${paymentIntentId}`, {
+      paymentMethodId
+    });
   }
 
   getPayment(paymentIntentId: string): Observable<PaymentResponseDTO> {
@@ -147,11 +144,7 @@ export class PaymentService {
     if (!stripe) {
       throw new Error('Stripe failed to initialize');
     }
-
-    const { error } = await stripe.confirmCardPayment(clientSecret);
-    if (error) {
-      throw new Error(error.message);
-    }
+    return stripe;
   }
 
   downloadInvoice(paymentId: string): Observable<Blob> {
