@@ -1,0 +1,10 @@
+PaymentResponseDTO' does not contain a definition for 'CustomerId' and no accessible extension method 'CustomerId' accepting a first argument of type 'PaymentResponseDTO' could be found (are you missing a using directive or an assembly reference?)CS1061
+
+fix this error in payment service or paymentRecord.AgencyId at both places it will be fixed.
+secondly I was adding the payment intigration at last but due to some problem it is added just getting a bug in confirmaiton api i am getting the data in stripe as well as confiromation api is working but there is just an error.
+
+
+aayush.soni@mechlintech.com
+
+Password
+zPZW.E55EKB7X(College name)
